@@ -1,0 +1,23 @@
+install python in machine
+install fastAPI package
+create folders structure
+
+<----------------------------------------------------------------------------------->
+
+postgre DB setup
+https://medium.com/@jewelski/quickly-set-up-a-local-postgres-database-using-docker-5098052a4726
+
+
+<----------------------------------------------------------------------------------->
+
+install any package run below command before
+
+source env/bin/activate  
+deactivate
+
+<----------------------------------------------------------------------------------->
+command for run application
+
+uvicorn app.main:app --reload
+
+<----------------------------------------------------------------------------------->
