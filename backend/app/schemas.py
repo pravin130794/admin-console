@@ -9,6 +9,18 @@ class UserCreate(BaseModel):
     password: str
 
 
+class UserUpdate(BaseModel):
+    firstname: Optional[str] = None
+    lastname: Optional[str] = None
+    username: Optional[str] = None
+    email: Optional[EmailStr] = None
+    password: Optional[str] = None
+    is_active: Optional[bool] = None
+    is_approved: Optional[bool] = None
+    
+    class Config:
+        orm_mode = True
+
 class UserResponse(BaseModel):
     id: int
     username: str
@@ -88,6 +100,21 @@ class ProjectUpdate(ProjectBase):
 
 class ProjectResponse(ProjectBase):
     id: int
+
+    class Config:
+        orm_mode = True
+
+# User Schema with nested groups and projects
+class UsersResponse(BaseModel):
+    id: int
+    firstname: str
+    lastname: str
+    username: str
+    email: str
+    is_active: bool
+    is_approved: bool
+    groups: List[GroupBase]  # List of group details
+    projects: List[ProjectBase]  # List of project details
 
     class Config:
         orm_mode = True

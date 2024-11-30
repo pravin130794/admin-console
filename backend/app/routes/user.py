@@ -4,7 +4,7 @@ from typing import Annotated, List
 from app import models, schemas
 from app import database
 from app import utils
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.exc import SQLAlchemyError
 
 
@@ -16,8 +16,7 @@ def get_db():
         yield db
     finally:
         db.close()
-
-        
+     
 
 db_dependency = Annotated[Session, Depends(get_db)]
 
@@ -54,12 +53,20 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
         db.rollback()
 
 
-@router.get("/users", response_model=List[schemas.UserResponse])
-def get_users(username: str = None, db: Session = Depends(get_db)):
-    query = db.query(models.User)
-    if username:
-        query = query.filter(models.User.username.ilike(f"%{username}%"))
-    return query.all()
+# Pagination query for getting users
+@router.get("/users", response_model=List[schemas.UsersResponse])
+def get_users(
+    db: Session = Depends(get_db),
+    skip: int = 0,  # Default skip (pagination start)
+    limit: int = 10  # Default limit (number of users per page)
+):
+    # Query users with pagination and join groups and projects
+    users = db.query(models.User).options(
+        joinedload(models.User.groups),
+        joinedload(models.User.projects)
+    ).offset(skip).limit(limit).all()
+
+    return users
 
 
 @router.put("/users/{user_id}", response_model=schemas.UserResponse)
@@ -85,7 +92,7 @@ def update_user(user_id: int, user: schemas.UserCreate, db: Session = Depends(ge
 
 
 @router.patch("/users/{user_id}", response_model=schemas.UserResponse)
-def partial_update_user(user_id: int, user: schemas.UserCreate, db: Session = Depends(get_db)):
+def partial_update_user(user_id: int, user: schemas.UserUpdate, db: Session = Depends(get_db)):
     try:
         # Check if user exists
         existing_user = db.query(models.User).filter(models.User.id == user_id).first()
@@ -99,7 +106,10 @@ def partial_update_user(user_id: int, user: schemas.UserCreate, db: Session = De
             existing_user.email = user.email
         if user.password:
             existing_user.hashed_password = utils.hash_password(user.password)  # Optionally rehash password
-        existing_user.is_active = False  # You can make it editable based on your needs
+        if user.is_active:
+            existing_user.is_active = user.is_active
+        if user.is_approved:
+            existing_user.is_approved = user.is_approved
 
         db.commit()
         db.refresh(existing_user)
@@ -215,7 +225,6 @@ def verify_otp(otp_data: schemas.OTPVerify, db: Session = Depends(get_db)):
     return {"message": "OTP verified. Your password has been updated. Login to the system"}
 
 
-
 # API to approve user and assign multiple groups/projects
 @router.post("/approve_user")
 def approve_user(request: schemas.UserApprove, db: Session = Depends(get_db)):
@@ -226,6 +235,7 @@ def approve_user(request: schemas.UserApprove, db: Session = Depends(get_db)):
     
     # Approve user
     user.is_approved = True
+    user.is_active = True
 
     # Assign user to the specified groups
     groups = db.query(models.Group).filter(models.Group.id.in_(request.groups)).all()

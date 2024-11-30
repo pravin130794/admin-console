@@ -30,6 +30,7 @@ class User(Base):
     email = Column(String(100), unique=True, index=True)
     hashed_password = Column(String(255))
     is_active = Column(Boolean, default=True)
+    is_approved= Column(Boolean, default=True)
 
     # Relationships
     otp_record = relationship("UserOTP", back_populates="user", uselist=False)  # One-to-one relationship with UserOTP
