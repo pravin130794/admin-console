@@ -5,7 +5,10 @@ from email.mime.multipart import MIMEMultipart
 from typing import Optional
 import mailersend
 from passlib.context import CryptContext
+from dotenv import load_dotenv
+import os
 
+load_dotenv()
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -25,10 +28,10 @@ def generate_otp() -> str:
 
 # Function to send email with OTP
 def send_otp_email(to_email: str, otp: str):
-    from_email = "anku130794@gmail.com"  # Replace with your email
-    from_password = "xhlexropodjtdwbf"  # Replace with your email password
-    smtp_server = "smtp.gmail.com"  # Use the SMTP server for your email provider
-    smtp_port = 587  # SMTP port for sending email (typically 587 for TLS)
+    from_email = os.getenv('FROM_EMAIL')  # Replace with your email
+    from_password = os.getenv('FROM_PASSWORD')  # Replace with your email password
+    smtp_server = os.getenv('SMTP_SERVER')  # Use the SMTP server for your email provider
+    smtp_port = os.getenv('SMTP_PORT')  # SMTP port for sending email (typically 587 for TLS)
 
     # Compose the email
     subject = "Your OTP Code"

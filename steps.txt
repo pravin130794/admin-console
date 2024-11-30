@@ -18,6 +18,15 @@ deactivate
 <----------------------------------------------------------------------------------->
 command for run application
 
+make sure docker local should running in deamon mode
+run the docker for postgre sql
+
+docker compose up -d
+
+source env/bin/activate     
+
+cd backend
+
 uvicorn app.main:app --reload
 
 <----------------------------------------------------------------------------------->
