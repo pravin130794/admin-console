@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from pydantic import BaseModel, EmailStr, Field
 
 class UserCreate(BaseModel):
@@ -51,3 +51,43 @@ class UserApprove(BaseModel):
     is_approved: bool
     groups: List[int] = []  # List of group IDs
     projects: List[int] = []  # List of project IDs
+
+# Group Schema
+class GroupBase(BaseModel):
+    name: str
+
+
+class GroupCreate(GroupBase):
+    pass
+
+
+class GroupUpdate(GroupBase):
+    pass
+
+
+class GroupResponse(GroupBase):
+    id: int
+
+    class Config:
+        orm_mode = True
+
+
+# Project Schema
+class ProjectBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+
+
+class ProjectCreate(ProjectBase):
+    pass
+
+
+class ProjectUpdate(ProjectBase):
+    pass
+
+
+class ProjectResponse(ProjectBase):
+    id: int
+
+    class Config:
+        orm_mode = True
