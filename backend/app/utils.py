@@ -2,6 +2,7 @@ import random
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from fastapi import HTTPException
 import jwt
 from datetime import datetime, timedelta
 from passlib.context import CryptContext
@@ -68,24 +69,18 @@ def create_access_token(data: dict) -> str:
 def decode_jwt(token: str) -> dict:
     try:
         # Decode the token
-        decoded_token = jwt.decode(
-            token,
-            key=os.getenv('JWT_SECRET_KEY'),
-            algorithms=[os.getenv('JWT_ALGORITHM')]
-        )
-        # print("decoded_token -->", decoded_token)
-
-        # Validate expiration time
-        if "expires" in decoded_token:
-            expiration_time = datetime.datetime.fromtimestamp(decoded_token["expires"])
-            if expiration_time < datetime.datetime.now():
-                raise Exception("Token has expired")
-
+        decoded_token = jwt.decode(token, os.getenv('JWT_SECRET_KEY'), algorithms=[os.getenv('JWT_ALGORITHM')])
+        
+        # Check if the token is expired
+        exp = decoded_token.get("exp")
+        if exp and datetime.datetime.utcnow() > datetime.datetime.utcfromtimestamp(exp):
+            raise HTTPException(status_code=403, detail="Token has expired.")
+        
         return decoded_token
+
     except jwt.ExpiredSignatureError:
-        print("Token has expired")
-        return {}
-    except jwt.InvalidTokenError as e:
-        print(f"Invalid token: {e}")
-        return {}
-    
+        raise HTTPException(status_code=403, detail="Token has expired.")
+    except jwt.JWTClaimsError:
+        raise HTTPException(status_code=403, detail="Invalid token claims.")
+    except Exception as e:
+        raise HTTPException(status_code=403, detail="Invalid token: " + str(e))    

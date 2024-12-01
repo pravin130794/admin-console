@@ -38,3 +38,7 @@ https://myaccount.google.com/apppassword
 create app for email
 
 <----------------------------------------------------------------------------------->
+
+truncate users table and it associate 
+
+"TRUNCATE TABLE users CASCADE;"

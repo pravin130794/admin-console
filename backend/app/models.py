@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime, timedelta
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Boolean, Table
 from app.database import Base
 from sqlalchemy.orm import relationship
@@ -31,7 +31,7 @@ class User(Base):
     hashed_password = Column(String(255))
     is_active = Column(Boolean, default=True)
     is_approved= Column(Boolean, default=True)
-
+    tokens = relationship("UserToken", back_populates="user")
     # Relationships
     otp_record = relationship("UserOTP", back_populates="user", uselist=False)  # One-to-one relationship with UserOTP
     groups = relationship("Group", secondary=user_group_association, back_populates="users")
@@ -44,7 +44,7 @@ class UserOTP(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey('users.id'))
     otp = Column(String(6))
-    expiration_time = Column(DateTime, default=datetime.datetime.now() + datetime.timedelta(minutes=5))  # OTP expires in 5 minutes
+    expiration_time = Column(DateTime, default=datetime.now() + timedelta(minutes=5))  # OTP expires in 5 minutes
 
     # Relationships
     user = relationship("User", back_populates="otp_record")
@@ -70,3 +70,14 @@ class Project(Base):
 
     # Relationships
     users = relationship("User", secondary=user_project_association, back_populates="projects")
+
+class UserToken(Base):
+    __tablename__ = "user_tokens"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    token = Column(String, nullable=False)
+    created_at = Column(DateTime, default=datetime.now())
+    expires_at = Column(DateTime, nullable=False)
+
+    user = relationship("User", back_populates="tokens")

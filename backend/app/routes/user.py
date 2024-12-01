@@ -1,15 +1,14 @@
-import datetime
+from datetime import datetime, timedelta
 from fastapi import APIRouter, HTTPException, Depends
 from typing import Annotated, List
-from datetime import datetime
 from app import models, schemas
 from app import database
 from app import utils
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.exc import SQLAlchemyError
-
 from app.middleware.auth import JWTBearer
-
+from dotenv import load_dotenv
+import os
 
 router = APIRouter()
 
@@ -176,7 +175,7 @@ def sign_up(user: schemas.UserSignUpRequest, db: Session = Depends(get_db)):
 
 # Function to store OTP and expiration time in the database
 def store_otp(db: Session, user_id: int, otp: str):
-    expiration_time = datetime.datetime.now() + datetime.timedelta(minutes=5) # OTP expires in 5 minutes
+    expiration_time = datetime.now() + timedelta(minutes=5) # OTP expires in 5 minutes
     otp_record = models.UserOTP(user_id=user_id, otp=otp, expiration_time=expiration_time)
     db.add(otp_record)
     db.commit()
@@ -196,9 +195,37 @@ def login(user: schemas.UserLoginRequest, db: Session = Depends(get_db)):
     if not utils.verify_password(user.password, db_user.hashed_password):
         raise HTTPException(status_code=400, detail="Invalid username or password")
 
-    token = utils.create_access_token({"sub": str(db_user.id), "username": db_user.username})
-    return {"message": "Login successful.","access_token": token}
+    # Check if a valid token exists for the user
+    valid_token = (
+        db.query(models.UserToken)
+        .filter(models.UserToken.user_id == db_user.id)
+        .filter(models.UserToken.expires_at > datetime.now())  # Check if the token is still valid
+        .first()
+    )
 
+    if valid_token:
+        # Return the existing valid token
+        return {"message": "Login successful.", "access_token": valid_token.token}
+
+    # Generate a new JWT token
+    token = utils.create_access_token({"sub": str(db_user.id), "username": db_user.username})
+
+    # Calculate expiration time (e.g., 1 hour)
+    expires_at = datetime.now() + timedelta(minutes=int(os.getenv('JWT_EXPIRATION_MINUTES')))
+
+    # Store the new token in the UserToken table
+    user_token = models.UserToken(user_id=db_user.id, token=token, expires_at=expires_at)
+    db.add(user_token)
+    db.commit()
+
+    return {"message": "Login successful.", "access_token": token}
+
+@router.post("/logout",dependencies=[Depends(JWTBearer())])
+def logout(current_user: dict, db: Session = Depends(get_db)):
+    # Delete the user's token from the UserToken table
+    db.query(models.UserToken).filter(models.UserToken.user_id == current_user["sub"]).delete()
+    db.commit()
+    return {"message": "Logout successful."}
 
 @router.post("/verify-otp")
 def verify_otp(otp_data: schemas.OTPVerify, db: Session = Depends(get_db)):
@@ -217,7 +244,7 @@ def verify_otp(otp_data: schemas.OTPVerify, db: Session = Depends(get_db)):
     if otp_record.otp != otp_data.otp:
         raise HTTPException(status_code=400, detail="Invalid OTP")
     
-    if datetime.datetime.now() > otp_record.expiration_time:
+    if datetime.now() > otp_record.expiration_time:
         raise HTTPException(status_code=400, detail="OTP has expired")
     
     # Update the user's password
@@ -229,7 +256,7 @@ def verify_otp(otp_data: schemas.OTPVerify, db: Session = Depends(get_db)):
 
 
 # API to approve user and assign multiple groups/projects
-@router.post("/approve_user",dependencies=[Depends(JWTBearer())])
+@router.post("/approve_user")
 def approve_user(request: schemas.UserApprove, db: Session = Depends(get_db)):
     # Check if user exists
     user = db.query(models.User).filter(models.User.id == request.user_id).first()
