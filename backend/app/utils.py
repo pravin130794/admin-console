@@ -2,8 +2,8 @@ import random
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from typing import Optional
-import mailersend
+import jwt
+from datetime import datetime, timedelta
 from passlib.context import CryptContext
 from dotenv import load_dotenv
 import os
@@ -56,4 +56,36 @@ def send_otp_email(to_email: str, otp: str):
         print(f"Failed to send email: {str(e)}")
         raise Exception("Email sending failed")
     
+# Generate JWT Token
+def create_access_token(data: dict) -> str:
+    to_encode = data.copy()
+    expire = datetime.now() + timedelta(minutes=int(os.getenv('JWT_EXPIRATION_MINUTES')))
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, os.getenv('JWT_SECRET_KEY'), algorithm=os.getenv('JWT_ALGORITHM'))
+    return encoded_jwt
+
+# Decode and Verify JWT Token
+def decode_jwt(token: str) -> dict:
+    try:
+        # Decode the token
+        decoded_token = jwt.decode(
+            token,
+            key=os.getenv('JWT_SECRET_KEY'),
+            algorithms=[os.getenv('JWT_ALGORITHM')]
+        )
+        # print("decoded_token -->", decoded_token)
+
+        # Validate expiration time
+        if "expires" in decoded_token:
+            expiration_time = datetime.datetime.fromtimestamp(decoded_token["expires"])
+            if expiration_time < datetime.datetime.now():
+                raise Exception("Token has expired")
+
+        return decoded_token
+    except jwt.ExpiredSignatureError:
+        print("Token has expired")
+        return {}
+    except jwt.InvalidTokenError as e:
+        print(f"Invalid token: {e}")
+        return {}
     

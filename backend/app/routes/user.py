@@ -1,11 +1,14 @@
 import datetime
 from fastapi import APIRouter, HTTPException, Depends
 from typing import Annotated, List
+from datetime import datetime
 from app import models, schemas
 from app import database
 from app import utils
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.exc import SQLAlchemyError
+
+from app.middleware.auth import JWTBearer
 
 
 router = APIRouter()
@@ -21,7 +24,7 @@ def get_db():
 db_dependency = Annotated[Session, Depends(get_db)]
 
 
-@router.post("/users", response_model=schemas.UserResponse)
+@router.post("/users",dependencies=[Depends(JWTBearer())], response_model=schemas.UserResponse)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     try:
         # Check if username or email already exists
@@ -54,7 +57,7 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
 
 
 # Pagination query for getting users
-@router.get("/users", response_model=List[schemas.UsersResponse])
+@router.get("/users",dependencies=[Depends(JWTBearer())], response_model=List[schemas.UsersResponse])
 def get_users(
     db: Session = Depends(get_db),
     skip: int = 0,  # Default skip (pagination start)
@@ -69,7 +72,7 @@ def get_users(
     return users
 
 
-@router.put("/users/{user_id}", response_model=schemas.UserResponse)
+@router.put("/users/{user_id}",dependencies=[Depends(JWTBearer())], response_model=schemas.UserResponse)
 def update_user(user_id: int, user: schemas.UserCreate, db: Session = Depends(get_db)):
     try:
         # Check if user exists
@@ -91,7 +94,7 @@ def update_user(user_id: int, user: schemas.UserCreate, db: Session = Depends(ge
         db.rollback()
 
 
-@router.patch("/users/{user_id}", response_model=schemas.UserResponse)
+@router.patch("/users/{user_id}",dependencies=[Depends(JWTBearer())], response_model=schemas.UserResponse)
 def partial_update_user(user_id: int, user: schemas.UserUpdate, db: Session = Depends(get_db)):
     try:
         # Check if user exists
@@ -119,7 +122,7 @@ def partial_update_user(user_id: int, user: schemas.UserUpdate, db: Session = De
         db.rollback()
 
 
-@router.delete("/users/{username}", response_model=schemas.UserResponse)
+@router.delete("/users/{username}",dependencies=[Depends(JWTBearer())], response_model=schemas.UserResponse)
 def delete_user(username: str, db: Session = Depends(get_db)):
     # Check if user exists
     existing_user = db.query(models.User).filter(models.User.username == username).first()
@@ -193,8 +196,8 @@ def login(user: schemas.UserLoginRequest, db: Session = Depends(get_db)):
     if not utils.verify_password(user.password, db_user.hashed_password):
         raise HTTPException(status_code=400, detail="Invalid username or password")
 
-
-    return {"message": "Login successful."}
+    token = utils.create_access_token({"sub": str(db_user.id), "username": db_user.username})
+    return {"message": "Login successful.","access_token": token}
 
 
 @router.post("/verify-otp")
@@ -226,7 +229,7 @@ def verify_otp(otp_data: schemas.OTPVerify, db: Session = Depends(get_db)):
 
 
 # API to approve user and assign multiple groups/projects
-@router.post("/approve_user")
+@router.post("/approve_user",dependencies=[Depends(JWTBearer())])
 def approve_user(request: schemas.UserApprove, db: Session = Depends(get_db)):
     # Check if user exists
     user = db.query(models.User).filter(models.User.id == request.user_id).first()
