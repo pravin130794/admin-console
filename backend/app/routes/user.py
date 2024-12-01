@@ -113,6 +113,18 @@ def partial_update_user(user_id: int, user: schemas.UserUpdate, db: Session = De
         if user.is_approved:
             existing_user.is_approved = user.is_approved
 
+        # Update user groups if provided
+        if user.groups:
+            # Assuming `groups` is a list of group IDs
+            groups_to_add = db.query(models.Group).filter(models.Group.id.in_(user.groups)).all()
+            existing_user.groups = groups_to_add
+
+        # Update user projects if provided
+        if user.projects:
+            # Assuming `projects` is a list of project IDs
+            projects_to_add = db.query(models.Project).filter(models.Project.id.in_(user.projects)).all()
+            existing_user.projects = projects_to_add
+            
         db.commit()
         db.refresh(existing_user)
 

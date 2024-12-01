@@ -17,6 +17,8 @@ class UserUpdate(BaseModel):
     password: Optional[str] = None
     is_active: Optional[bool] = None
     is_approved: Optional[bool] = None
+    groups: List[int] = []  # List of group IDs
+    projects: List[int] = []  # List of project IDs
     
     class Config:
         orm_mode = True
