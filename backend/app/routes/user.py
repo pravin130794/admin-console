@@ -112,6 +112,8 @@ def partial_update_user(user_id: int, user: schemas.UserUpdate, db: Session = De
             existing_user.is_active = user.is_active
         if user.is_approved:
             existing_user.is_approved = user.is_approved
+        if user.is_admin:
+            existing_user.is_admin = user.is_admin
 
         # Update user groups if provided
         if user.groups:
@@ -135,16 +137,19 @@ def partial_update_user(user_id: int, user: schemas.UserUpdate, db: Session = De
 
 @router.delete("/users/{username}",dependencies=[Depends(JWTBearer())], response_model=schemas.UserResponse)
 def delete_user(username: str, db: Session = Depends(get_db)):
-    # Check if user exists
-    existing_user = db.query(models.User).filter(models.User.username == username).first()
-    if not existing_user:
-        raise HTTPException(status_code=404, detail="User not found")
+    try:
+        # Check if user exists
+        existing_user = db.query(models.User).filter(models.User.username == username).first()
+        if not existing_user:
+            raise HTTPException(status_code=404, detail="User not found")
 
-    # Delete the user
-    db.delete(existing_user)
-    db.commit()
+        # Delete the user
+        db.delete(existing_user)
+        db.commit()
 
-    return existing_user
+        return existing_user
+    except SQLAlchemyError as e:
+        db.rollback()
 
 
 # Sign-up API - POST request to create a new user
@@ -197,114 +202,138 @@ def store_otp(db: Session, user_id: int, otp: str):
 # Login API - POST request to authenticate user
 @router.post("/login")
 def login(user: schemas.UserLoginRequest, db: Session = Depends(get_db)):
-    # Check if user exists in the database
-    db_user = db.query(models.User).filter(models.User.username == user.username).first()
+    try:
+        # Check if user exists in the database
+        db_user = db.query(models.User).filter(models.User.username == user.username).first()
 
-    if not db_user:
-        raise HTTPException(status_code=400, detail="Invalid username or password")
+        if not db_user:
+            raise HTTPException(status_code=400, detail="Invalid username or password")
 
-    # Verify password (Here, we assume hashed passwords)
-    if not utils.verify_password(user.password, db_user.hashed_password):
-        raise HTTPException(status_code=400, detail="Invalid username or password")
+        # Verify password (Here, we assume hashed passwords)
+        if not utils.verify_password(user.password, db_user.hashed_password):
+            raise HTTPException(status_code=400, detail="Invalid username or password")
 
-    # Check if a valid token exists for the user
-    valid_token = (
-        db.query(models.UserToken)
-        .filter(models.UserToken.user_id == db_user.id)
-        .filter(models.UserToken.expires_at > datetime.now())  # Check if the token is still valid
-        .first()
-    )
+        # Check if a valid token exists for the user
+        valid_token = (
+            db.query(models.UserToken)
+            .filter(models.UserToken.user_id == db_user.id)
+            .filter(models.UserToken.expires_at > datetime.now())  # Check if the token is still valid
+            .first()
+        )
 
-    if valid_token:
-        # Return the existing valid token
-        return {"message": "Login successful.", "access_token": valid_token.token}
+        if valid_token:
+            # Return the existing valid token
+            return {"message": "Login successful.", "access_token": valid_token.token}
 
-    # Generate a new JWT token
-    token = utils.create_access_token({"sub": str(db_user.id), "username": db_user.username})
+        # Generate a new JWT token
+        token = utils.create_access_token({"sub": str(db_user.id), "username": db_user.username})
 
-    # Calculate expiration time (e.g., 1 hour)
-    expires_at = datetime.now() + timedelta(minutes=int(os.getenv('JWT_EXPIRATION_MINUTES')))
+        # Calculate expiration time (e.g., 1 hour)
+        expires_at = datetime.now() + timedelta(minutes=int(os.getenv('JWT_EXPIRATION_MINUTES')))
 
-    # Store the new token in the UserToken table
-    user_token = models.UserToken(user_id=db_user.id, token=token, expires_at=expires_at)
-    db.add(user_token)
-    db.commit()
+        # Store the new token in the UserToken table
+        user_token = models.UserToken(user_id=db_user.id, token=token, expires_at=expires_at)
+        db.add(user_token)
+        db.commit()
 
-    return {"message": "Login successful.", "access_token": token}
+        return {"message": "Login successful.", "access_token": token}
+    except SQLAlchemyError as e:
+        db.rollback()
 
 @router.post("/logout",dependencies=[Depends(JWTBearer())])
 def logout(current_user: dict, db: Session = Depends(get_db)):
-    # Delete the user's token from the UserToken table
-    db.query(models.UserToken).filter(models.UserToken.user_id == current_user["sub"]).delete()
-    db.commit()
-    return {"message": "Logout successful."}
+    try:
+        # Delete the user's token from the UserToken table
+        db.query(models.UserToken).filter(models.UserToken.user_id == current_user["sub"]).delete()
+        db.commit()
+        return {"message": "Logout successful."}
+    except SQLAlchemyError as e:
+        db.rollback()
 
 @router.post("/verify-otp")
 def verify_otp(otp_data: schemas.OTPVerify, db: Session = Depends(get_db)):
-    # Find the user by email
-    user = db.query(models.User).filter(models.User.email == otp_data.email).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    # Find the OTP record for the user
-    otp_record = db.query(models.UserOTP).filter(models.UserOTP.user_id == user.id).first()
+    try:
+        # Find the user by email
+        user = db.query(models.User).filter(models.User.email == otp_data.email).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Find the OTP record for the user
+        otp_record = db.query(models.UserOTP).filter(models.UserOTP.user_id == user.id).first()
 
-    if not otp_record:
-        raise HTTPException(status_code=400, detail="OTP not found or expired")
-    
-    # Check if the OTP matches and if it's expired
-    if otp_record.otp != otp_data.otp:
-        raise HTTPException(status_code=400, detail="Invalid OTP")
-    
-    if datetime.now() > otp_record.expiration_time:
-        raise HTTPException(status_code=400, detail="OTP has expired")
-    
-    # Update the user's password
-    user.hashed_password = utils.hash_password(otp_data.new_password)
-    db.commit()
-    db.refresh(user)
-    # OTP verified, now allow the user to set a password
-    return {"message": "OTP verified. Your password has been updated. Login to the system"}
-
+        if not otp_record:
+            raise HTTPException(status_code=400, detail="OTP not found or expired")
+        
+        # Check if the OTP matches and if it's expired
+        if otp_record.otp != otp_data.otp:
+            raise HTTPException(status_code=400, detail="Invalid OTP")
+        
+        if datetime.now() > otp_record.expiration_time:
+            raise HTTPException(status_code=400, detail="OTP has expired")
+        
+        # Update the user's password
+        user.hashed_password = utils.hash_password(otp_data.new_password)
+        db.commit()
+        db.refresh(user)
+        # OTP verified, now allow the user to set a password
+        return {"message": "OTP verified. Your password has been updated. Login to the system"}
+    except SQLAlchemyError as e:
+        db.rollback()
 
 # API to approve user and assign multiple groups/projects
 @router.post("/approve_user")
 def approve_user(request: schemas.UserApprove, db: Session = Depends(get_db)):
-    # Check if user exists
-    user = db.query(models.User).filter(models.User.id == request.user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    # Approve user
-    user.is_approved = True
-    user.is_active = True
-
-    # Assign user to the specified groups
-    groups = db.query(models.Group).filter(models.Group.id.in_(request.groups)).all()
-    if not groups:
-        raise HTTPException(status_code=404, detail="Some groups not found")
-    user.groups = groups
-
-    # Assign user to the specified projects
-    projects = db.query(models.Project).filter(models.Project.id.in_(request.projects)).all()
-    if not projects:
-        raise HTTPException(status_code=404, detail="Some projects not found")
-    user.projects = projects
-
-    # Commit changes to DB
-    db.commit()
-    db.refresh(user)
-
-    # If login is successful, generate an OTP
-    otp = utils.generate_otp()
-    store_otp(db, user.id, otp)  # Store OTP in the database
-    print(otp)
-    # Send OTP to user's email
     try:
-        utils.send_otp_email(request.email, otp)
-    except Exception:
-        raise HTTPException(status_code=500, detail="Failed to send OTP email")
+        # Check if user exists
+        user = db.query(models.User).filter(models.User.id == request.user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
 
-    db.commit()
+        # Check if the current user is already approved
+        if user.is_approved == True:
+            raise HTTPException(status_code=403, detail="User has been already approved by admin")
+        
+        # Check if the current user is an active
+        if user.is_active == False:
+            raise HTTPException(status_code=403, detail="Only Active User can approve users")
+        
+        # Check if the current user is an admin
+        if user.is_admin == False:
+            raise HTTPException(status_code=403, detail="Only admins can approve users")
+        
+        
+        # Approve user
+        user.is_approved = True
+        user.is_active = True
 
-    return {"message": "User approved, groups and projects assigned, and OTP sent for password reset"}
+        # Assign user to the specified groups
+        groups = db.query(models.Group).filter(models.Group.id.in_(request.groups)).all()
+        if not groups:
+            raise HTTPException(status_code=404, detail="Some groups not found")
+        user.groups = groups
+
+        # Assign user to the specified projects
+        projects = db.query(models.Project).filter(models.Project.id.in_(request.projects)).all()
+        if not projects:
+            raise HTTPException(status_code=404, detail="Some projects not found")
+        user.projects = projects
+
+        # Commit changes to DB
+        db.commit()
+        db.refresh(user)
+
+        # If login is successful, generate an OTP
+        otp = utils.generate_otp()
+        store_otp(db, user.id, otp)  # Store OTP in the database
+        # print(otp)
+        # Send OTP to user's email
+        try:
+            utils.send_otp_email(request.email, otp)
+        except Exception:
+            raise HTTPException(status_code=500, detail="Failed to send OTP email")
+
+        db.commit()
+
+        return {"message": "User approved, groups and projects assigned, and OTP sent for password reset"}
+    except SQLAlchemyError as e:
+        db.rollback()

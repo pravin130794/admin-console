@@ -41,4 +41,12 @@ create app for email
 
 truncate users table and it associate 
 
-"TRUNCATE TABLE users CASCADE;"
+"TRUNCATE TABLE users RESTART IDENTITY CASCADE;"
+
+<----------------------------------------------------------------------------------->
+
+user update query
+
+UPDATE public.users
+SET is_admin=True, is_active=True
+WHERE id=1;

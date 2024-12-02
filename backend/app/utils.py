@@ -36,7 +36,7 @@ def send_otp_email(to_email: str, otp: str):
 
     # Compose the email
     subject = "Your OTP Code"
-    body = f"Your OTP code is: {otp}"
+    body = f"Your OTP code is: {otp} expire in : 5 minutes"
 
     msg = MIMEMultipart()
     msg['From'] = from_email

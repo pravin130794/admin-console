@@ -31,6 +31,7 @@ class User(Base):
     hashed_password = Column(String(255))
     is_active = Column(Boolean, default=True)
     is_approved= Column(Boolean, default=True)
+    is_admin = Column(Boolean, default=False)
     tokens = relationship("UserToken", back_populates="user")
     # Relationships
     otp_record = relationship("UserOTP", back_populates="user", uselist=False)  # One-to-one relationship with UserOTP
