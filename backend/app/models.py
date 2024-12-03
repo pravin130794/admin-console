@@ -30,7 +30,7 @@ class User(Base):
     email = Column(String(100), unique=True, index=True)
     hashed_password = Column(String(255))
     is_active = Column(Boolean, default=True)
-    is_approved= Column(Boolean, default=True)
+    is_approved= Column(Boolean, default=False)
     is_admin = Column(Boolean, default=False)
     tokens = relationship("UserToken", back_populates="user")
     # Relationships

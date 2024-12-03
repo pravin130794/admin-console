@@ -73,7 +73,7 @@ def decode_jwt(token: str) -> dict:
         
         # Check if the token is expired
         exp = decoded_token.get("exp")
-        if exp and datetime.datetime.utcnow() > datetime.datetime.utcfromtimestamp(exp):
+        if exp and datetime.now() > datetime.fromtimestamp(exp):
             raise HTTPException(status_code=403, detail="Token has expired.")
         
         return decoded_token

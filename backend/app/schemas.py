@@ -8,6 +8,16 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str
 
+class SuperUserCreate(BaseModel):
+    firstname: str
+    lastname: str
+    username: str
+    email: EmailStr
+    password: str
+    is_active: Optional[bool] = None
+    is_approved: Optional[bool] = None
+    is_admin: Optional[bool] = None
+
 
 class UserUpdate(BaseModel):
     firstname: Optional[str] = None
@@ -62,6 +72,7 @@ class ProjectBase(BaseModel):
 
 class UserApprove(BaseModel):
     user_id: int
+    approver_user_id: int
     email: str
     is_approved: bool
     groups: List[int] = []  # List of group IDs

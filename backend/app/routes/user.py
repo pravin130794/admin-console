@@ -23,7 +23,7 @@ def get_db():
 db_dependency = Annotated[Session, Depends(get_db)]
 
 
-@router.post("/users",dependencies=[Depends(JWTBearer())], response_model=schemas.UserResponse)
+@router.post("/user",dependencies=[Depends(JWTBearer())], response_model=schemas.UserResponse)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     try:
         # Check if username or email already exists
@@ -54,9 +54,41 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     except SQLAlchemyError as e:
         db.rollback()
 
+@router.post("/superuser", response_model=schemas.UserResponse)
+def create_user(user: schemas.SuperUserCreate, db: Session = Depends(get_db)):
+    try:
+        # Check if username or email already exists
+        existing_user = db.query(models.User).filter(
+            (models.User.username == user.username)
+        ).first()
+        if existing_user:
+            raise HTTPException(status_code=400, detail="Username or email already exists")
+        print(user)
+        hash_password = utils.hash_password(user.password)
+
+        # Create a new user instance
+        new_user = models.User(
+            firstname=user.firstname,
+            lastname=user.lastname,
+            username=user.username,
+            email=user.email,
+            hashed_password=hash_password,
+            is_active=True,
+            is_approved=True,
+            is_admin=True
+        )
+
+        # Add the user to the database and commit
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+
+        return new_user
+    except SQLAlchemyError as e:
+        db.rollback()
 
 # Pagination query for getting users
-@router.get("/users",dependencies=[Depends(JWTBearer())], response_model=List[schemas.UsersResponse])
+@router.get("/users", response_model=List[schemas.UsersResponse])
 def get_users(
     db: Session = Depends(get_db),
     skip: int = 0,  # Default skip (pagination start)
@@ -71,7 +103,7 @@ def get_users(
     return users
 
 
-@router.put("/users/{user_id}",dependencies=[Depends(JWTBearer())], response_model=schemas.UserResponse)
+@router.put("/user/{user_id}",dependencies=[Depends(JWTBearer())], response_model=schemas.UserResponse)
 def update_user(user_id: int, user: schemas.UserCreate, db: Session = Depends(get_db)):
     try:
         # Check if user exists
@@ -93,7 +125,7 @@ def update_user(user_id: int, user: schemas.UserCreate, db: Session = Depends(ge
         db.rollback()
 
 
-@router.patch("/users/{user_id}",dependencies=[Depends(JWTBearer())], response_model=schemas.UserResponse)
+@router.patch("/user/{user_id}",dependencies=[Depends(JWTBearer())], response_model=schemas.UserResponse)
 def partial_update_user(user_id: int, user: schemas.UserUpdate, db: Session = Depends(get_db)):
     try:
         # Check if user exists
@@ -135,7 +167,7 @@ def partial_update_user(user_id: int, user: schemas.UserUpdate, db: Session = De
         db.rollback()
 
 
-@router.delete("/users/{username}",dependencies=[Depends(JWTBearer())], response_model=schemas.UserResponse)
+@router.delete("/user/{username}",dependencies=[Depends(JWTBearer())], response_model=schemas.UserResponse)
 def delete_user(username: str, db: Session = Depends(get_db)):
     try:
         # Check if user exists
@@ -207,11 +239,11 @@ def login(user: schemas.UserLoginRequest, db: Session = Depends(get_db)):
         db_user = db.query(models.User).filter(models.User.username == user.username).first()
 
         if not db_user:
-            raise HTTPException(status_code=400, detail="Invalid username or password")
+            raise HTTPException(status_code=400, detail="Invalid username")
 
         # Verify password (Here, we assume hashed passwords)
         if not utils.verify_password(user.password, db_user.hashed_password):
-            raise HTTPException(status_code=400, detail="Invalid username or password")
+            raise HTTPException(status_code=400, detail="Invalid password")
 
         # Check if a valid token exists for the user
         valid_token = (
@@ -281,26 +313,22 @@ def verify_otp(otp_data: schemas.OTPVerify, db: Session = Depends(get_db)):
         db.rollback()
 
 # API to approve user and assign multiple groups/projects
-@router.post("/approve_user")
+@router.post("/approve_user", dependencies=[Depends(JWTBearer())])
 def approve_user(request: schemas.UserApprove, db: Session = Depends(get_db)):
     try:
+
+        approve_user = db.query(models.User).filter(models.User.id == request.approver_user_id).first()
+        if not approve_user:
+            raise HTTPException(status_code=404, detail="Approve user not found")
+        
+        # Check if the current user is an admin
+        if approve_user.is_admin == False:
+            raise HTTPException(status_code=403, detail="Only admins can approve users")
+        
         # Check if user exists
         user = db.query(models.User).filter(models.User.id == request.user_id).first()
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
-
-        # Check if the current user is already approved
-        if user.is_approved == True:
-            raise HTTPException(status_code=403, detail="User has been already approved by admin")
-        
-        # Check if the current user is an active
-        if user.is_active == False:
-            raise HTTPException(status_code=403, detail="Only Active User can approve users")
-        
-        # Check if the current user is an admin
-        if user.is_admin == False:
-            raise HTTPException(status_code=403, detail="Only admins can approve users")
-        
         
         # Approve user
         user.is_approved = True
@@ -325,7 +353,6 @@ def approve_user(request: schemas.UserApprove, db: Session = Depends(get_db)):
         # If login is successful, generate an OTP
         otp = utils.generate_otp()
         store_otp(db, user.id, otp)  # Store OTP in the database
-        # print(otp)
         # Send OTP to user's email
         try:
             utils.send_otp_email(request.email, otp)
