@@ -1,0 +1,30 @@
+{
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "users": "Users"
+  },
+  "dashboard": {
+    "dashboard": "Dashboard",
+    "users": "Users"
+  },
+  "error": {
+    "404_title": "Oops! Page Not Found!",
+    "404_desc": "It seems like the page you're looking for <br></br> does not exist or might have been removed.",
+    "go_back": "Go Back",
+    "back_to_home": "Back to Home",
+    "500_title": "Oops! Something went wrong :')",
+    "500_desc": "We apologize for the inconvenience. <br></br>  Please try again later.",
+    "maintenance_title": "Website is under maintenance!",
+    "maintenance_desc": "The site is not available at the moment. <br></br> We'll be back online shortly.",
+    "learn_more": "Learn More",
+    "unauthorised_title": "Oops! You don't have permission to access this page.",
+    "unauthorised_desc": " It looks like you tried to access a resource that requires proper authentication. <br></br> Please log in with the appropriate credentials."
+  },
+  "userNav": {
+    "profile": "Profile",
+    "billing": "Billing",
+    "settings": "Settings",
+    "new_team": "New Team",
+    "log_out": "Log out"
+  }
+}

@@ -88,7 +88,7 @@ def create_user(user: schemas.SuperUserCreate, db: Session = Depends(get_db)):
         db.rollback()
 
 # Pagination query for getting users
-@router.get("/users", response_model=List[schemas.UsersResponse])
+@router.get("/users",dependencies=[Depends(JWTBearer())], response_model=List[schemas.UsersResponse])
 def get_users(
     db: Session = Depends(get_db),
     skip: int = 0,  # Default skip (pagination start)
