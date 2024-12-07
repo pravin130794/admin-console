@@ -21,13 +21,13 @@ command for run application
 make sure docker local should running in deamon mode
 run the docker for postgre sql
 
-"docker compose up -d"
+"docker-compose -f <file.yml> -f <file.yml> up"
 
 "source env/bin/activate"     
 
 cd backend
 
-"uvicorn app.main:app --reload"
+"cd app && python3 -m uvicorn app.main:app --reload"
 
 <----------------------------------------------------------------------------------->
 
@@ -50,3 +50,13 @@ user update query
 UPDATE public.users
 SET is_admin=True, is_active=True
 WHERE id=1;
+
+<----------------------------------------------------------------------------------->
+
+Steps for frontend setup till step 3
+
+https://blog.ashutoshtiwari.co.in/how-to-build-a-react-ui-component-library-a-step-by-step-guide-using-shadcn-ui-vite-tailwind-36c1b89e2113
+
+
+shadcn UI admin 
+https://github.com/satnaing/shadcn-admin

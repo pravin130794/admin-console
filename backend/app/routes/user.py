@@ -223,13 +223,31 @@ def sign_up(user: schemas.UserSignUpRequest, db: Session = Depends(get_db)):
 
 
 # Function to store OTP and expiration time in the database
-def store_otp(db: Session, user_id: int, otp: str):
-    expiration_time = datetime.now() + timedelta(minutes=5) # OTP expires in 5 minutes
-    otp_record = models.UserOTP(user_id=user_id, otp=otp, expiration_time=expiration_time)
-    db.add(otp_record)
-    db.commit()
-    db.refresh(otp_record)
-    return otp_record
+def store_or_refresh_otp(db: Session, user_id: int):
+    # Fetch existing OTP record for the user
+    otp_record = db.query(models.UserOTP).filter(models.UserOTP.user_id == user_id).first()
+    current_time = datetime.now()
+
+    if otp_record:
+        # Check if the existing OTP has expired
+        if otp_record.expiration_time > current_time:
+            return otp_record  # Return existing OTP if still valid
+        else:
+            # Update the OTP and expiration time if expired
+            otp_record.otp = utils.generate_otp()
+            otp_record.expiration_time = current_time + timedelta(minutes=5)
+            db.commit()
+            db.refresh(otp_record)
+            return otp_record
+    else:
+        # Create a new OTP record if none exists
+        otp = utils.generate_otp()
+        expiration_time = current_time + timedelta(minutes=5)
+        new_otp_record = models.UserOTP(user_id=user_id, otp=otp, expiration_time=expiration_time)
+        db.add(new_otp_record)
+        db.commit()
+        db.refresh(new_otp_record)
+        return new_otp_record
 
 # Login API - POST request to authenticate user
 @router.post("/login")
@@ -272,14 +290,16 @@ def login(user: schemas.UserLoginRequest, db: Session = Depends(get_db)):
     except SQLAlchemyError as e:
         db.rollback()
 
-@router.post("/logout",dependencies=[Depends(JWTBearer())])
-def logout(current_user: dict, db: Session = Depends(get_db)):
+@router.post("/logout",)
+def logout(dependencies=Depends(JWTBearer()), db: Session = Depends(get_db)):
+    token=dependencies
     try:
         # Delete the user's token from the UserToken table
-        db.query(models.UserToken).filter(models.UserToken.user_id == current_user["sub"]).delete()
+        db.query(models.UserToken).filter(models.UserToken.user_id == int(token['sub'])).delete()
         db.commit()
         return {"message": "Logout successful."}
     except SQLAlchemyError as e:
+        print(e)
         db.rollback()
 
 @router.post("/verify-otp")
@@ -351,8 +371,7 @@ def approve_user(request: schemas.UserApprove, db: Session = Depends(get_db)):
         db.refresh(user)
 
         # If login is successful, generate an OTP
-        otp = utils.generate_otp()
-        store_otp(db, user.id, otp)  # Store OTP in the database
+        otp = store_or_refresh_otp(db, user.id)  # Store OTP in the database
         # Send OTP to user's email
         try:
             utils.send_otp_email(request.email, otp)

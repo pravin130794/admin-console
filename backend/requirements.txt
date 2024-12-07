@@ -17,3 +17,4 @@ uvicorn==0.22.0  # specify a stable version
 sqlalchemy==2.0.20
 psycopg2-binary==2.9.6  # replace psycopg2 with psycopg2-binary
 pydantic[email]
+aiortc

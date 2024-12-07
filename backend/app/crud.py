@@ -16,6 +16,9 @@ def create_group(db: Session, group: schemas.GroupCreate):
 def get_groups(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Group).offset(skip).limit(limit).all()
 
+# Function to hash password
+def hash_password(password: str) -> str:
+    return pwd_context.hash(password)
 
 def get_group_by_id(db: Session, group_id: int):
     return db.query(models.Group).filter(models.Group.id == group_id).first()
