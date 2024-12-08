@@ -34,7 +34,7 @@ class JWTBearer(HTTPBearer):
                 raise HTTPException(status_code=403, detail="Invalid authorization code.")
         except Exception as e:
             print(str(e))
-            raise HTTPException(status_code=403, detail=f"Error during token verification: {str(e.detail)}")
+            raise HTTPException(status_code=403, detail=f"Error during token verification: {str(e)}")
 
 
     def verify_and_decode_jwt(self, token: str,db: Session) -> dict:

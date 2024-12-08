@@ -248,7 +248,7 @@ def store_or_refresh_otp(db: Session, user_id: int):
         db.add(new_otp_record)
         db.commit()
         db.refresh(new_otp_record)
-        return new_otp_record
+        return new_otp_record.otp
 
 # Login API - POST request to authenticate user
 @router.post("/login")
