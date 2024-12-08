@@ -59,10 +59,10 @@ def create_user(user: schemas.SuperUserCreate, db: Session = Depends(get_db)):
     try:
         # Check if username or email already exists
         existing_user = db.query(models.User).filter(
-            (models.User.username == user.username)
+            (models.User.is_admin == True)
         ).first()
         if existing_user:
-            raise HTTPException(status_code=400, detail="Username or email already exists")
+            raise HTTPException(status_code=400, detail="Super User is already exists: " + existing_user.username)
         print(user)
         hash_password = utils.hash_password(user.password)
 
@@ -227,18 +227,19 @@ def store_or_refresh_otp(db: Session, user_id: int):
     # Fetch existing OTP record for the user
     otp_record = db.query(models.UserOTP).filter(models.UserOTP.user_id == user_id).first()
     current_time = datetime.now()
-
+    # print("otp_record.otp",otp_record.otp)
     if otp_record:
         # Check if the existing OTP has expired
         if otp_record.expiration_time > current_time:
-            return otp_record  # Return existing OTP if still valid
+            return otp_record.otp  # Return existing OTP if still valid
         else:
             # Update the OTP and expiration time if expired
             otp_record.otp = utils.generate_otp()
             otp_record.expiration_time = current_time + timedelta(minutes=5)
             db.commit()
             db.refresh(otp_record)
-            return otp_record
+            # print("otp_record.otp",otp_record.otp)
+            return otp_record.otp
     else:
         # Create a new OTP record if none exists
         otp = utils.generate_otp()
@@ -270,7 +271,6 @@ def login(user: schemas.UserLoginRequest, db: Session = Depends(get_db)):
             .filter(models.UserToken.expires_at > datetime.now())  # Check if the token is still valid
             .first()
         )
-
         if valid_token:
             # Return the existing valid token
             return {"message": "Login successful.", "access_token": valid_token.token}
@@ -280,8 +280,9 @@ def login(user: schemas.UserLoginRequest, db: Session = Depends(get_db)):
 
         # Calculate expiration time (e.g., 1 hour)
         expires_at = datetime.now() + timedelta(minutes=int(os.getenv('JWT_EXPIRATION_MINUTES')))
-
         # Store the new token in the UserToken table
+        delete_userTokenAll = db.query(models.UserToken).filter(models.UserToken.user_id == db_user.id).delete()
+        print("delete all user token which expired: ",delete_userTokenAll)
         user_token = models.UserToken(user_id=db_user.id, token=token, expires_at=expires_at)
         db.add(user_token)
         db.commit()

@@ -1,3 +1,4 @@
+from app.middleware.auth import DBSessionMiddleware
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app import models, database
@@ -16,6 +17,7 @@ app.add_middleware(
 # Create all the database tables (you can use alembic for migrations instead)
 models.Base.metadata.create_all(bind=database.engine)
 
+app.add_middleware(DBSessionMiddleware)
 # Include the user-related routes
 app.include_router(user.router, prefix="/api/v1", tags=["Users"])
 
