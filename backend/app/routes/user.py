@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
 from fastapi import APIRouter, HTTPException, Depends
 from typing import Annotated, List
+
+import pytz
 from app import models, schemas
 from app import database
 from app import utils
@@ -226,11 +228,11 @@ def sign_up(user: schemas.UserSignUpRequest, db: Session = Depends(get_db)):
 def store_or_refresh_otp(db: Session, user_id: int):
     # Fetch existing OTP record for the user
     otp_record = db.query(models.UserOTP).filter(models.UserOTP.user_id == user_id).first()
-    current_time = datetime.now()
+    current_time = (datetime.now().replace(tzinfo=pytz.UTC))
     # print("otp_record.otp",otp_record.otp)
     if otp_record:
         # Check if the existing OTP has expired
-        if otp_record.expiration_time > current_time:
+        if datetime.strptime(str(otp_record.expiration_time), "%Y-%m-%d %H:%M:%S.%f").replace(tzinfo=pytz.UTC) > current_time:
             return otp_record.otp  # Return existing OTP if still valid
         else:
             # Update the OTP and expiration time if expired
@@ -268,7 +270,7 @@ def login(user: schemas.UserLoginRequest, db: Session = Depends(get_db)):
         valid_token = (
             db.query(models.UserToken)
             .filter(models.UserToken.user_id == db_user.id)
-            .filter(models.UserToken.expires_at > datetime.now())  # Check if the token is still valid
+            .filter(models.UserToken.expires_at > datetime.now().replace(tzinfo=pytz.UTC))  # Check if the token is still valid
             .first()
         )
         if valid_token:
@@ -279,7 +281,7 @@ def login(user: schemas.UserLoginRequest, db: Session = Depends(get_db)):
         token = utils.create_access_token({"sub": str(db_user.id), "username": db_user.username})
 
         # Calculate expiration time (e.g., 1 hour)
-        expires_at = datetime.now() + timedelta(minutes=int(os.getenv('JWT_EXPIRATION_MINUTES')))
+        expires_at = (datetime.now().replace(tzinfo=pytz.UTC)) + timedelta(minutes=int(os.getenv('JWT_EXPIRATION_MINUTES')))
         # Store the new token in the UserToken table
         delete_userTokenAll = db.query(models.UserToken).filter(models.UserToken.user_id == db_user.id).delete()
         print("delete all user token which expired: ",delete_userTokenAll)
@@ -321,7 +323,7 @@ def verify_otp(otp_data: schemas.OTPVerify, db: Session = Depends(get_db)):
         if otp_record.otp != otp_data.otp:
             raise HTTPException(status_code=400, detail="Invalid OTP")
         
-        if datetime.now() > otp_record.expiration_time:
+        if (datetime.now().replace(tzinfo=pytz.UTC)) > datetime.strptime(str(otp_record.expiration_time), "%Y-%m-%d %H:%M:%S.%f").replace(tzinfo=pytz.UTC):
             raise HTTPException(status_code=400, detail="OTP has expired")
         
         # Update the user's password
@@ -351,6 +353,8 @@ def approve_user(request: schemas.UserApprove, db: Session = Depends(get_db)):
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         
+        if user.is_approved == True:
+            raise HTTPException(status_code=403, detail="User is already approved by Admin. Please login to the system.")
         # Approve user
         user.is_approved = True
         user.is_active = True

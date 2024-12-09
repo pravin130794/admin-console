@@ -4,6 +4,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from fastapi import HTTPException
 import jwt
+import pytz
 from datetime import datetime, timedelta
 from passlib.context import CryptContext
 from dotenv import load_dotenv
@@ -60,7 +61,7 @@ def send_otp_email(to_email: str, otp: str):
 # Generate JWT Token
 def create_access_token(data: dict) -> str:
     to_encode = data.copy()
-    expire = datetime.now() + timedelta(minutes=int(os.getenv('JWT_EXPIRATION_MINUTES')))
+    expire = datetime.now().replace(tzinfo=pytz.UTC) + timedelta(minutes=int(os.getenv('JWT_EXPIRATION_MINUTES')))
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, os.getenv('JWT_SECRET_KEY'), algorithm=os.getenv('JWT_ALGORITHM'))
     return encoded_jwt
@@ -73,7 +74,7 @@ def decode_jwt(token: str) -> dict:
         
         # Check if the token is expired
         exp = decoded_token.get("exp")
-        if exp and datetime.now() > datetime.fromtimestamp(exp):
+        if exp and datetime.now().replace(tzinfo=pytz.UTC) > datetime.strptime(str(exp), "%Y-%m-%d %H:%M:%S.%f").replace(tzinfo=pytz.UTC):
             raise HTTPException(status_code=403, detail="Token has expired.")
         
         return decoded_token

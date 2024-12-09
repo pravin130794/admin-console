@@ -1,6 +1,7 @@
 
 from datetime import datetime
 import os
+import pytz
 import jwt # type: ignore
 from typing import Annotated
 from app import models, database 
@@ -33,8 +34,12 @@ class JWTBearer(HTTPBearer):
             else:
                 raise HTTPException(status_code=403, detail="Invalid authorization code.")
         except Exception as e:
-            print(str(e))
-            raise HTTPException(status_code=403, detail=f"Error during token verification: {str(e)}")
+            if hasattr(e, 'detail'):
+                print(e.detail)
+                raise HTTPException(status_code=403, detail=f"Error during token verification: {e.detail}")
+            else:
+                print(e)
+                raise HTTPException(status_code=403, detail=f"Error during token verification: {e}")
 
 
     def verify_and_decode_jwt(self, token: str,db: Session) -> dict:
@@ -48,7 +53,7 @@ class JWTBearer(HTTPBearer):
 
                 # Check for expiration
                 exp = decoded_token.get("exp")
-                if exp and datetime.now() > datetime.fromtimestamp(exp):
+                if exp and datetime.now().replace(tzinfo=pytz.UTC) > datetime.fromtimestamp(exp).replace(tzinfo=pytz.UTC):
                     raise HTTPException(status_code=403, detail="Token has expired.")
 
                 # Verify token in the database
@@ -57,16 +62,20 @@ class JWTBearer(HTTPBearer):
                     models.UserToken.token == token,
                     models.UserToken.user_id == user_id
                 ).first()
-                print("token_entry",datetime.now(),token_entry.expires_at)
+
                 if not token_entry:
                     raise HTTPException(status_code=403, detail="Token is invalid or not found in the database.")
-                if datetime.now() > token_entry.expires_at:
+                if datetime.now().replace(tzinfo=pytz.UTC) > datetime.strptime(str(token_entry.expires_at), "%Y-%m-%d %H:%M:%S.%f").replace(tzinfo=pytz.UTC):
                     raise HTTPException(status_code=403, detail="Token has expired in the database.")
 
                 return decoded_token
             except Exception as e:
-                print(str(e.detail))
-                raise HTTPException(status_code=403, detail=str(e.detail))                
+                if hasattr(e, 'detail'):
+                    print(e.detail)
+                    raise HTTPException(status_code=403, detail=str(e.detail)) 
+                else:
+                    print(e)
+                    raise HTTPException(status_code=403, detail=str(e))             
 
 class DBSessionMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
