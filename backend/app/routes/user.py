@@ -232,7 +232,7 @@ def store_or_refresh_otp(db: Session, user_id: int):
     # print("otp_record.otp",otp_record.otp)
     if otp_record:
         # Check if the existing OTP has expired
-        if datetime.strptime(str(otp_record.expiration_time), "%Y-%m-%d %H:%M:%S.%f").replace(tzinfo=pytz.UTC) > current_time:
+        if datetime.strptime(str(otp_record.expiration_time), "%Y-%m-%d %H:%M:%S.%f%z").replace(tzinfo=pytz.UTC) > current_time:
             return otp_record.otp  # Return existing OTP if still valid
         else:
             # Update the OTP and expiration time if expired
@@ -323,7 +323,7 @@ def verify_otp(otp_data: schemas.OTPVerify, db: Session = Depends(get_db)):
         if otp_record.otp != otp_data.otp:
             raise HTTPException(status_code=400, detail="Invalid OTP")
         
-        if (datetime.now().replace(tzinfo=pytz.UTC)) > datetime.strptime(str(otp_record.expiration_time), "%Y-%m-%d %H:%M:%S.%f").replace(tzinfo=pytz.UTC):
+        if (datetime.now().replace(tzinfo=pytz.UTC)) > datetime.strptime(str(otp_record.expiration_time), "%Y-%m-%d %H:%M:%S.%f%z").replace(tzinfo=pytz.UTC):
             raise HTTPException(status_code=400, detail="OTP has expired")
         
         # Update the user's password

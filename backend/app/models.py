@@ -46,7 +46,7 @@ class UserOTP(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey('users.id'))
     otp = Column(String(6))
-    expiration_time = Column(DateTime, default=(datetime.now().replace(tzinfo=pytz.UTC)) + timedelta(minutes=5))  # OTP expires in 5 minutes
+    expiration_time = Column(DateTime(timezone=True), default=(datetime.now().replace(tzinfo=pytz.UTC)) + timedelta(minutes=5))  # OTP expires in 5 minutes
 
     # Relationships
     user = relationship("User", back_populates="otp_record")
@@ -79,7 +79,7 @@ class UserToken(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     token = Column(String, nullable=False)
-    created_at = Column(DateTime, default=datetime.now().replace(tzinfo=pytz.UTC))
-    expires_at = Column(DateTime, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=datetime.now().replace(tzinfo=pytz.UTC))
+    expires_at = Column(DateTime(timezone=True), nullable=False)
 
     user = relationship("User", back_populates="tokens")

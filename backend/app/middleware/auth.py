@@ -52,9 +52,9 @@ class JWTBearer(HTTPBearer):
                 )
 
                 # Check for expiration
-                exp = decoded_token.get("exp")
-                if exp and datetime.now().replace(tzinfo=pytz.UTC) > datetime.fromtimestamp(exp).replace(tzinfo=pytz.UTC):
-                    raise HTTPException(status_code=403, detail="Token has expired.")
+                # exp = decoded_token.get("exp")
+                # if exp and datetime.now().replace(tzinfo=pytz.UTC) > datetime.fromtimestamp(exp).replace(tzinfo=pytz.UTC):
+                    # raise HTTPException(status_code=403, detail="Token has expired.")
 
                 # Verify token in the database
                 user_id = decoded_token.get("sub")
@@ -65,7 +65,7 @@ class JWTBearer(HTTPBearer):
 
                 if not token_entry:
                     raise HTTPException(status_code=403, detail="Token is invalid or not found in the database.")
-                if datetime.now().replace(tzinfo=pytz.UTC) > datetime.strptime(str(token_entry.expires_at), "%Y-%m-%d %H:%M:%S.%f").replace(tzinfo=pytz.UTC):
+                if datetime.now().replace(tzinfo=pytz.UTC) > datetime.strptime(str(token_entry.expires_at), "%Y-%m-%d %H:%M:%S.%f%z").replace(tzinfo=pytz.UTC):
                     raise HTTPException(status_code=403, detail="Token has expired in the database.")
 
                 return decoded_token
