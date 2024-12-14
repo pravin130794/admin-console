@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/custom/button";
-import { PasswordInput } from "@/components/custom/password-input";
 import { cn } from "@/lib/utils";
 import { Bounce, toast } from "react-toastify";
 
@@ -22,17 +21,16 @@ interface UserAuthFormProps extends HTMLAttributes<HTMLDivElement> {}
 
 const formSchema = z.object({
   username: z.string().min(1, { message: "Please enter your username" }),
-  password: z
+  firstname: z.string().min(1, { message: "Please enter your firstname" }),
+  lastname: z.string().min(1, { message: "Please enter your lastname" }),
+  email: z.string().min(1, { message: "Please enter your email" }),
+  phone: z
     .string()
-    .min(1, {
-      message: "Please enter your password",
-    })
-    .min(3, {
-      message: "Password must be at least 7 characters long",
-    }),
+    .min(10, { message: "Please enter your phone" })
+    .max(10, { message: "please enter valid mobile number" }),
 });
 
-export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
+export function UserAuthSignUpForm({ className, ...props }: UserAuthFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -40,7 +38,10 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       username: "",
-      password: "",
+      firstname: "",
+      lastname: "",
+      email: "",
+      phone: "",
     },
   });
 
@@ -48,14 +49,17 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
     setIsLoading(true);
     // console.log(data);
     try {
-      const response = await fetch("http://localhost:8000/api/v1/login", {
+      const response = await fetch("http://localhost:8000/api/v1/sign-up", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           username: data.username,
-          password: data.password,
+          firstname: data.firstname,
+          lastname: data.lastname,
+          email: data.email,
+          //   phone: data.phone,
         }),
       });
 
@@ -66,11 +70,10 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
       }
 
       const dataRes = await response.json();
-      localStorage.setItem("access_token", dataRes.access_token); // Store access token
-      // console.log("Login successful:", dataRes);
-      toast.success("Login successful", {
+      console.log("Register successful:", dataRes);
+      toast.success(dataRes.message, {
         position: "bottom-right",
-        autoClose: 1000,
+        autoClose: 5000,
         hideProgressBar: false,
         closeOnClick: true,
         pauseOnHover: true,
@@ -79,10 +82,9 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
         theme: "dark",
         transition: Bounce,
       });
-      navigate("/"); // Redirect to the home page
+      navigate("/sign-in"); // Redirect to the login page
     } catch (err) {
       console.log("🚀 ~ onSubmit ~ err:", err);
-      // setError(err.message);
     }
 
     setTimeout(() => {
@@ -110,21 +112,67 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
             />
             <FormField
               control={form.control}
-              name="password"
+              name="firstname"
               render={({ field }) => (
                 <FormItem className="space-y-1">
-                  <div className="flex items-center justify-between">
-                    <FormLabel>Password</FormLabel>
-                  </div>
+                  <FormLabel>Firstname</FormLabel>
                   <FormControl>
-                    <PasswordInput placeholder="********" {...field} />
+                    <Input placeholder="firstname" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+            <FormField
+              control={form.control}
+              name="lastname"
+              render={({ field }) => (
+                <FormItem className="space-y-1">
+                  <FormLabel>Lastname</FormLabel>
+                  <FormControl>
+                    <Input placeholder="lastname" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem className="space-y-1">
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input placeholder="email" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem className="space-y-1">
+                  <FormLabel>Phone Number</FormLabel>
+                  <FormControl>
+                    <Input placeholder="phone" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <p className="mt-4 px-8 text-center text-sm text-muted-foreground">
+              Already have an account?{" "}
+              <Link
+                to="/sign-in"
+                className="underline underline-offset-4 hover:text-primary"
+              >
+                Sign In
+              </Link>
+            </p>
             <Button className="mt-2" loading={isLoading}>
-              Login
+              Sign Up
             </Button>
 
             <div className="relative my-2">

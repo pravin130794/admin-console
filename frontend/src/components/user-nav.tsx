@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useTranslations } from "use-intl";
 import { useNavigate } from "react-router-dom";
+import { Bounce, toast } from "react-toastify";
 
 export function UserNav() {
   const t = useTranslations("userNav");
@@ -28,12 +29,24 @@ export function UserNav() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || "Logout failed");
+        toast.error(errorData.detail);
+        throw new Error(errorData.detail || "Logout failed");
       }
 
       const dataRes = await response.json();
       // console.log("Logout successful:", dataRes);
       localStorage.clear();
+      toast.success("Logout successful", {
+        position: "bottom-right",
+        autoClose: 1000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "dark",
+        transition: Bounce,
+      });
       navigate("/sign-in"); // Redirect to the home page
     } catch (err) {
       console.log("🚀 ~ onSubmit ~ err:", err);
