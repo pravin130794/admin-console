@@ -260,7 +260,7 @@ export function UsersActionDialog({ currentRow, open, onOpenChange }: Props) {
                     <FormLabel className="col-span-2 text-right">
                       Role
                     </FormLabel>
-                    <SelectDropdown
+                    {/* <SelectDropdown
                       defaultValue={field.value}
                       onValueChange={field.onChange}
                       placeholder="Select a role"
@@ -269,7 +269,7 @@ export function UsersActionDialog({ currentRow, open, onOpenChange }: Props) {
                         label,
                         value,
                       }))}
-                    />
+                    /> */}
                     <FormMessage className="col-span-4 col-start-3" />
                   </FormItem>
                 )}

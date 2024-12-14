@@ -1,12 +1,30 @@
 import { z } from 'zod'
 
-// We're keeping a simple non-relational schema here.
-// IRL, you will have a schema for your data models.
-export const userSchema = z.object({
-  id: z.number(),
-  username: z.string(),
-  is_active: z.boolean(),
-  email: z.string()
-})
+const userStatusSchema = z.union([
+  z.literal('active'),
+  z.literal('inactive')
+])
+export type UserStatus = z.infer<typeof userStatusSchema>
 
+const userRoleSchema = z.union([
+  z.literal('superadmin'),
+  z.literal('admin'),
+  z.literal('groupadmin'),
+])
+export type UserRole = z.infer<typeof userRoleSchema>
+
+const userSchema = z.object({
+  id: z.string(),
+  firstName: z.string(),
+  lastName: z.string(),
+  username: z.string(),
+  email: z.string(),
+  phoneNumber: z.string(),
+  status: userStatusSchema,
+  role: userRoleSchema,
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
+})
 export type User = z.infer<typeof userSchema>
+
+export const userListSchema = z.array(userSchema)

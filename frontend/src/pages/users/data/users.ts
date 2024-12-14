@@ -1,40 +1,35 @@
-export const users = [
-  
-    {
-      id: 5,
-      firstname: "Anku",
-      lastname: "Rathi1",
-      username: "a007",
-      email: "anku130794@gmail.com",
-      is_active: true,
-      is_approved: true,
-      statuses:"Active",
-      groups: [
-        {
-          "name": "UAT"
-        }
-      ],
-      projects: [
-        {
-          name: "DevOps",
-          description: "DevOps Projects"
-        }
-      ]
-    },
-    {
-      id: 1,
-      firstname: "Pravin",
-      lastname: "Rathi",
-      username: "p007",
-      email: "pravin130794@gmail.com",
-      is_active: true,
-      is_approved: true,
-      statuses:"Active",
-      groups: [],
-      projects: []
-    }
+import { faker } from '@faker-js/faker'
 
-  ];
-
-
-  
+export const users = Array.from({ length: 20 }, () => {
+  const firstName = faker.person.firstName()
+  const lastName = faker.person.lastName()
+  return {
+    id: faker.string.numeric(2),
+    firstName,
+    lastName,
+    username: faker.internet
+      .username({ firstName, lastName })
+      .toLocaleLowerCase(),
+    email: faker.internet.email({ firstName }).toLocaleLowerCase(),
+    phoneNumber: faker.phone.number({ style: 'international' }),
+    status: faker.helpers.arrayElement([
+      'active',
+      'inactive',
+      'invited',
+      'suspended',
+    ]),
+    approved: faker.helpers.arrayElement([
+      'Approved',
+      'Rejected'
+    ]),
+    role: faker.helpers.arrayElement([
+      'superadmin',
+      'groupadmin',
+      'user'
+    ]),
+    createdAt: faker.date.past(),
+    updatedAt: faker.date.recent(),
+    groups: [],
+    projects: []
+  }
+})

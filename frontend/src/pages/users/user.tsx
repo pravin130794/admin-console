@@ -3,13 +3,17 @@ import ThemeSwitch from "@/components/theme-switch";
 import { UserNav } from "@/components/user-nav";
 import { DataTable } from "./components/data-table";
 import { columns } from "./components/columns";
-// import { users } from "./data/users";
+import { users } from "./data/users";
 import { useEffect, useState } from "react";
+import { UsersActionDialog } from "./components/user-action-dialog";
+import useDialogState from "@/hooks/use-dialog-state";
+import { UsersDialogType } from "./context/users-context";
 
 export default function Users() {
-  const [users, setUsers] = useState([]);
+  // const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [open, setOpen] = useDialogState<UsersDialogType>(null);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -30,8 +34,8 @@ export default function Users() {
           throw new Error(`Error: ${response.status}`);
         }
 
-        const data = await response.json();
-        setUsers(data); // Adjust based on the API response structure
+        // const data = await response.json();
+        // setUsers(data); // Adjust based on the API response structure
       } catch (err: any) {
         setError(err.message);
       } finally {
@@ -61,6 +65,11 @@ export default function Users() {
           <DataTable data={users} columns={columns} />
         </div>
       </Layout.Body>
+      <UsersActionDialog
+        key="user-add"
+        open={open === "add"}
+        onOpenChange={() => setOpen("add")}
+      />
     </Layout>
   );
 }
