@@ -3,7 +3,6 @@
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
@@ -24,8 +23,11 @@ import { Input } from "@/components/ui/input";
 import { User } from "../data/schema";
 import { PasswordInput } from "@/components/custom/password-input";
 import { Button } from "@/components/custom/button";
-import { SelectDropdown } from "@/components/select-dropdown";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { SelectDropdown } from "@/components/select-dropdown";
+import { userTypes } from "../data/data";
+import { Bounce, toast } from "react-toastify";
+import { useState } from "react";
 
 const formSchema = z
   .object({
@@ -39,6 +41,7 @@ const formSchema = z
       .email({ message: "Email is invalid." }),
     password: z.string().transform((pwd) => pwd.trim()),
     role: z.string().min(1, { message: "Role is required." }),
+    status: z.string().min(1, { message: "Status is required." }),
     confirmPassword: z.string().transform((pwd) => pwd.trim()),
     isEdit: z.boolean(),
   })
@@ -95,6 +98,7 @@ interface Props {
 
 export function UsersActionDialog({ currentRow, open, onOpenChange }: Props) {
   const isEdit = !!currentRow;
+  const [isLoading, setIsLoading] = useState(false);
   const form = useForm<UserForm>({
     resolver: zodResolver(formSchema),
     defaultValues: isEdit
@@ -117,16 +121,56 @@ export function UsersActionDialog({ currentRow, open, onOpenChange }: Props) {
         },
   });
 
-  const onSubmit = (values: UserForm) => {
+  const onSubmit = async (values: UserForm) => {
     form.reset();
-    toast({
-      title: "You submitted the following values:",
-      description: (
-        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-          <code className="text-white">{JSON.stringify(values, null, 2)}</code>
-        </pre>
-      ),
-    });
+    console.log(values);
+
+    setIsLoading(true);
+    // console.log(data);
+    try {
+      const token = localStorage.getItem("access_token");
+      const response = await fetch("http://localhost:8000/api/v1/user", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          username: values.username,
+          firstname: values.firstName,
+          lastname: values.lastName,
+          email: values.email,
+          password: values.password,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        toast.error(errorData.detail);
+        throw new Error(errorData.detail || "Login failed");
+      }
+
+      const dataRes = await response.json();
+      console.log("Register successful:", dataRes);
+      toast.success("Added User Success", {
+        position: "bottom-right",
+        autoClose: 2000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "dark",
+        transition: Bounce,
+      });
+    } catch (err) {
+      console.log("🚀 ~ onSubmit ~ err:", err);
+    }
+
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 3000);
+
     onOpenChange(false);
   };
 
@@ -260,7 +304,7 @@ export function UsersActionDialog({ currentRow, open, onOpenChange }: Props) {
                     <FormLabel className="col-span-2 text-right">
                       Role
                     </FormLabel>
-                    {/* <SelectDropdown
+                    <SelectDropdown
                       defaultValue={field.value}
                       onValueChange={field.onChange}
                       placeholder="Select a role"
@@ -269,7 +313,31 @@ export function UsersActionDialog({ currentRow, open, onOpenChange }: Props) {
                         label,
                         value,
                       }))}
-                    /> */}
+                    />
+                    <FormMessage className="col-span-4 col-start-3" />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem className="grid grid-cols-6 items-center gap-x-4 gap-y-1 space-y-0">
+                    <FormLabel className="col-span-2 text-right">
+                      Status
+                    </FormLabel>
+                    <SelectDropdown
+                      defaultValue={field.value}
+                      onValueChange={field.onChange}
+                      placeholder="Select a status"
+                      className="col-span-4"
+                      items={[
+                        { label: "Active", value: "active" },
+                        { label: "Inactive", value: "inactive" },
+                        { label: "Invited", value: "invited" },
+                        { label: "Suspended", value: "suspended" },
+                      ]}
+                    />
                     <FormMessage className="col-span-4 col-start-3" />
                   </FormItem>
                 )}
@@ -278,36 +346,41 @@ export function UsersActionDialog({ currentRow, open, onOpenChange }: Props) {
                 control={form.control}
                 name="password"
                 render={({ field }) => (
-                  <FormItem className="grid grid-cols-6 items-center gap-x-4 gap-y-1 space-y-0">
+                  <FormItem className="grid grid-cols-6 items-center gap-x-4 gap-y-1">
                     <FormLabel className="col-span-2 text-right">
                       Password
                     </FormLabel>
-                    <FormControl>
-                      <PasswordInput
-                        placeholder="e.g., S3cur3P@ssw0rd"
-                        className="col-span-4"
-                        {...field}
-                      />
+                    <FormControl className="col-span-4">
+                      <div className="w-full">
+                        <PasswordInput
+                          placeholder="e.g., S3cur3P@ssw0rd"
+                          className="w-full" // Ensure full width
+                          {...field}
+                        />
+                      </div>
                     </FormControl>
                     <FormMessage className="col-span-4 col-start-3" />
                   </FormItem>
                 )}
               />
+
               <FormField
                 control={form.control}
                 name="confirmPassword"
                 render={({ field }) => (
-                  <FormItem className="grid grid-cols-6 items-center gap-x-4 gap-y-1 space-y-0">
+                  <FormItem className="grid grid-cols-6 items-center gap-x-4 gap-y-1">
                     <FormLabel className="col-span-2 text-right">
                       Confirm Password
                     </FormLabel>
-                    <FormControl>
-                      <PasswordInput
-                        disabled={!isPasswordTouched}
-                        placeholder="e.g., S3cur3P@ssw0rd"
-                        className="col-span-4"
-                        {...field}
-                      />
+                    <FormControl className="col-span-4">
+                      <div className="w-full">
+                        <PasswordInput
+                          disabled={!isPasswordTouched}
+                          placeholder="e.g., S3cur3P@ssw0rd"
+                          className="w-full" // Ensure full width
+                          {...field}
+                        />
+                      </div>
                     </FormControl>
                     <FormMessage className="col-span-4 col-start-3" />
                   </FormItem>
@@ -317,7 +390,7 @@ export function UsersActionDialog({ currentRow, open, onOpenChange }: Props) {
           </Form>
         </ScrollArea>
         <DialogFooter>
-          <Button type="submit" form="user-form">
+          <Button type="submit" form="user-form" loading={isLoading}>
             Save changes
           </Button>
         </DialogFooter>

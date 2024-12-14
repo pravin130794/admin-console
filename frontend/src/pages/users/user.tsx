@@ -65,11 +65,6 @@ export default function Users() {
           <DataTable data={users} columns={columns} />
         </div>
       </Layout.Body>
-      <UsersActionDialog
-        key="user-add"
-        open={open === "add"}
-        onOpenChange={() => setOpen("add")}
-      />
     </Layout>
   );
 }

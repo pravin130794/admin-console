@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker'
 
-export const users = Array.from({ length: 20 }, () => {
+export const users = Array.from({ length: 5 }, () => {
   const firstName = faker.person.firstName()
   const lastName = faker.person.lastName()
   return {

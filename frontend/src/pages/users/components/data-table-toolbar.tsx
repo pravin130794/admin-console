@@ -7,6 +7,9 @@ import { DataTableViewOptions } from "./data-table-view-options";
 
 import { statuses, userTypes } from "../data/data";
 import { DataTableFacetedFilter } from "./data-table-faceted-filter";
+import { IconUserPlus, IconUsersGroup } from "@tabler/icons-react";
+import { useState } from "react";
+import { UsersActionDialog } from "./user-action-dialog";
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>;
@@ -16,7 +19,7 @@ export function DataTableToolbar<TData>({
   table,
 }: DataTableToolbarProps<TData>) {
   const isFiltered = table.getState().columnFilters.length > 0;
-
+  const [open, setOpen] = useState(false);
   return (
     <div className="flex items-center justify-between">
       <div className="flex flex-1 flex-col-reverse items-start gap-y-2 sm:flex-row sm:items-center sm:space-x-2">
@@ -63,6 +66,13 @@ export function DataTableToolbar<TData>({
         )}
       </div>
       {/* <DataTableViewOptions table={table} /> */}
+      <div className="flex gap-2">
+        <Button onClick={() => setOpen(true)}>
+          Add User
+          <IconUserPlus />
+        </Button>
+      </div>
+      <UsersActionDialog key="user-add" open={open} onOpenChange={setOpen} />
     </div>
   );
 }
