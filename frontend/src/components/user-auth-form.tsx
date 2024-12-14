@@ -123,6 +123,16 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
                 </FormItem>
               )}
             />
+            <p className="mt-4 px-8 text-center text-sm text-muted-foreground">
+              Don't have an account?{" "}
+              <Link
+                to="/sign-up"
+                className="underline underline-offset-4 hover:text-primary"
+              >
+                Sign up
+              </Link>
+              .
+            </p>
             <Button className="mt-2" loading={isLoading}>
               Login
             </Button>

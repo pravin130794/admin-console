@@ -12,6 +12,12 @@ const router = createBrowserRouter([
       Component: (await import("./pages/auth/sign-in.tsx")).default,
     }),
   },
+  {
+    path: "/sign-up",
+    lazy: async () => ({
+      Component: (await import("./pages/auth/sign-up.tsx")).default,
+    }),
+  },
   // Main routes
   {
     path: "/",
