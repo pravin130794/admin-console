@@ -3,7 +3,6 @@ import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { IconBrandFacebook, IconBrandGithub } from "@tabler/icons-react";
 import {
   Form,
   FormControl,
@@ -82,7 +81,7 @@ export function UserAuthSignUpForm({ className, ...props }: UserAuthFormProps) {
         theme: "dark",
         transition: Bounce,
       });
-      navigate("/sign-in"); // Redirect to the login page
+      navigate("/otp"); // Redirect to the otp page
     } catch (err) {
       console.log("🚀 ~ onSubmit ~ err:", err);
     }

@@ -18,6 +18,12 @@ const router = createBrowserRouter([
       Component: (await import("./pages/auth/sign-up.tsx")).default,
     }),
   },
+  {
+    path: "/otp",
+    lazy: async () => ({
+      Component: (await import("./pages/auth/otp.tsx")).default,
+    }),
+  },
   // Main routes
   {
     path: "/",
@@ -43,10 +49,10 @@ const router = createBrowserRouter([
   },
 
   // Error routes
-  { path: "/500", Component: GeneralError },
-  { path: "/404", Component: NotFoundError },
-  { path: "/503", Component: MaintenanceError },
-  { path: "/401", Component: UnauthorisedError },
+  // { path: "/500", Component: GeneralError },
+  // { path: "/404", Component: NotFoundError },
+  // { path: "/503", Component: MaintenanceError },
+  // { path: "/401", Component: UnauthorisedError },
 
   // Fallback 404 route
   { path: "*", Component: NotFoundError },
