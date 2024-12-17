@@ -3,6 +3,8 @@ import { Routes, Route } from 'react-router-dom';
 import SidebarLayout from './layouts/SidebarLayout';
 import DashboardPage from './pages/DashboardPage';
 import UsersPage from './pages/UsersPage';
+import GroupsPage from './pages/GroupsPage';
+
 
 const App = () => {
   return (
@@ -10,6 +12,7 @@ const App = () => {
       <Routes>
         <Route path="/" element={<DashboardPage />} />
         <Route path="/users" element={<UsersPage />} />
+        <Route path="/groups" element={<GroupsPage />} />
       </Routes>
     </SidebarLayout>
   );
