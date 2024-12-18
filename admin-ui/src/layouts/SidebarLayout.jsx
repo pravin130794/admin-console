@@ -7,19 +7,17 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  Typography,
 } from "@mui/material";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import GroupIcon from "@mui/icons-material/Group";
-import { Link } from "react-router-dom";
+import { Link, Outlet } from "react-router-dom";
 
 const drawerWidth = 240;
 
-const SidebarLayout = ({ children }) => {
+const SidebarLayout = () => {
   return (
     <Box sx={{ display: "flex" }}>
       <CssBaseline />
-      {/* Sidebar */}
       <Drawer
         variant="permanent"
         sx={{
@@ -31,11 +29,6 @@ const SidebarLayout = ({ children }) => {
           },
         }}
       >
-        <Box sx={{ textAlign: "center", my: 2 }}>
-          <Typography variant="h6" noWrap>
-            Admin Dashboard
-          </Typography>
-        </Box>
         <List>
           <ListItem button component={Link} to="/">
             <ListItemIcon>
@@ -55,6 +48,12 @@ const SidebarLayout = ({ children }) => {
             </ListItemIcon>
             <ListItemText primary="Groups" />
           </ListItem>
+          <ListItem button component={Link} to="/devices">
+            <ListItemIcon>
+              <GroupIcon />
+            </ListItemIcon>
+            <ListItemText primary="Devices" />
+          </ListItem>
         </List>
       </Drawer>
 
@@ -62,12 +61,12 @@ const SidebarLayout = ({ children }) => {
       <Box
         component="main"
         sx={{
-          flexGrow: 1, // Takes up the remaining space
-          p: 3, // Padding inside main content
-          backgroundColor: "#f9f9f9", // Optional background for contrast
+          flexGrow: 1,
+          p: 3,
+          backgroundColor: "#f9f9f9",
         }}
       >
-        {children}
+        <Outlet />
       </Box>
     </Box>
   );
