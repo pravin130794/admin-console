@@ -26,7 +26,7 @@ const LoginPage = () => {
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
-    severity: "info", // Can be 'success', 'error', 'warning', 'info'
+    severity: "info",
   });
 
   const handleChange = (e) => {
@@ -39,35 +39,16 @@ const LoginPage = () => {
 
   const handleSubmit = async () => {
     try {
-      // Simulate API call
-      // const response = await fetch("https://api.example.com/login", {
-      //   method: "POST",
-      //   headers: {
-      //     "Content-Type": "application/json",
-      //   },
-      //   body: JSON.stringify(formData),
-      // });
-
-      // if (!response.ok) {
-      //   throw new Error("Invalid username or password");
-      // }
-
-      // const result = await response.json();
-
       console.log("🚀 ~ handleSubmit ~ formData:", formData);
-      // Success: Redirect to dashboard
       setSnackbar({
         open: true,
         message: "Login successful!",
         severity: "success",
       });
-
-      // Redirect after 1.5 seconds
       setTimeout(() => {
         navigate("/");
       }, 1500);
     } catch (error) {
-      // Error: Show Snackbar
       setSnackbar({
         open: true,
         message: error.message || "An error occurred. Please try again.",
@@ -80,6 +61,9 @@ const LoginPage = () => {
     setSnackbar((prev) => ({ ...prev, open: false }));
   };
 
+  const handleNavigateToSignup = () => {
+    navigate("/signup");
+  };
   return (
     <Box
       sx={{
@@ -119,82 +103,95 @@ const LoginPage = () => {
           boxShadow: "0 4px 10px rgba(0, 0, 0, 0.2)",
         }}
       >
+        {/* Centered Logo */}
         <Box
           sx={{
+            position: "absolute",
+            top: "-50px", // Moves half-outside
+            left: "50%",
+            transform: "translate(-50%, 0)",
             backgroundColor: "#001a99",
             color: "white",
-            padding: "10px",
+            width: "100px",
+            height: "100px",
             borderRadius: "50%",
-            display: "inline-flex",
-            marginBottom: "10px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: "0 4px 6px rgba(0, 0, 0, 0.2)",
           }}
         >
-          <AccountCircleIcon fontSize="large" />
+          <AccountCircleIcon fontSize="small" sx={{ fontSize: "50px" }} />
         </Box>
 
-        <Typography variant="h5" fontWeight="bold" mb={2}>
-          Login
-        </Typography>
+        <Box mt={3}>
+          <Typography variant="h5" fontWeight="bold" mb={2}>
+            Login
+          </Typography>
 
-        {/* Username Field */}
-        <TextField
-          variant="outlined"
-          fullWidth
-          placeholder="Username"
-          name="username"
-          value={formData.username}
-          onChange={handleChange}
-          sx={{ marginBottom: 2 }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <EmailIcon />
-              </InputAdornment>
-            ),
-          }}
-        />
+          {/* Username Field */}
+          <TextField
+            variant="outlined"
+            fullWidth
+            placeholder="Username"
+            name="username"
+            value={formData.username}
+            onChange={handleChange}
+            sx={{ marginBottom: 2 }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <EmailIcon />
+                </InputAdornment>
+              ),
+            }}
+          />
 
-        {/* Password Field */}
-        <TextField
-          variant="outlined"
-          fullWidth
-          type="password"
-          placeholder="Password"
-          name="password"
-          value={formData.password}
-          onChange={handleChange}
-          sx={{ marginBottom: 3 }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <LockIcon />
-              </InputAdornment>
-            ),
-          }}
-        />
+          {/* Password Field */}
+          <TextField
+            variant="outlined"
+            fullWidth
+            type="password"
+            placeholder="Password"
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            sx={{ marginBottom: 3 }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <LockIcon />
+                </InputAdornment>
+              ),
+            }}
+          />
 
-        {/* Login Button */}
-        <Button
-          variant="contained"
-          fullWidth
-          onClick={handleSubmit}
-          sx={{
-            backgroundColor: "#001a99",
-            color: "white",
-            fontWeight: "bold",
-            "&:hover": { backgroundColor: "#0026d1" },
-          }}
-        >
-          Login
-        </Button>
+          {/* Login Button */}
+          <Button
+            variant="contained"
+            fullWidth
+            onClick={handleSubmit}
+            sx={{
+              backgroundColor: "#001a99",
+              color: "white",
+              fontWeight: "bold",
+              "&:hover": { backgroundColor: "#0026d1" },
+            }}
+          >
+            Login
+          </Button>
 
-        {/* Register Link */}
-        <Typography mt={2} variant="body2" color="gray">
-          Don’t have an account?{" "}
-          <span style={{ color: "#001a99", cursor: "pointer" }}>
-            Register User
-          </span>
-        </Typography>
+          {/* Register Link */}
+          <Typography mt={2} variant="body2" color="gray">
+            Don’t have an account?{" "}
+            <span
+              style={{ color: "#001a99", cursor: "pointer" }}
+              onClick={handleNavigateToSignup}
+            >
+              Register User
+            </span>
+          </Typography>
+        </Box>
       </Paper>
 
       {/* Reusable Snackbar Component */}

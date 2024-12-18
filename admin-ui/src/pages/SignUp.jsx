@@ -81,6 +81,10 @@ const SignUp = () => {
     setSnackbar((prev) => ({ ...prev, open: false }));
   };
 
+  const handleNavigateToLogin = () => {
+    navigate("/login");
+  };
+
   return (
     <Box
       sx={{
@@ -120,93 +124,108 @@ const SignUp = () => {
           boxShadow: "0 4px 10px rgba(0, 0, 0, 0.2)",
         }}
       >
+        {/* Centered Logo */}
         <Box
           sx={{
+            position: "absolute",
+            top: "-50px", // Moves half-outside
+            left: "50%",
+            transform: "translate(-50%, 0)",
             backgroundColor: "#001a99",
             color: "white",
-            padding: "10px",
+            width: "100px",
+            height: "100px",
             borderRadius: "50%",
-            display: "inline-flex",
-            marginBottom: "10px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: "0 4px 6px rgba(0, 0, 0, 0.2)",
           }}
         >
-          <AccountCircleIcon fontSize="large" />
+          <AccountCircleIcon fontSize="small" sx={{ fontSize: "50px" }} />
         </Box>
 
-        <Typography variant="h5" fontWeight="bold" mb={2}>
-          Register
-        </Typography>
+        <Box mt={3}>
+          <Typography variant="h5" fontWeight="bold" mb={2}>
+            Register
+          </Typography>
 
-        <TextField
-          required
-          variant="outlined"
-          fullWidth
-          label="First Name"
-          name="firstName"
-          value={formData.firstName}
-          onChange={handleChange}
-          sx={{ marginBottom: 2 }}
-        />
-        <TextField
-          required
-          variant="outlined"
-          fullWidth
-          label="Last Name"
-          name="lastName"
-          value={formData.lastName}
-          onChange={handleChange}
-          sx={{ marginBottom: 2 }}
-        />
-        <TextField
-          required
-          variant="outlined"
-          fullWidth
-          label="Username"
-          name="username"
-          value={formData.username}
-          onChange={handleChange}
-          sx={{ marginBottom: 2 }}
-        />
-        <TextField
-          required
-          variant="outlined"
-          fullWidth
-          label="Email"
-          name="email"
-          value={formData.email}
-          onChange={handleChange}
-          sx={{ marginBottom: 2 }}
-        />
-        <TextField
-          required
-          variant="outlined"
-          fullWidth
-          label="Phone Number"
-          name="phone"
-          value={formData.phone}
-          onChange={handleChange}
-          sx={{ marginBottom: 1 }}
-        />
+          <TextField
+            required
+            variant="outlined"
+            fullWidth
+            label="First Name"
+            name="firstName"
+            value={formData.firstName}
+            onChange={handleChange}
+            sx={{ marginBottom: 2 }}
+          />
+          <TextField
+            required
+            variant="outlined"
+            fullWidth
+            label="Last Name"
+            name="lastName"
+            value={formData.lastName}
+            onChange={handleChange}
+            sx={{ marginBottom: 2 }}
+          />
+          <TextField
+            required
+            variant="outlined"
+            fullWidth
+            label="Username"
+            name="username"
+            value={formData.username}
+            onChange={handleChange}
+            sx={{ marginBottom: 2 }}
+          />
+          <TextField
+            required
+            variant="outlined"
+            fullWidth
+            label="Email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            sx={{ marginBottom: 2 }}
+          />
+          <TextField
+            required
+            variant="outlined"
+            fullWidth
+            label="Phone Number"
+            name="phone"
+            value={formData.phone}
+            onChange={handleChange}
+            sx={{ marginBottom: 1 }}
+          />
 
-        <Typography mt={2} variant="body2" color="gray">
-          Already have an account?{" "}
-          <span style={{ color: "#001a99", cursor: "pointer" }}>Login</span>
-        </Typography>
+          <Typography mt={2} variant="body2" color="gray">
+            Already have an account?{" "}
+            <span
+              style={{ color: "#001a99", cursor: "pointer" }}
+              onClick={handleNavigateToLogin}
+            >
+              Login
+            </span>
+          </Typography>
 
-        <Button
-          variant="contained"
-          fullWidth
-          onClick={handleSubmit}
-          sx={{
-            marginTop: 3,
-            backgroundColor: "#001a99",
-            color: "white",
-            fontWeight: "bold",
-            "&:hover": { backgroundColor: "#0026d1" },
-          }}
-        >
-          Sign Up
-        </Button>
+          <Button
+            variant="contained"
+            fullWidth
+            onClick={handleSubmit}
+            sx={{
+              marginTop: 3,
+              backgroundColor: "#001a99",
+              color: "white",
+              fontWeight: "bold",
+              "&:hover": { backgroundColor: "#0026d1" },
+            }}
+          >
+            Sign Up
+          </Button>
+        </Box>
       </Paper>
 
       {/* Snackbar for alerts */}
