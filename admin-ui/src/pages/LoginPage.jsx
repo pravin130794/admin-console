@@ -1,3 +1,4 @@
+import axios from "axios";
 import React, { useState } from "react";
 import {
   Box,
@@ -14,9 +15,12 @@ import LockIcon from "@mui/icons-material/Lock";
 import EmailIcon from "@mui/icons-material/Email";
 import { useNavigate } from "react-router-dom";
 import SnackbarComponent from "../components/Snackbar";
+import { useAuth } from "../context/Auth";
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
+  const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     username: "",
@@ -38,22 +42,56 @@ const LoginPage = () => {
   };
 
   const handleSubmit = async () => {
+    if (!formData.username || !formData.password) {
+      setSnackbar({
+        open: true,
+        message: "Please fill in all fields.",
+        severity: "warning",
+      });
+      return;
+    }
+    setLoading(true);
     try {
-      console.log("🚀 ~ handleSubmit ~ formData:", formData);
+      // Make API call to the login endpoint
+      const response = await fetch("http://localhost:8000/api/v1/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: formData.username,
+          password: formData.password,
+        }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        setSnackbar({
+          open: true,
+          message: errorData.detail,
+          severity: "error",
+        });
+        // throw new Error(errorData || "Login failed");
+      }
+      // Assuming the API returns a token upon successful login
+      const { access_token } = await response.json();
+
+      // Store the token in local storage or cookies
+      localStorage.setItem("authToken", access_token);
+
+      // Show success message
       setSnackbar({
         open: true,
         message: "Login successful!",
         severity: "success",
       });
       setTimeout(() => {
+        login(formData.username);
         navigate("/");
-      }, 1500);
+      }, 1000);
     } catch (error) {
-      setSnackbar({
-        open: true,
-        message: error.message || "An error occurred. Please try again.",
-        severity: "error",
-      });
+      console.log("🚀 ~ handleSubmit ~ error:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -171,6 +209,7 @@ const LoginPage = () => {
             variant="contained"
             fullWidth
             onClick={handleSubmit}
+            disabled={loading}
             sx={{
               backgroundColor: "#001a99",
               color: "white",
@@ -178,7 +217,7 @@ const LoginPage = () => {
               "&:hover": { backgroundColor: "#0026d1" },
             }}
           >
-            Login
+            {loading ? "Logging in..." : "Login"}
           </Button>
 
           {/* Register Link */}
