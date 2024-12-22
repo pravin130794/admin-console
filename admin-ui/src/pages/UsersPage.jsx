@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Table,
@@ -25,10 +25,11 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import CloseIcon from "@mui/icons-material/Close";
 import CancelIcon from "@mui/icons-material/Cancel";
 import FormControl from "@mui/material/FormControl";
+import CircularProgress from "@mui/material/CircularProgress";
 import { PendingActions } from "@mui/icons-material";
 
 // Sample User Data
-const users = [
+const users1 = [
   {
     id: 1,
     firstName: "Brian",
@@ -91,6 +92,48 @@ const UserPage = () => {
     role: "",
     purpose: "",
   });
+
+  const [groups, setGroups] = useState([]); // State for groups data
+  const [loadingGroups, setLoadingGroups] = useState(false); // Loading state for API call
+  const [users, setUsers] = useState([]); // State for groups data
+  const [loadingUsers, setLoadingUsers] = useState(false); // Loading state for API call
+
+  // Fetch groups data when the modal opens
+  useEffect(() => {
+    if (openRegister) {
+      fetchGroups();
+    }
+  }, [openRegister]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchGroups = async () => {
+    setLoadingGroups(true);
+    try {
+      const response = await fetch("http://localhost:8000/api/v1/groups"); // Replace with your API
+      const data = await response.json();
+      setGroups(data); // Assuming API returns an array of groups
+    } catch (error) {
+      console.error("Error fetching groups:", error);
+    } finally {
+      setLoadingGroups(false);
+    }
+  };
+
+  const fetchUsers = async () => {
+    setLoadingUsers(true);
+    try {
+      const response = await fetch("http://localhost:8000/api/v1/users"); // Replace with your API
+      const data = await response.json();
+      setUsers(data.users); // Assuming API returns an array of groups
+    } catch (error) {
+      console.error("Error fetching groups:", error);
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
 
   // Open Delete Modal
   const handleDeleteOpen = (user) => {
@@ -266,81 +309,82 @@ const UserPage = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {users.map((user, index) => (
-                <TableRow key={user.id}>
-                  <TableCell>{index + 1}</TableCell>
-                  <TableCell>{user.username}</TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>
-                    {user.status === "Approved" ? (
-                      <Box
-                        sx={{
-                          color: "green",
-                          display: "flex",
-                          alignItems: "center",
-                        }}
+              {users &&
+                users.map((user, index) => (
+                  <TableRow key={user.id}>
+                    <TableCell>{index}</TableCell>
+                    <TableCell>{user.username}</TableCell>
+                    <TableCell>{user.email}</TableCell>
+                    <TableCell>
+                      {user.status === "Approved" ? (
+                        <Box
+                          sx={{
+                            color: "green",
+                            display: "flex",
+                            alignItems: "center",
+                          }}
+                        >
+                          <CheckCircleIcon sx={{ marginRight: "5px" }} />
+                          Approved
+                        </Box>
+                      ) : user.status === "Rejected" ? (
+                        <Box
+                          sx={{
+                            color: "red",
+                            display: "flex",
+                            alignItems: "center",
+                          }}
+                        >
+                          <CancelIcon sx={{ marginRight: "5px" }} />
+                          Rejected
+                        </Box>
+                      ) : (
+                        <Box
+                          sx={{
+                            color: "Blue",
+                            display: "flex",
+                            alignItems: "center",
+                          }}
+                        >
+                          <AccessTimeIcon sx={{ marginRight: "5px" }} />
+                          Pending
+                        </Box>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <IconButton
+                        color="primary"
+                        onClick={() => handleViewOpen(user)}
                       >
-                        <CheckCircleIcon sx={{ marginRight: "5px" }} />
-                        Approved
-                      </Box>
-                    ) : user.status === "Rejected" ? (
-                      <Box
-                        sx={{
-                          color: "red",
-                          display: "flex",
-                          alignItems: "center",
-                        }}
+                        <VisibilityIcon />
+                      </IconButton>
+                      <IconButton
+                        color="error"
+                        onClick={() => handleDeleteOpen(user)}
                       >
-                        <CancelIcon sx={{ marginRight: "5px" }} />
-                        Rejected
-                      </Box>
-                    ) : (
-                      <Box
-                        sx={{
-                          color: "Blue",
-                          display: "flex",
-                          alignItems: "center",
-                        }}
+                        <DeleteIcon />
+                      </IconButton>
+                      <IconButton
+                        color="warning"
+                        onClick={() => handleRejectOpen(user)}
                       >
-                        <AccessTimeIcon sx={{ marginRight: "5px" }} />
-                        Pending
-                      </Box>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <IconButton
-                      color="primary"
-                      onClick={() => handleViewOpen(user)}
-                    >
-                      <VisibilityIcon />
-                    </IconButton>
-                    <IconButton
-                      color="error"
-                      onClick={() => handleDeleteOpen(user)}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                    <IconButton
-                      color="warning"
-                      onClick={() => handleRejectOpen(user)}
-                    >
-                      <CancelIcon />
-                    </IconButton>
-                    <IconButton
-                      color="success"
-                      onClick={() => handleApproveOpen(user)}
-                    >
-                      <CheckCircleIcon />
-                    </IconButton>
-                    <IconButton
-                      color="secondary"
-                      onClick={() => handleEditOpen(user)}
-                    >
-                      <EditIcon />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))}
+                        <CancelIcon />
+                      </IconButton>
+                      <IconButton
+                        color="success"
+                        onClick={() => handleApproveOpen(user)}
+                      >
+                        <CheckCircleIcon />
+                      </IconButton>
+                      <IconButton
+                        color="secondary"
+                        onClick={() => handleEditOpen(user)}
+                      >
+                        <EditIcon />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
             </TableBody>
           </Table>
         </TableContainer>
@@ -868,19 +912,28 @@ const UserPage = () => {
                 }
               />
 
-              <TextField
-                fullWidth
-                select
-                label="Group *"
-                value={registerData.group}
-                onChange={(e) =>
-                  handleRegisterInputChange("group", e.target.value)
-                }
-                margin="normal"
-              >
-                <MenuItem value="A">Group A</MenuItem>
-                <MenuItem value="B">Group B</MenuItem>
-              </TextField>
+              <FormControl fullWidth>
+                <InputLabel>Group *</InputLabel>
+                <Select
+                  value={registerData.group}
+                  onChange={(e) =>
+                    handleRegisterInputChange("group", e.target.value)
+                  }
+                  disabled={loadingGroups} // Disable dropdown while loading
+                >
+                  {loadingGroups ? (
+                    <MenuItem disabled>
+                      <CircularProgress size={20} /> Loading...
+                    </MenuItem>
+                  ) : (
+                    groups.map((group) => (
+                      <MenuItem key={group.id} value={group.name}>
+                        {group.name}
+                      </MenuItem>
+                    ))
+                  )}
+                </Select>
+              </FormControl>
               <Select
                 value={registerData.role}
                 onChange={(e) =>
