@@ -26,7 +26,6 @@ async def create_user(user: User):
 async def get_user_list():
     # Fetch all users
     users = await User.find_all().to_list()
-    print(users)
     # Prepare the response with groups and projects details for each user
     user_list = []
     for user in users:
@@ -44,6 +43,7 @@ async def get_user_list():
             "phone": user.phone,
             "username": user.username,
             "role": user.role,
+            "status": user.status,
             "isActive": user.isActive,
             "isApproved": user.isApproved,
             "createdAt": user.createdAt,
@@ -52,7 +52,6 @@ async def get_user_list():
             "projects": projects
         }
         user_list.append(user_data)
-    print(user_list)
     return {"users": user_list}
 
 # Get a single user by ID

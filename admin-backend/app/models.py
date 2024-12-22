@@ -28,13 +28,14 @@ class User(Document):
     email: EmailStr
     phone: Optional[str] = None
     username: str
-    password: str
+    password: Optional[str] = None
     role: str = Field(default="User", enum=["SuperAdmin", "GroupAdmin", "User"])
     groupIds: List[PydanticObjectId]  = [] # Store only group IDs
     projectIds: List[PydanticObjectId] = [] 
     businessPurpose: Optional[str] = None  # Optional field
     isActive: bool = True
     isApproved: bool = False
+    status: str = Field(default="Pending", enum=["Approved", "Rejected", "Pending"])
     createdAt: datetime = Field(default_factory=datetime.utcnow)
     updatedAt: datetime = Field(default_factory=datetime.utcnow)
 

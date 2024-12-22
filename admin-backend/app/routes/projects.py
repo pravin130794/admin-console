@@ -6,13 +6,13 @@ from typing import List
 router = APIRouter()
 
 # Create a new project
-@router.post("/projects/")
+@router.post("/projects")
 async def create_project(project: Project):
     await project.create()
     return {"message": "Project created successfully", "project": project}
 
 # Get a list of all projects
-@router.get("/projects/")
+@router.get("/projects")
 async def list_projects():
     projects = await Project.find_all().to_list()
     return projects

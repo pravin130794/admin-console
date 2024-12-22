@@ -6,13 +6,13 @@ from typing import List
 router = APIRouter()
 
 # Create a new group
-@router.post("/groups/")
+@router.post("/groups")
 async def create_group(group: Group):
     await group.create()
     return {"message": "Group created successfully", "group": group}
 
 # Get a list of all groups
-@router.get("/groups/")
+@router.get("/groups")
 async def list_groups():
     groups = await Group.find_all().to_list()
     return groups
