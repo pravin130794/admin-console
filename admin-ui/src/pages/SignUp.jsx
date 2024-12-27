@@ -16,8 +16,8 @@ const SignUp = () => {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
+    firstname: "",
+    lastname: "",
     username: "",
     email: "",
     phone: "",
@@ -39,23 +39,19 @@ const SignUp = () => {
 
   const handleSubmit = async () => {
     try {
-      // Simulate an API call
-      //   const response = await fetch("https://api.example.com/register", {
-      //     method: "POST",
-      //     headers: {
-      //       "Content-Type": "application/json",
-      //     },
-      //     body: JSON.stringify(formData),
-      //   });
-      console.log("🚀 ~ handleSubmit ~ formData:", formData);
-      const response = {
-        ok: true,
-      };
+      // Signp an API call
+      const response = await fetch("http://localhost:8000/api/v1/sign-up", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
       if (!response.ok) {
         throw new Error("Failed to register. Please try again.");
       }
 
-      //   const result = await response.json();
+      const result = await response.json();
       // Show success message and redirect to dashboard
       setSnackbar({
         open: true,
@@ -65,7 +61,7 @@ const SignUp = () => {
 
       // Redirect to dashboard after success
       setTimeout(() => {
-        navigate("/");
+        navigate("/login");
       }, 1500);
     } catch (error) {
       // Show error message in snackbar
@@ -155,8 +151,8 @@ const SignUp = () => {
             variant="outlined"
             fullWidth
             label="First Name"
-            name="firstName"
-            value={formData.firstName}
+            name="firstname"
+            value={formData.firstname}
             onChange={handleChange}
             sx={{ marginBottom: 2 }}
           />
@@ -165,8 +161,8 @@ const SignUp = () => {
             variant="outlined"
             fullWidth
             label="Last Name"
-            name="lastName"
-            value={formData.lastName}
+            name="lastname"
+            value={formData.lastname}
             onChange={handleChange}
             sx={{ marginBottom: 2 }}
           />

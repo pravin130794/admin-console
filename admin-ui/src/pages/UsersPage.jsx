@@ -312,7 +312,7 @@ const UserPage = () => {
               {users &&
                 users.map((user, index) => (
                   <TableRow key={user.id}>
-                    <TableCell>{index}</TableCell>
+                    <TableCell>{index + 1}</TableCell>
                     <TableCell>{user.username}</TableCell>
                     <TableCell>{user.email}</TableCell>
                     <TableCell>
