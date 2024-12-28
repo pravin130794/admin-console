@@ -22,6 +22,13 @@ const SignUp = () => {
     email: "",
     phone: "",
   });
+  const [formErrors, setFormErrors] = useState({
+    firstname: "",
+    lastname: "",
+    username: "",
+    email: "",
+    phone: "",
+  });
 
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -35,9 +42,47 @@ const SignUp = () => {
       ...prev,
       [name]: value,
     }));
+    // Clear the error for the specific field
+    setFormErrors((prev) => ({
+      ...prev,
+      [name]: "",
+    }));
+  };
+
+  const validateForm = () => {
+    const errors = {};
+    if (!formData.username.trim()) {
+      errors.username = "User Name is required.";
+    }
+    if (!formData.firstname.trim()) {
+      errors.firstname = "First Name is required.";
+    }
+    if (!formData.lastname.trim()) {
+      errors.lastname = "Last Name is required.";
+    }
+    if (!formData.email.trim()) {
+      errors.email = "Email is required.";
+    }
+    if (!formData.phone.trim()) {
+      errors.phone = "Phone number is required.";
+    }
+
+    // Email Validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!formData.email.trim()) {
+      errors.email = "Email is required.";
+    } else if (!emailRegex.test(formData.email)) {
+      errors.email = "Invalid email format.";
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const handleSubmit = async () => {
+    if (!validateForm()) {
+      return;
+    }
     try {
       // Signp an API call
       const response = await fetch("http://localhost:8000/api/v1/sign-up", {
@@ -155,6 +200,8 @@ const SignUp = () => {
             label="First Name"
             name="firstname"
             value={formData.firstname}
+            error={!!formErrors.firstname}
+            helperText={formErrors.firstname}
             onChange={handleChange}
             sx={{ marginBottom: 2 }}
           />
@@ -165,6 +212,8 @@ const SignUp = () => {
             label="Last Name"
             name="lastname"
             value={formData.lastname}
+            error={!!formErrors.lastname}
+            helperText={formErrors.lastname}
             onChange={handleChange}
             sx={{ marginBottom: 2 }}
           />
@@ -175,6 +224,8 @@ const SignUp = () => {
             label="Username"
             name="username"
             value={formData.username}
+            error={!!formErrors.username}
+            helperText={formErrors.username}
             onChange={handleChange}
             sx={{ marginBottom: 2 }}
           />
@@ -185,6 +236,8 @@ const SignUp = () => {
             label="Email"
             name="email"
             value={formData.email}
+            error={!!formErrors.email}
+            helperText={formErrors.email}
             onChange={handleChange}
             sx={{ marginBottom: 2 }}
           />
@@ -195,6 +248,8 @@ const SignUp = () => {
             label="Phone Number"
             name="phone"
             value={formData.phone}
+            error={!!formErrors.phone}
+            helperText={formErrors.phone}
             onChange={handleChange}
             sx={{ marginBottom: 1 }}
           />

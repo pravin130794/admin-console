@@ -1,4 +1,3 @@
-import axios from "axios";
 import React, { useState } from "react";
 import {
   Box,
@@ -14,7 +13,6 @@ import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import LockIcon from "@mui/icons-material/Lock";
 import EmailIcon from "@mui/icons-material/Email";
 import { useNavigate } from "react-router-dom";
-import SnackbarComponent from "../components/Snackbar";
 import { useAuth } from "../context/Auth";
 
 const LoginPage = () => {
@@ -27,11 +25,33 @@ const LoginPage = () => {
     password: "",
   });
 
+  const [formErrors, setFormErrors] = useState({
+    username: "",
+    password: "",
+  });
+
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
     severity: "info",
   });
+
+  const validateForm = () => {
+    const errors = {};
+    if (!formData.username.trim()) {
+      errors.username = "Username is required.";
+    }
+    // Password Validation
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/; // Must include a-z, A-Z, 0-9, special characters, min length 8
+    if (!formData.password.trim()) {
+      errors.password = "Password is required.";
+    } else if (!passwordRegex.test(formData.password)) {
+      errors.password =
+        "Password must include a mix of a-z, A-Z, 0-9, special characters, and be at least 8 characters long.";
+    }
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -39,20 +59,20 @@ const LoginPage = () => {
       ...prev,
       [name]: value,
     }));
+    // Clear the error for the specific field
+    setFormErrors((prev) => ({
+      ...prev,
+      [name]: "",
+    }));
   };
 
   const handleSubmit = async () => {
-    if (!formData.username || !formData.password) {
-      setSnackbar({
-        open: true,
-        message: "Please fill in all fields.",
-        severity: "warning",
-      });
+    if (!validateForm()) {
       return;
     }
+
     setLoading(true);
     try {
-      // Make API call to the login endpoint
       const response = await fetch("http://localhost:8000/api/v1/login", {
         method: "POST",
         headers: {
@@ -63,6 +83,7 @@ const LoginPage = () => {
           password: formData.password,
         }),
       });
+
       if (!response.ok) {
         const errorData = await response.json();
         setSnackbar({
@@ -70,27 +91,30 @@ const LoginPage = () => {
           message: errorData.detail,
           severity: "error",
         });
-        // throw new Error(errorData || "Login failed");
+        return;
       }
-      // Assuming the API returns a token upon successful login
+
       const { access_token, user_id } = await response.json();
 
-      // Store the token in local storage or cookies
       localStorage.setItem("authToken", access_token);
       localStorage.setItem("user_id", user_id);
 
-      // Show success message
       setSnackbar({
         open: true,
         message: "Login successful!",
         severity: "success",
       });
+
       setTimeout(() => {
         login(formData.username);
         navigate("/");
       }, 1000);
     } catch (error) {
-      console.log("🚀 ~ handleSubmit ~ error:", error);
+      setSnackbar({
+        open: true,
+        message: "An error occurred. Please try again.",
+        severity: "error",
+      });
     } finally {
       setLoading(false);
     }
@@ -103,6 +127,7 @@ const LoginPage = () => {
   const handleNavigateToSignup = () => {
     navigate("/signup");
   };
+
   return (
     <Box
       sx={{
@@ -142,11 +167,10 @@ const LoginPage = () => {
           boxShadow: "0 4px 10px rgba(0, 0, 0, 0.2)",
         }}
       >
-        {/* Centered Logo */}
         <Box
           sx={{
             position: "absolute",
-            top: "-50px", // Moves half-outside
+            top: "-50px",
             left: "50%",
             transform: "translate(-50%, 0)",
             backgroundColor: "#001a99",
@@ -176,6 +200,8 @@ const LoginPage = () => {
             name="username"
             value={formData.username}
             onChange={handleChange}
+            error={!!formErrors.username}
+            helperText={formErrors.username}
             sx={{ marginBottom: 2 }}
             InputProps={{
               startAdornment: (
@@ -195,6 +221,8 @@ const LoginPage = () => {
             name="password"
             value={formData.password}
             onChange={handleChange}
+            error={!!formErrors.password}
+            helperText={formErrors.password}
             sx={{ marginBottom: 3 }}
             InputProps={{
               startAdornment: (
@@ -234,13 +262,20 @@ const LoginPage = () => {
         </Box>
       </Paper>
 
-      {/* Reusable Snackbar Component */}
-      <SnackbarComponent
+      {/* Snackbar for Alerts */}
+      <Snackbar
         open={snackbar.open}
-        message={snackbar.message}
-        severity={snackbar.severity}
+        autoHideDuration={3000}
         onClose={handleCloseSnackbar}
-      />
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
