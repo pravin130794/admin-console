@@ -7,6 +7,7 @@ import GroupsPage from "./pages/GroupsPage";
 import DevicesPage from "./pages/DevicesPage";
 import LoginPage from "./pages/LoginPage";
 import SignUp from "./pages/SignUp";
+import OtpPage from "./pages/OtpPage";
 import NotFoundPage from "./pages/NotFound";
 import UnauthorizedPage from "./pages/Unauthorized";
 import { AuthProvider, RequireAuth } from "./context/Auth";
@@ -18,6 +19,7 @@ const App = () => {
         {/* Public Routes */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignUp />} />
+        <Route path="/otp" element={<OtpPage />} />
 
         {/* Protected Routes with Sidebar */}
         <Route element={<SidebarLayout />}>

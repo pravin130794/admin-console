@@ -21,6 +21,24 @@ class ProjectAssignmentModel(BaseModel):
     role: str
     permissions: PermissionModel
 
+# Input schema for Superuser creation
+class SuperUserCreate(BaseModel):
+    firstname: str
+    lastname: str
+    username: str
+    email: EmailStr
+    password: str
+
+# Response schema
+class UserResponse(BaseModel):
+    id: str
+    firstname: str
+    lastname: str
+    username: str
+    email: EmailStr
+    is_active: bool
+    is_approved: bool
+
 # User Model
 class User(Document):
     firstName: str
@@ -87,7 +105,7 @@ class UserSignUpRequest(BaseModel):
     lastname: str
     username: str
     email: EmailStr
-    password: str
+    password: Optional[str] = None
 
 class UserToken(Document):
     user_id: str  # Reference to the User ID
@@ -100,3 +118,24 @@ class UserToken(Document):
 class UserLoginRequest(BaseModel):
     username: str
     password: str
+
+class OTPVerify(BaseModel):
+    email: EmailStr
+    otp: str
+    password: str
+
+class UserOTP(Document):
+    user_id: PydanticObjectId
+    otp: str
+    expiration_time: datetime
+
+    class Settings:
+        name = "user_otps"
+
+# Request schema for approving a user
+class UserApprove(BaseModel):
+    approver_user_id: PydanticObjectId
+    user_id: PydanticObjectId
+    groups: List[PydanticObjectId]  # List of group IDs
+    projects: List[PydanticObjectId]  # List of project IDs
+    email: EmailStr

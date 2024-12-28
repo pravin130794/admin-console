@@ -73,10 +73,11 @@ const LoginPage = () => {
         // throw new Error(errorData || "Login failed");
       }
       // Assuming the API returns a token upon successful login
-      const { access_token } = await response.json();
+      const { access_token, user_id } = await response.json();
 
       // Store the token in local storage or cookies
       localStorage.setItem("authToken", access_token);
+      localStorage.setItem("user_id", user_id);
 
       // Show success message
       setSnackbar({

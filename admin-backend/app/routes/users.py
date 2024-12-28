@@ -1,14 +1,63 @@
 
 from datetime import datetime, timedelta
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from app.middleware.auth import JWTBearer
-from app.models import Group, Project, User, UserLoginRequest, UserSignUpRequest, UserToken
+from app.models import Group, Project, User,UserOTP,  UserLoginRequest, UserSignUpRequest, UserToken, SuperUserCreate, UserResponse, OTPVerify, UserApprove 
 from bson import ObjectId
+from beanie import PydanticObjectId
 import os
 
-from app.utils.utils import create_access_token, encrypt_password, verify_access_token, verify_password
+from app.utils.utils import create_access_token, encrypt_password, verify_access_token, verify_password, generate_otp, send_otp_email
 
 router = APIRouter()
+
+
+@router.post("/superuser", response_model=UserResponse)
+async def create_superuser(user: SuperUserCreate):
+    try:
+        # Check if a superuser already exists
+        existing_user = await User.find_one({"username": user.username})
+        if existing_user:
+            raise HTTPException(
+                status_code=400,
+                detail="Super User already exists"
+            )
+
+        # Hash the password
+        encpt_password = encrypt_password(user.password)
+
+        # Create a new superuser instance
+        new_superuser = User(
+            firstName=user.firstname,
+            lastName=user.lastname,
+            username=user.username,
+            email=user.email,
+            password=encpt_password,
+            role="SuperAdmin",
+            isActive=True,
+            isApproved=True,
+            status="Approved"
+        )
+
+        # Save the superuser to the database
+        await new_superuser.insert()
+
+        return UserResponse(
+            id=str(new_superuser.id),
+            firstname=new_superuser.firstName,
+            lastname=new_superuser.lastName,
+            username=new_superuser.username,
+            email=new_superuser.email,
+            is_active=new_superuser.isActive,
+            is_approved=new_superuser.isApproved
+        )
+
+    except HTTPException as error:
+        raise error
+    except Exception as e:
+        # Log unexpected errors
+        print(f"An unexpected error occurred: {e}")
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
 
 # Create a new user
 @router.post("/users", response_model=User)
@@ -23,11 +72,16 @@ async def create_user(user: User):
 
 # Get all users
 @router.get("/users")
-async def get_user_list():
-    # Fetch all users
-    users = await User.find_all().to_list()
-    # Prepare the response with groups and projects details for each user
+async def get_user_list(skip: int = Query(0, ge=0), limit: int = Query(10, ge=1)):
+    """
+    Get a paginated list of users.
+    :param skip: Number of items to skip (default: 0)
+    :param limit: Number of items to return (default: 10)
+    """
+    # Fetch users with pagination
+    users = await User.find_all().skip(skip).limit(limit).to_list()
     user_list = []
+
     for user in users:
         # Fetch groups for the current user
         groups = await Group.find({"_id": {"$in": user.groupIds}}).to_list()
@@ -49,10 +103,19 @@ async def get_user_list():
             "createdAt": user.createdAt,
             "updatedAt": user.updatedAt,
             "groups": groups,
-            "projects": projects
+            "projects": projects,
         }
         user_list.append(user_data)
-    return {"users": user_list}
+
+    # Total number of users for additional context
+    total_users = await User.find_all().count()
+
+    return {
+        "total": total_users,
+        "skip": skip,
+        "limit": limit,
+        "users": user_list,
+    }
 
 # Get a single user by ID
 @router.get("/users/{user_id}")
@@ -193,7 +256,10 @@ async def sign_up(user: UserSignUpRequest):
         raise HTTPException(status_code=400, detail="Email already in use")
 
     # Hash the password
-    encpt_password = encrypt_password(user.password)
+    if user.password:
+        encpt_password = encrypt_password(user.password)
+    else:
+        encpt_password = None
 
     # Create the new user document
     new_user = User(
@@ -246,7 +312,7 @@ async def login(user: UserLoginRequest):
     user_token = UserToken(user_id=str(db_user.id), token=token, expires_at=expires_at)
     await user_token.create()
 
-    return {"message": "Login successful.", "access_token": token}
+    return {"message": "Login successful.", "access_token": token,"user_id":str(db_user.id)}
 
 @router.post("/logout")
 async def logout(current_token: str = Depends(JWTBearer())):
@@ -262,3 +328,124 @@ async def logout(current_token: str = Depends(JWTBearer())):
         raise HTTPException(status_code=404, detail="Token not found or already deleted")
 
     return {"message": "Logout successful."}
+
+@router.post("/verify-otp")
+async def verify_otp(otp_data: OTPVerify):
+    try:
+        # Find the user by email
+        user = await User.find_one(User.email == otp_data.email)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Find the OTP record for the user
+        otp_record = await UserOTP.find_one(UserOTP.user_id == user.id)
+        if not otp_record:
+            raise HTTPException(status_code=400, detail="OTP not found or expired")
+
+        # Check if the OTP matches
+        if otp_record.otp != otp_data.otp:
+            raise HTTPException(status_code=400, detail="Invalid OTP")
+
+        # Check if the OTP is expired
+        if datetime.utcnow() > otp_record.expiration_time:
+            raise HTTPException(status_code=400, detail="OTP has expired")
+
+        # Update the user's password
+        user.password = encrypt_password(otp_data.password)
+        await user.save()
+
+        # Delete the OTP record after successful verification
+        await otp_record.delete()
+
+        return {"message": "OTP verified. Your password has been updated. Login to the system"}
+    except HTTPException as error:
+        raise error
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
+
+
+@router.post("/approve_user")
+async def approve_user(request: UserApprove):
+    try:
+        # Find the approver user
+        approver_user = await User.find_one(User.id == request.approver_user_id)
+        if not approver_user:
+            raise HTTPException(status_code=404, detail="Approver user not found")
+
+        # Check if the approver is an admin
+        if not approver_user.role == 'SuperAdmin':
+            raise HTTPException(status_code=403, detail="Only Super Admins can approve users")
+
+        # Find the user to be approved
+        user = await User.find_one(User.id == request.user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        if user.isApproved:
+            raise HTTPException(status_code=403, detail="User is already approved by Admin. Please login to the system.")
+
+        # Approve the user
+        user.isApproved = True
+        user.isActive = True
+        user.status = 'Approved'
+
+        # Assign the user to the specified groups
+        groups = await Group.find({"_id": {"$in": request.groups}}).to_list()
+        if len(groups) != len(request.groups):
+            raise HTTPException(status_code=404, detail="Some groups not found")
+        user.groupIds.extend([group.id for group in groups])
+
+        # Assign the user to the specified projects
+        projects = await Project.find({"_id": {"$in": request.projects}}).to_list()
+        if len(projects) != len(request.projects):
+            raise HTTPException(status_code=404, detail="Some projects not found")
+        user.projectIds.extend([project.id for project in projects])
+
+        # Save the changes to the user
+        await user.save()
+
+        # Generate and send an OTP to the user's email
+        otp = await store_or_refresh_otp(user.id)
+        await send_otp_email(request.email, otp)
+
+        return {"message": "User approved, groups and projects assigned, and OTP sent for password reset"}
+        
+    except HTTPException as error:
+        raise error
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+
+# Function to store OTP and expiration time in the database
+async def store_or_refresh_otp(user_id: PydanticObjectId) -> str:
+    """
+    Store or refresh an OTP for a user in the database.
+    If an existing OTP is still valid, it will be reused.
+    Otherwise, a new OTP will be generated and stored.
+    """
+    current_time = datetime.utcnow()
+
+    # Find the existing OTP record for the user
+    otp_record = await UserOTP.find_one(UserOTP.user_id == user_id)
+    # otp_record = await UserOTP.find_one({"user_id": user_id})
+    if otp_record:
+        # Check if the existing OTP has expired
+        if otp_record.expiration_time > current_time:
+            return otp_record.otp  # Return existing OTP if still valid
+
+        # Update the OTP and expiration time if expired
+        otp_record.otp = generate_otp()
+        otp_record.expiration_time = current_time + timedelta(minutes=5)
+        await otp_record.save()
+        return otp_record.otp
+
+    else:
+        # Create a new OTP record if none exists
+        otp = generate_otp()
+        expiration_time = current_time + timedelta(minutes=5)
+        new_otp_record = UserOTP(
+            user_id=user_id,
+            otp=otp,
+            expiration_time=expiration_time
+        )
+        await new_otp_record.insert()
+        return new_otp_record.otp

@@ -52,16 +52,18 @@ const SignUp = () => {
       }
 
       const result = await response.json();
+      console.log(result);
+
       // Show success message and redirect to dashboard
       setSnackbar({
         open: true,
-        message: "Registration successful!",
+        message: result.message || "Registration successful!",
         severity: "success",
       });
 
       // Redirect to dashboard after success
       setTimeout(() => {
-        navigate("/login");
+        navigate(`/otp?email=${formData.email}`);
       }, 1500);
     } catch (error) {
       // Show error message in snackbar

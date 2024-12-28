@@ -15,6 +15,7 @@ import {
   Paper,
   Select,
   MenuItem,
+  Backdrop,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import InputLabel from "@mui/material/InputLabel";
@@ -27,46 +28,7 @@ import CancelIcon from "@mui/icons-material/Cancel";
 import FormControl from "@mui/material/FormControl";
 import CircularProgress from "@mui/material/CircularProgress";
 import { PendingActions } from "@mui/icons-material";
-
-// Sample User Data
-const users1 = [
-  {
-    id: 1,
-    firstName: "Brian",
-    lastName: "Lord",
-    phone: "2657456781",
-    email: "Brian123@gmail.com",
-    username: "Brian123",
-    group: "A",
-    role: "SuperAdmin",
-    purpose: "Test",
-    status: "Approved",
-  },
-  {
-    id: 2,
-    firstName: "Alex",
-    lastName: "Smith",
-    phone: "1234567890",
-    email: "alex@gmail.com",
-    username: "Alex123",
-    group: "B",
-    role: "GroupAdmin",
-    purpose: "Project",
-    status: "Rejected",
-  },
-  {
-    id: 3,
-    firstName: "Den",
-    lastName: "SmithJoe",
-    phone: "1234563890",
-    email: "Den@gmail.com",
-    username: "Den123",
-    group: "C",
-    role: "User",
-    purpose: "Project",
-    status: "Pending",
-  },
-];
+import SnackbarComponent from "../components/Snackbar";
 
 const UserPage = () => {
   const [openDelete, setOpenDelete] = useState(false);
@@ -92,6 +54,16 @@ const UserPage = () => {
     role: "",
     purpose: "",
   });
+  const [apiLoading, setApiLoading] = useState(false);
+  const [selectedGroups, setSelectedGroups] = useState([]);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "info", // Can be 'success', 'error', 'warning', 'info'
+  });
+  const handleCloseSnackbar = () => {
+    setSnackbar((prev) => ({ ...prev, open: false }));
+  };
 
   const [groups, setGroups] = useState([]); // State for groups data
   const [loadingGroups, setLoadingGroups] = useState(false); // Loading state for API call
@@ -100,10 +72,10 @@ const UserPage = () => {
 
   // Fetch groups data when the modal opens
   useEffect(() => {
-    if (openRegister) {
+    if (openRegister || openApprove) {
       fetchGroups();
     }
-  }, [openRegister]);
+  }, [openRegister, openApprove]);
 
   useEffect(() => {
     fetchUsers();
@@ -127,9 +99,9 @@ const UserPage = () => {
     try {
       const response = await fetch("http://localhost:8000/api/v1/users"); // Replace with your API
       const data = await response.json();
-      setUsers(data.users); // Assuming API returns an array of groups
+      setUsers(data.users); // Assuming API returns an array of users
     } catch (error) {
-      console.error("Error fetching groups:", error);
+      console.error("Error fetching users:", error);
     } finally {
       setLoadingUsers(false);
     }
@@ -177,23 +149,76 @@ const UserPage = () => {
 
   const handleApproveClose = () => {
     setOpenApprove(false);
-    setGroup("");
+    setSelectedGroups([]);
     setRole("");
     setReason("");
   };
 
-  const handleApproveSave = () => {
-    console.log(
-      "Approved User:",
-      selectedUser,
-      "Group:",
-      group,
-      "Role:",
-      role,
-      "Reason:",
-      reason
+  const handleGroupSelect = (event) => {
+    const {
+      target: { value },
+    } = event;
+    console.log("Selected Groups:", event);
+    setSelectedGroups(
+      typeof value === "string" ? value.split(",") : value // Ensure multiple selections are handled correctly
     );
-    handleApproveClose();
+  };
+
+  const handleApproveSave = async () => {
+    if (!selectedUser || selectedGroups.length === 0) {
+      setSnackbar({
+        open: true,
+        message: "Please select at least one group and provide a reason.",
+        severity: "warning",
+      });
+      return;
+    }
+    const user_id = localStorage.getItem("user_id");
+
+    const requestBody = {
+      approver_user_id: user_id, // Replace with actual approver ID
+      user_id: selectedUser.id,
+      groups: selectedGroups, // Send selected group IDs
+      projects: [], // Add projects if applicable
+      email: selectedUser.email,
+    };
+    setApiLoading(true);
+    try {
+      const response = await fetch(
+        "http://localhost:8000/api/v1/approve_user",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(requestBody),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Failed to approve user");
+      }
+
+      const data = await response.json();
+      setSnackbar({
+        open: true,
+        message: `User ${selectedUser.username} approved successfully!`,
+        severity: "success",
+      });
+
+      fetchUsers();
+    } catch (error) {
+      console.error("Error approving user:", error);
+      setSnackbar({
+        open: true,
+        message: error.message || "An error occurred while approving the user",
+        severity: "error",
+      });
+    } finally {
+      setApiLoading(false);
+      handleApproveClose();
+    }
   };
 
   // Open Edit User Modal
@@ -660,17 +685,31 @@ const UserPage = () => {
             </IconButton>
           </Box>
           <Box p={3}>
-            <TextField
-              fullWidth
-              select
-              label="Group *"
-              value={group}
-              onChange={(e) => setGroup(e.target.value)}
-              margin="normal"
-            >
-              <MenuItem value="A">Group A</MenuItem>
-              <MenuItem value="B">Group B</MenuItem>
-            </TextField>
+            <FormControl fullWidth>
+              <InputLabel>Group *</InputLabel>
+              <Select
+                value={selectedGroups[0]}
+                onChange={handleGroupSelect}
+                // renderValue={(selected) => {
+                //   selected.map(
+                //     (id) => groups.find((group) => group._id === id)?.name
+                //   );
+                // }}
+                disabled={loadingGroups} // Disable dropdown while loading
+              >
+                {loadingGroups ? (
+                  <MenuItem disabled>
+                    <CircularProgress size={20} /> Loading...
+                  </MenuItem>
+                ) : (
+                  groups.map((group) => (
+                    <MenuItem key={group.id} value={group._id}>
+                      {group.name}
+                    </MenuItem>
+                  ))
+                )}
+              </Select>
+            </FormControl>
             <TextField
               fullWidth
               select
@@ -971,6 +1010,17 @@ const UserPage = () => {
           </Box>
         </Box>
       </Modal>
+      {/* Snackbar for alerts */}
+      <SnackbarComponent
+        open={snackbar.open}
+        message={snackbar.message}
+        severity={snackbar.severity}
+        onClose={handleCloseSnackbar}
+      />
+      {/* Backdrop Loader */}
+      <Backdrop open={apiLoading} sx={{ color: "#fff", zIndex: 1301 }}>
+        <CircularProgress color="inherit" />
+      </Backdrop>
     </Box>
   );
 };

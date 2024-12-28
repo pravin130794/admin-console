@@ -33,11 +33,11 @@ def generate_otp() -> str:
     return str(otp)
 
 # Function to send email with OTP
-def send_otp_email(to_email: str, otp: str):
-    from_email = os.getenv('FROM_EMAIL')  # Replace with your email
-    from_password = os.getenv('FROM_PASSWORD')  # Replace with your email password
-    smtp_server = os.getenv('SMTP_SERVER')  # Use the SMTP server for your email provider
-    smtp_port = os.getenv('SMTP_PORT')  # SMTP port for sending email (typically 587 for TLS)
+async def send_otp_email(to_email: str, otp: str):
+    from_email = os.getenv('FROM_EMAIL',"anku130794@gmail.com")  # Replace with your email
+    from_password = os.getenv('FROM_PASSWORD',"xhlexropodjtdwbf")  # Replace with your email password
+    smtp_server = os.getenv('SMTP_SERVER',"smtp.gmail.com")  # Use the SMTP server for your email provider
+    smtp_port = os.getenv('SMTP_PORT',587)  # SMTP port for sending email (typically 587 for TLS)
 
     # Compose the email
     subject = "Your OTP Code"
@@ -73,7 +73,6 @@ def verify_access_token(token: str) -> dict:
     try:
         # Decode the token
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        print("--->",payload)
         return payload
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token has expired.")
