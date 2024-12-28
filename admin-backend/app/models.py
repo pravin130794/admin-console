@@ -53,6 +53,7 @@ class User(Document):
     businessPurpose: Optional[str] = None  # Optional field
     isActive: bool = True
     isApproved: bool = False
+    reason: Optional[str] = None  # Optional field
     status: str = Field(default="Pending", enum=["Approved", "Rejected", "Pending"])
     createdAt: datetime = Field(default_factory=datetime.utcnow)
     updatedAt: datetime = Field(default_factory=datetime.utcnow)
@@ -139,3 +140,19 @@ class UserApprove(BaseModel):
     groups: List[PydanticObjectId]  # List of group IDs
     projects: List[PydanticObjectId]  # List of project IDs
     email: EmailStr
+
+class RejectUserRequest(BaseModel):
+    user_id: PydanticObjectId
+    reason: str
+
+class UserUpdateRequest(BaseModel):
+    id: PydanticObjectId
+    reason: Optional[str] = None
+    firstname: Optional[str] = None
+    lastname: Optional[str] = None
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
+    businessPurpose: Optional[str] = None
+    groups: List[PydanticObjectId]= []  # List of group IDs
+    projects: List[PydanticObjectId]= []  # List of project IDs
+    

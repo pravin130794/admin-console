@@ -2,7 +2,7 @@
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Query
 from app.middleware.auth import JWTBearer
-from app.models import Group, Project, User,UserOTP,  UserLoginRequest, UserSignUpRequest, UserToken, SuperUserCreate, UserResponse, OTPVerify, UserApprove 
+from app.models import Group, Project, User,UserOTP,  UserLoginRequest, UserSignUpRequest, UserToken, SuperUserCreate, UserResponse, OTPVerify, UserApprove, RejectUserRequest, UserUpdateRequest 
 from bson import ObjectId
 from beanie import PydanticObjectId
 import os
@@ -128,6 +128,7 @@ async def get_user_list(
                 "username": user.username,
                 "role": user.role,
                 "status": user.status,
+                "businessPurpose": user.businessPurpose,
                 "isActive": user.isActive,
                 "isApproved": user.isApproved,
                 "createdAt": user.createdAt,
@@ -258,15 +259,15 @@ async def get_user_details(user_id: str):
     }
 
 # Update a user by ID
-@router.put("/{user_id}", response_model=User)
-async def update_user(user_id: str, updated_data: User):
-    if not ObjectId.is_valid(user_id):
-        raise HTTPException(status_code=400, detail="Invalid user ID")
-    user = await User.get(user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    updated_user = await user.set(updated_data.dict(exclude_unset=True))
-    return updated_user
+# @router.put("/{user_id}", response_model=User)
+# async def update_user(user_id: str, updated_data: User):
+#     if not ObjectId.is_valid(user_id):
+#         raise HTTPException(status_code=400, detail="Invalid user ID")
+#     user = await User.get(user_id)
+#     if not user:
+#         raise HTTPException(status_code=404, detail="User not found")
+#     updated_user = await user.set(updated_data.dict(exclude_unset=True))
+#     return updated_user
 
 # Delete a user by ID
 @router.delete("/{user_id}")
@@ -279,6 +280,55 @@ async def delete_user(user_id: str):
     await user.delete()
     return {"message": "User deleted successfully"}
 
+@router.put("/users")
+async def partial_update_user(user: UserUpdateRequest):
+    """
+    Partially update user details.
+    """
+    try:
+        # Convert user_id to PydanticObjectId
+        user_id = PydanticObjectId(user.id)
+        # Check if user exists
+        existing_user = await User.find_one(User.id == user_id)
+        if not existing_user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Update fields provided in the request
+        if user.firstname is not None:
+            existing_user.firstName = user.firstname
+        if user.lastname is not None:
+            existing_user.lastName = user.lastname
+        if user.email is not None:
+            existing_user.email = user.email
+        if user.phone is not None:
+            existing_user.phone = user.phone
+        if user.businessPurpose is not None:
+            existing_user.businessPurpose = user.businessPurpose
+
+        print(user)
+        # Update user groups if provided
+        if user.groups is not None:
+            groups = await Group.find({"_id": {"$in": user.groups}}).to_list()
+            if len(groups) != len(user.groups):
+                raise HTTPException(status_code=404, detail="Some groups not found")
+            existing_user.groupIds = [group.id for group in groups]
+
+        # Update user projects if provided
+        if user.projects is not None:
+            projects = await Project.find({"_id": {"$in": user.projects}}).to_list()
+            if len(projects) != len(user.projects):
+                raise HTTPException(status_code=404, detail="Some projects not found")
+            existing_user.projectIds = [project.id for project in projects]
+
+        # Save the changes
+        await existing_user.save()
+
+        return {
+            "message": "User updated successfully"
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
 @router.post("/sign-up")
 async def sign_up(user: UserSignUpRequest):
@@ -449,6 +499,33 @@ async def approve_user(request: UserApprove):
         
     except HTTPException as error:
         raise error
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+
+@router.post("/reject_user")
+async def reject_user(request: RejectUserRequest):
+    """
+    Reject a user by setting their status to 'Rejected' and updating the rejection reason.
+    """
+    try:
+        # Convert user_id to PydanticObjectId
+        user_id = request.user_id
+
+        # Find the user by ID
+        user = await User.find_one(User.id == user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Update the user's status and rejection reason
+        user.status = "Rejected"
+        user.reason = request.reason
+        user.updatedAt = datetime.utcnow()
+
+        # Save the changes
+        await user.save()
+
+        return {"message": f"User with ID {user_id} has been rejected successfully"}
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 

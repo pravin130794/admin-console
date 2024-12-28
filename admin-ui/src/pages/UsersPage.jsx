@@ -54,7 +54,7 @@ const UserPage = () => {
     confirmPassword: "",
     group: "",
     role: "",
-    purpose: "",
+    businessPurpose: "",
   });
   const [apiLoading, setApiLoading] = useState(false);
   const [selectedGroups, setSelectedGroups] = useState([]);
@@ -74,10 +74,10 @@ const UserPage = () => {
 
   // Fetch groups data when the modal opens
   useEffect(() => {
-    if (openRegister || openApprove) {
+    if (openRegister || openApprove || openEdit) {
       fetchGroups();
     }
-  }, [openRegister, openApprove]);
+  }, [openRegister, openApprove, openEdit]);
 
   useEffect(() => {
     fetchUsers();
@@ -155,9 +155,44 @@ const UserPage = () => {
     setSelectedUser(user);
     setOpenReject(true);
   };
-  const handleRejectClose = () => {
-    setOpenReject(false);
-    setReason("");
+
+  const handleRejectClose = async () => {
+    setApiLoading(true);
+    try {
+      const response = await fetch("http://localhost:8000/api/v1/reject_user", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          reason: reason,
+          user_id: selectedUser.id,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Failed to add user.");
+      }
+
+      setSnackbar({
+        open: true,
+        message: "User rejected successfully!",
+        severity: "success",
+      });
+      fetchUsers();
+    } catch (error) {
+      console.error("Error rejecting user:", error);
+      setSnackbar({
+        open: true,
+        message: error.message || "An error occurred.",
+        severity: "error",
+      });
+    } finally {
+      setApiLoading(false);
+      setOpenReject(false);
+      setReason("");
+    }
   };
 
   // Approve Modal Handlers
@@ -243,7 +278,7 @@ const UserPage = () => {
   // Open Edit User Modal
   const handleEditOpen = (user) => {
     setSelectedUser(user);
-    setEditedData(user); // Pre-fill form with selected user's data
+    setEditedData(user);
     setOpenEdit(true);
   };
 
@@ -252,9 +287,43 @@ const UserPage = () => {
     setEditedData({});
   };
 
-  const handleEditSave = () => {
+  const handleEditSave = async () => {
     console.log("Updated User Data:", editedData);
-    handleEditClose();
+    // if (!validateRegisterForm()) return;
+    editedData.groups = selectedGroups;
+    setApiLoading(true);
+    try {
+      const response = await fetch(`http://localhost:8000/api/v1/users`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(editedData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Failed to add user.");
+      }
+
+      setSnackbar({
+        open: true,
+        message: "User updated successfully!",
+        severity: "success",
+      });
+
+      handleEditClose();
+      fetchUsers();
+    } catch (error) {
+      console.error("Error update user:", error);
+      setSnackbar({
+        open: true,
+        message: error.message || "An error occurred.",
+        severity: "error",
+      });
+    } finally {
+      setApiLoading(false);
+    }
   };
 
   // Handle Input Changes
@@ -262,6 +331,49 @@ const UserPage = () => {
     setEditedData({ ...editedData, [field]: value });
   };
 
+  const validateRegisterForm = () => {
+    const {
+      firstName,
+      lastName,
+      email,
+      phone,
+      username,
+      password,
+      confirmPassword,
+      group,
+      role,
+    } = registerData;
+
+    if (
+      !firstName ||
+      !lastName ||
+      !email ||
+      !phone ||
+      !username ||
+      !password ||
+      !confirmPassword ||
+      !group ||
+      !role
+    ) {
+      setSnackbar({
+        open: true,
+        message: "Please fill all required fields.",
+        severity: "warning",
+      });
+      return false;
+    }
+
+    if (password !== confirmPassword) {
+      setSnackbar({
+        open: true,
+        message: "Passwords do not match.",
+        severity: "error",
+      });
+      return false;
+    }
+
+    return true;
+  };
   // Open Register User Modal
   const handleRegisterOpen = () => {
     setRegisterData({
@@ -274,7 +386,7 @@ const UserPage = () => {
       confirmPassword: "",
       group: "",
       role: "",
-      purpose: "",
+      businessPurpose: "",
     });
     setOpenRegister(true);
   };
@@ -283,9 +395,41 @@ const UserPage = () => {
     setOpenRegister(false);
   };
 
-  const handleRegisterSave = () => {
-    console.log("Registered User Data:", registerData);
-    handleRegisterClose();
+  const handleRegisterSave = async () => {
+    if (!validateRegisterForm()) return;
+    setApiLoading(true);
+    try {
+      const response = await fetch("http://localhost:8000/api/v1/users", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(registerData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Failed to add user.");
+      }
+
+      setSnackbar({
+        open: true,
+        message: "User added successfully!",
+        severity: "success",
+      });
+
+      handleRegisterClose();
+      fetchUsers();
+    } catch (error) {
+      console.error("Error adding user:", error);
+      setSnackbar({
+        open: true,
+        message: error.message || "An error occurred.",
+        severity: "error",
+      });
+    } finally {
+      setApiLoading(false);
+    }
   };
 
   const handleRegisterInputChange = (field, value) => {
@@ -647,7 +791,7 @@ const UserPage = () => {
                 <Typography fontWeight="bold">
                   Business Purpose:{" "}
                   <span style={{ color: "orange" }}>
-                    {selectedUser.purpose}
+                    {selectedUser.businessPurpose}
                   </span>
                 </Typography>
               </Box>
@@ -835,13 +979,32 @@ const UserPage = () => {
                     handleUpdateInputChange("phone", e.target.value)
                   }
                 />
-                <TextField
-                  label="Group *"
-                  value={editedData.group || ""}
-                  onChange={(e) =>
-                    handleUpdateInputChange("group", e.target.value)
-                  }
-                />
+
+                <FormControl fullWidth>
+                  <InputLabel>Group *</InputLabel>
+                  <Select
+                    value={selectedGroups[0]}
+                    onChange={handleGroupSelect}
+                    renderValue={(selectedGroups) => {
+                      selectedGroups.map(
+                        (id) => groups.find((group) => group._id === id)?.name
+                      );
+                    }}
+                    disabled={loadingGroups} // Disable dropdown while loading
+                  >
+                    {loadingGroups ? (
+                      <MenuItem disabled>
+                        <CircularProgress size={20} /> Loading...
+                      </MenuItem>
+                    ) : (
+                      groups.map((group) => (
+                        <MenuItem key={group.id} value={group._id}>
+                          {group.name}
+                        </MenuItem>
+                      ))
+                    )}
+                  </Select>
+                </FormControl>
                 <Box sx={{ minWidth: 120 }}>
                   <FormControl fullWidth>
                     <InputLabel id="demo-simple-select-label">Role</InputLabel>
@@ -865,9 +1028,9 @@ const UserPage = () => {
                 fullWidth
                 margin="normal"
                 label="Business Purpose"
-                value={editedData.purpose || ""}
+                value={editedData.businessPurpose || ""}
                 onChange={(e) =>
-                  handleUpdateInputChange("purpose", e.target.value)
+                  handleUpdateInputChange("businessPurpose", e.target.value)
                 }
               />
               <Box textAlign="right" mt={2}>
@@ -1015,9 +1178,9 @@ const UserPage = () => {
               fullWidth
               margin="normal"
               label="Business Purpose"
-              value={registerData.purpose}
+              value={registerData.businessPurpose}
               onChange={(e) =>
-                handleRegisterInputChange("purpose", e.target.value)
+                handleRegisterInputChange("businessPurpose", e.target.value)
               }
             />
             <Box textAlign="right" mt={2}>
