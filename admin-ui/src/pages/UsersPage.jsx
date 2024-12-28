@@ -16,6 +16,7 @@ import {
   Select,
   MenuItem,
   Backdrop,
+  TablePagination,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import InputLabel from "@mui/material/InputLabel";
@@ -39,8 +40,9 @@ const UserPage = () => {
   const [editedData, setEditedData] = useState({});
   const [openApprove, setOpenApprove] = useState(false);
   const [reason, setReason] = useState("");
-  const [group, setGroup] = useState("");
   const [role, setRole] = useState("");
+  const [page, setPage] = useState(0); // Current page
+  const [rowsPerPage, setRowsPerPage] = useState(10); // Rows per page
   const [openRegister, setOpenRegister] = useState(false);
   const [registerData, setRegisterData] = useState({
     firstName: "",
@@ -81,6 +83,20 @@ const UserPage = () => {
     fetchUsers();
   }, []);
 
+  // Handle page change
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  // Handle rows per page change
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0); // Reset to the first page
+  };
+  const paginatedUsers = users.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
+  );
   const fetchGroups = async () => {
     setLoadingGroups(true);
     try {
@@ -334,8 +350,8 @@ const UserPage = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {users &&
-                users.map((user, index) => (
+              {paginatedUsers &&
+                paginatedUsers.map((user, index) => (
                   <TableRow key={user.id}>
                     <TableCell>{index + 1}</TableCell>
                     <TableCell>{user.username}</TableCell>
@@ -414,7 +430,16 @@ const UserPage = () => {
           </Table>
         </TableContainer>
       </Box>
-
+      {/* Pagination */}
+      <TablePagination
+        component="div"
+        count={users.length}
+        page={page}
+        onPageChange={handleChangePage}
+        rowsPerPage={rowsPerPage}
+        onRowsPerPageChange={handleChangeRowsPerPage}
+        rowsPerPageOptions={[10, 25, 50]}
+      />
       {/* Delete User Modal */}
       <Modal open={openDelete} onClose={handleDeleteClose}>
         <Box
