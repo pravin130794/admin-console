@@ -6,9 +6,8 @@ import {
   ListItem,
   ListItemText,
   Divider,
-  Button,
-  Paper,
 } from "@mui/material";
+import iphone_13 from "../assets/iphone_13.png";
 
 const DevicesPage = () => {
   const [selectedDevice, setSelectedDevice] = useState(
@@ -36,14 +35,14 @@ const DevicesPage = () => {
   ];
 
   return (
-    <Box display="flex" height="100vh" bgcolor="#f0f0f0">
+    <Box display="flex" height="100vh" overflow="hidden">
       {/* Device List Box */}
       <Box
         width="300px"
         bgcolor="white"
         borderRight="1px solid #ddd"
         p={2}
-        overflow="auto"
+        sx={{ overflowY: "auto" }}
       >
         <Typography variant="h6" gutterBottom>
           Device List
@@ -79,29 +78,41 @@ const DevicesPage = () => {
         justifyContent="center"
         alignItems="center"
         p={2}
+        overflow="hidden"
+        bgcolor="#f8f9fa"
       >
-        <Paper
-          elevation={3}
+        <Box
+          position="relative"
+          width="370px" // Adjusted width for accuracy
+          height="810px" // Adjusted height for accuracy
           sx={{
-            width: 375,
-            height: 812,
-            borderRadius: "24px",
-            overflow: "hidden",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
+            backgroundImage: `url(${iphone_13})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            // borderRadius: "24px",
+            // boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.2)",
           }}
         >
-          <iframe
-            src={selectedDevice}
-            title="Device Frame"
-            style={{
-              width: "100%",
-              height: "100%",
-              border: "none",
-            }}
-          />
-        </Paper>
+          <Box
+            position="absolute"
+            top="7.8%" // Fine-tuned top positioning
+            left="6.5%" // Fine-tuned left positioning
+            width="87%" // Fine-tuned width
+            height="84.9%" // Fine-tuned height
+            overflow="auto"
+            borderRadius="45px"
+          >
+            <iframe
+              src={selectedDevice}
+              title="Device Frame"
+              style={{
+                width: "100%",
+                height: "100%",
+                border: "none",
+              }}
+            />
+          </Box>
+        </Box>
       </Box>
     </Box>
   );

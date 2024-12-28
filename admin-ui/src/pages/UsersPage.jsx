@@ -113,7 +113,10 @@ const UserPage = () => {
   const fetchUsers = async () => {
     setLoadingUsers(true);
     try {
-      const response = await fetch("http://localhost:8000/api/v1/users"); // Replace with your API
+      const user_id = localStorage.getItem("user_id");
+      const response = await fetch(
+        `http://localhost:8000/api/v1/users?user_id=${user_id}`
+      ); // Replace with your API
       const data = await response.json();
       setUsers(data.users); // Assuming API returns an array of users
     } catch (error) {

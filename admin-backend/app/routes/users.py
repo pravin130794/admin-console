@@ -70,52 +70,89 @@ async def create_user(user: User):
     await user.create()
     return user
 
-# Get all users
 @router.get("/users")
-async def get_user_list(skip: int = Query(0, ge=0), limit: int = Query(10, ge=1)):
+async def get_user_list(
+    user_id: str,  # Pass user_id as a query parameter
+    skip: int = Query(0, ge=0),  # Pagination: Number of items to skip
+    limit: int = Query(10, ge=1)  # Pagination: Number of items to fetch
+):
     """
-    Get a paginated list of users.
-    :param skip: Number of items to skip (default: 0)
-    :param limit: Number of items to return (default: 10)
+    Get a paginated list of users based on the provided user_id's role.
+    - SuperAdmin: See all users.
+    - GroupAdmin: See users in groups they manage.
+    - Regular User: See users in the same groups.
     """
-    # Fetch users with pagination
-    users = await User.find_all().skip(skip).limit(limit).to_list()
-    user_list = []
+    try:
+        # Convert user_id to PydanticObjectId
+        user_id = PydanticObjectId(user_id)
 
-    for user in users:
-        # Fetch groups for the current user
-        groups = await Group.find({"_id": {"$in": user.groupIds}}).to_list()
+        # Fetch the current user from the database
+        current_user = await User.find_one(User.id == user_id)
+        if not current_user:
+            raise HTTPException(status_code=404, detail="User not found")
 
-        # Fetch projects for the current user
-        projects = await Project.find({"_id": {"$in": user.projectIds}}).to_list()
+        user_list = []
 
-        user_data = {
-            "id": str(user.id),
-            "firstName": user.firstName,
-            "lastName": user.lastName,
-            "email": user.email,
-            "phone": user.phone,
-            "username": user.username,
-            "role": user.role,
-            "status": user.status,
-            "isActive": user.isActive,
-            "isApproved": user.isApproved,
-            "createdAt": user.createdAt,
-            "updatedAt": user.updatedAt,
-            "groups": groups,
-            "projects": projects,
+        # SuperAdmin: Fetch all users
+        if current_user.role == "SuperAdmin":
+            users = await User.find_all().skip(skip).limit(limit).to_list()
+
+        # GroupAdmin: Fetch users in groups managed by the admin
+        elif current_user.role == "GroupAdmin":
+            group_ids = current_user.groupIds
+            if not group_ids:
+                raise HTTPException(status_code=403, detail="No groups assigned to the GroupAdmin.")
+            users = await User.find({"groupIds": {"$in": group_ids}}).skip(skip).limit(limit).to_list()
+
+        # Regular User: Fetch users in the same groups
+        else:
+            group_ids = current_user.groupIds
+            if not group_ids:
+                raise HTTPException(status_code=403, detail="No groups associated with the user.")
+            users = await User.find({"groupIds": {"$in": group_ids}}).skip(skip).limit(limit).to_list()
+
+        # Prepare the user list response
+        for user in users:
+            # Fetch groups for the current user
+            groups = await Group.find({"_id": {"$in": user.groupIds}}).to_list()
+
+            # Fetch projects for the current user
+            projects = await Project.find({"_id": {"$in": user.projectIds}}).to_list()
+
+            user_data = {
+                "id": str(user.id),
+                "firstName": user.firstName,
+                "lastName": user.lastName,
+                "email": user.email,
+                "phone": user.phone,
+                "username": user.username,
+                "role": user.role,
+                "status": user.status,
+                "isActive": user.isActive,
+                "isApproved": user.isApproved,
+                "createdAt": user.createdAt,
+                "updatedAt": user.updatedAt,
+                "groups": groups,
+                "projects": projects,
+            }
+            user_list.append(user_data)
+
+        # Calculate total users for pagination context
+        total_users = (
+            await User.find_all().count()
+            if current_user.role == "SuperAdmin"
+            else await User.find({"groupIds": {"$in": current_user.groupIds}}).count()
+        )
+
+        return {
+            "total": total_users,
+            "skip": skip,
+            "limit": limit,
+            "users": user_list,
         }
-        user_list.append(user_data)
 
-    # Total number of users for additional context
-    total_users = await User.find_all().count()
-
-    return {
-        "total": total_users,
-        "skip": skip,
-        "limit": limit,
-        "users": user_list,
-    }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
 # Get a single user by ID
 @router.get("/users/{user_id}")
@@ -297,7 +334,7 @@ async def login(user: UserLoginRequest):
     # ).to_list(limit=1)
 
     if valid_token and valid_token.expires_at > datetime.utcnow(): # Extract the first document from the list
-        return {"message": "Login successful.", "access_token": valid_token.token}
+        return {"message": "Login successful.", "access_token": valid_token.token, "user_id":str(db_user.id)}
 
     # Generate a new JWT token
     token = create_access_token({"sub": str(db_user.id), "username": db_user.username})
