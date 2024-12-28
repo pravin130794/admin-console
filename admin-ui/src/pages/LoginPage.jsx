@@ -15,6 +15,7 @@ import LockIcon from "@mui/icons-material/Lock";
 import EmailIcon from "@mui/icons-material/Email";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/Auth";
+import logo from "../assets/logo.png";
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -157,7 +158,17 @@ const LoginPage = () => {
         <source src={videoBg} autoPlay loop muted />
         Your browser does not support the video tag.
       </video>
-
+      {/* Logo Section */}
+      <Box
+        sx={{
+          position: "absolute",
+          top: 16,
+          right: 16,
+          zIndex: 10,
+        }}
+      >
+        <img src={logo} alt="Sapphire Logo" style={{ height: "10rem" }} />
+      </Box>
       {/* Login Card */}
       <Paper
         sx={{

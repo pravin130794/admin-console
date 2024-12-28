@@ -1,6 +1,6 @@
 import React from "react";
 import { Routes, Route } from "react-router-dom";
-import SidebarLayout from "./layouts/SidebarLayout";
+import AppBarLayout from "./layouts/AppBarLayout";
 import DashboardPage from "./pages/DashboardPage";
 import UsersPage from "./pages/UsersPage";
 import GroupsPage from "./pages/GroupsPage";
@@ -22,7 +22,7 @@ const App = () => {
         <Route path="/otp" element={<OtpPage />} />
 
         {/* Protected Routes with Sidebar */}
-        <Route element={<SidebarLayout />}>
+        <Route element={<AppBarLayout />}>
           <Route element={<RequireAuth />}>
             <Route path="/" element={<DashboardPage />} />
             <Route path="/users" element={<UsersPage />} />

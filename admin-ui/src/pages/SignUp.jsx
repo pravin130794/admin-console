@@ -11,6 +11,7 @@ import {
 import videoBg from "../assets/bgvideo.mp4";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import { useNavigate } from "react-router-dom";
+import logo from "../assets/logo.png";
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -152,7 +153,17 @@ const SignUp = () => {
         <source src={videoBg} autoPlay loop muted />
         Your browser does not support the video tag.
       </video>
-
+      {/* Logo Section */}
+      <Box
+        sx={{
+          position: "absolute",
+          top: 16,
+          right: 16,
+          zIndex: 10,
+        }}
+      >
+        <img src={logo} alt="Sapphire Logo" style={{ height: "10rem" }} />
+      </Box>
       {/* Sign Up Card */}
       <Paper
         sx={{

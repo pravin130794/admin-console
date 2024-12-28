@@ -302,9 +302,6 @@ const UserPage = () => {
           borderRadius: "5px",
         }}
       >
-        <Typography variant="h6" fontWeight="bold">
-          SAPPHIRE
-        </Typography>
         <Typography variant="h5" fontWeight="bold">
           User Management
         </Typography>
