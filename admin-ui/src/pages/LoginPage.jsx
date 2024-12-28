@@ -9,6 +9,7 @@ import {
   Alert,
   InputAdornment,
 } from "@mui/material";
+import videoBg from "../assets/bgvideo.mp4";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import LockIcon from "@mui/icons-material/Lock";
 import EmailIcon from "@mui/icons-material/Email";
@@ -42,7 +43,7 @@ const LoginPage = () => {
       errors.username = "Username is required.";
     }
     // Password Validation
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/; // Must include a-z, A-Z, 0-9, special characters, min length 8
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
     if (!formData.password.trim()) {
       errors.password = "Password is required.";
     } else if (!passwordRegex.test(formData.password)) {
@@ -59,7 +60,6 @@ const LoginPage = () => {
       ...prev,
       [name]: value,
     }));
-    // Clear the error for the specific field
     setFormErrors((prev) => ({
       ...prev,
       [name]: "",
@@ -131,27 +131,32 @@ const LoginPage = () => {
   return (
     <Box
       sx={{
-        backgroundImage: "url('https://source.unsplash.com/random/1920x1080')",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
+        position: "relative",
         height: "100vh",
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        position: "relative",
       }}
     >
-      <Box
-        sx={{
+      {/* Background Video */}
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        style={{
           position: "absolute",
           top: 0,
           left: 0,
           width: "100%",
           height: "100%",
-          backgroundColor: "rgba(0, 0, 0, 0.5)",
-          zIndex: 1,
+          objectFit: "cover",
+          zIndex: -1,
         }}
-      ></Box>
+      >
+        <source src={videoBg} autoPlay loop muted />
+        Your browser does not support the video tag.
+      </video>
 
       {/* Login Card */}
       <Paper

@@ -8,9 +8,9 @@ import {
   Snackbar,
   Alert,
 } from "@mui/material";
+import videoBg from "../assets/bgvideo.mp4";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import { useNavigate } from "react-router-dom";
-import SnackbarComponent from "../components/Snackbar";
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -42,7 +42,6 @@ const SignUp = () => {
       ...prev,
       [name]: value,
     }));
-    // Clear the error for the specific field
     setFormErrors((prev) => ({
       ...prev,
       [name]: "",
@@ -84,7 +83,6 @@ const SignUp = () => {
       return;
     }
     try {
-      // Signp an API call
       const response = await fetch("http://localhost:8000/api/v1/sign-up", {
         method: "POST",
         headers: {
@@ -99,19 +97,16 @@ const SignUp = () => {
       const result = await response.json();
       console.log(result);
 
-      // Show success message and redirect to dashboard
       setSnackbar({
         open: true,
         message: result.message || "Registration successful!",
         severity: "success",
       });
 
-      // Redirect to dashboard after success
       setTimeout(() => {
         navigate(`/otp?email=${formData.email}`);
       }, 1500);
     } catch (error) {
-      // Show error message in snackbar
       setSnackbar({
         open: true,
         message: error.message || "An error occurred. Please try again.",
@@ -131,27 +126,32 @@ const SignUp = () => {
   return (
     <Box
       sx={{
-        backgroundImage: "url('https://source.unsplash.com/random/1920x1080')",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
+        position: "relative",
         height: "100vh",
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        position: "relative",
       }}
     >
-      <Box
-        sx={{
+      {/* Background Video */}
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        style={{
           position: "absolute",
           top: 0,
           left: 0,
           width: "100%",
           height: "100%",
-          backgroundColor: "rgba(0, 0, 0, 0.5)",
-          zIndex: 1,
+          objectFit: "cover",
+          zIndex: -1,
         }}
-      ></Box>
+      >
+        <source src={videoBg} autoPlay loop muted />
+        Your browser does not support the video tag.
+      </video>
 
       {/* Sign Up Card */}
       <Paper
@@ -171,7 +171,7 @@ const SignUp = () => {
         <Box
           sx={{
             position: "absolute",
-            top: "-50px", // Moves half-outside
+            top: "-50px",
             left: "50%",
             transform: "translate(-50%, 0)",
             backgroundColor: "#001a99",
@@ -251,7 +251,7 @@ const SignUp = () => {
             error={!!formErrors.phone}
             helperText={formErrors.phone}
             onChange={handleChange}
-            sx={{ marginBottom: 1 }}
+            sx={{ marginBottom: 2 }}
           />
 
           <Typography mt={2} variant="body2" color="gray">
@@ -281,13 +281,20 @@ const SignUp = () => {
         </Box>
       </Paper>
 
-      {/* Snackbar for alerts */}
-      <SnackbarComponent
+      {/* Snackbar for Alerts */}
+      <Snackbar
         open={snackbar.open}
-        message={snackbar.message}
-        severity={snackbar.severity}
+        autoHideDuration={3000}
         onClose={handleCloseSnackbar}
-      />
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
