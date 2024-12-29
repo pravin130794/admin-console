@@ -156,3 +156,6 @@ class UserUpdateRequest(BaseModel):
     groups: List[PydanticObjectId]= []  # List of group IDs
     projects: List[PydanticObjectId]= []  # List of project IDs
     
+# Request schema for deactivating a user
+class InactivateUserRequest(BaseModel):
+    reason: Optional[str] = None  # Reason for inactivation

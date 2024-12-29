@@ -28,7 +28,6 @@ import CloseIcon from "@mui/icons-material/Close";
 import CancelIcon from "@mui/icons-material/Cancel";
 import FormControl from "@mui/material/FormControl";
 import CircularProgress from "@mui/material/CircularProgress";
-import { PendingActions } from "@mui/icons-material";
 import SnackbarComponent from "../components/Snackbar";
 
 const UserPage = () => {
@@ -44,6 +43,17 @@ const UserPage = () => {
   const [page, setPage] = useState(0); // Current page
   const [rowsPerPage, setRowsPerPage] = useState(10); // Rows per page
   const [openRegister, setOpenRegister] = useState(false);
+  const [apiLoading, setApiLoading] = useState(false);
+  const [selectedGroups, setSelectedGroups] = useState([]);
+  const [groups, setGroups] = useState([]);
+  const [loadingGroups, setLoadingGroups] = useState(false);
+  const [users, setUsers] = useState([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "info", // Can be 'success', 'error', 'warning', 'info'
+  });
   const [registerData, setRegisterData] = useState({
     firstName: "",
     lastName: "",
@@ -56,23 +66,7 @@ const UserPage = () => {
     role: "",
     businessPurpose: "",
   });
-  const [apiLoading, setApiLoading] = useState(false);
-  const [selectedGroups, setSelectedGroups] = useState([]);
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: "",
-    severity: "info", // Can be 'success', 'error', 'warning', 'info'
-  });
-  const handleCloseSnackbar = () => {
-    setSnackbar((prev) => ({ ...prev, open: false }));
-  };
 
-  const [groups, setGroups] = useState([]); // State for groups data
-  const [loadingGroups, setLoadingGroups] = useState(false); // Loading state for API call
-  const [users, setUsers] = useState([]); // State for groups data
-  const [loadingUsers, setLoadingUsers] = useState(false); // Loading state for API call
-
-  // Fetch groups data when the modal opens
   useEffect(() => {
     if (openRegister || openApprove || openEdit) {
       fetchGroups();
@@ -83,20 +77,24 @@ const UserPage = () => {
     fetchUsers();
   }, []);
 
-  // Handle page change
+  const handleCloseSnackbar = () => {
+    setSnackbar((prev) => ({ ...prev, open: false }));
+  };
+
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
 
-  // Handle rows per page change
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0); // Reset to the first page
   };
+
   const paginatedUsers = users.slice(
     page * rowsPerPage,
     page * rowsPerPage + rowsPerPage
   );
+
   const fetchGroups = async () => {
     setLoadingGroups(true);
     try {
@@ -126,37 +124,79 @@ const UserPage = () => {
     }
   };
 
-  // Open Delete Modal
   const handleDeleteOpen = (user) => {
     setSelectedUser(user);
     setOpenDelete(true);
   };
 
-  // Close Delete Modal
-  const handleDeleteClose = () => {
+  const handleDeleteClose = async () => {
     setOpenDelete(false);
     setReason("");
   };
 
-  // Open View User Details Modal
+  const handleDelete = async () => {
+    setApiLoading(true);
+    try {
+      const user_id = localStorage.getItem("user_id");
+      const response = await fetch(
+        `http://localhost:8000/api/v1/${user_id}/inactivate`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            reason: reason,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Failed to add user.");
+      }
+
+      setSnackbar({
+        open: true,
+        message: "User deleted successfully!",
+        severity: "success",
+      });
+      fetchUsers();
+    } catch (error) {
+      console.error("Error rejecting user:", error);
+      setSnackbar({
+        open: true,
+        message: error.message || "An error occurred.",
+        severity: "error",
+      });
+    } finally {
+      setApiLoading(false);
+      setOpenDelete(false);
+      setReason("");
+    }
+  };
+
   const handleViewOpen = (user) => {
     setSelectedUser(user);
     setOpenView(true);
   };
 
-  // Close View Modal
   const handleViewClose = () => {
     setOpenView(false);
     setSelectedUser(null);
   };
 
-  // Handlers for Reject Modal
   const handleRejectOpen = (user) => {
     setSelectedUser(user);
     setOpenReject(true);
   };
 
   const handleRejectClose = async () => {
+    setOpenReject(false);
+    setReason("");
+  };
+
+  const handleReject = async () => {
     setApiLoading(true);
     try {
       const response = await fetch("http://localhost:8000/api/v1/reject_user", {
@@ -195,7 +235,6 @@ const UserPage = () => {
     }
   };
 
-  // Approve Modal Handlers
   const handleApproveOpen = (user) => {
     setSelectedUser(user);
     setOpenApprove(true);
@@ -275,22 +314,20 @@ const UserPage = () => {
     }
   };
 
-  // Open Edit User Modal
   const handleEditOpen = (user) => {
     setSelectedUser(user);
-    setEditedData(user);
+    setEditedData({
+      ...user,
+      groups: user.groups.map((group) => group._id), // Map existing groups to their IDs
+    });
     setOpenEdit(true);
   };
 
   const handleEditClose = () => {
     setOpenEdit(false);
-    setEditedData({});
   };
 
   const handleEditSave = async () => {
-    console.log("Updated User Data:", editedData);
-    // if (!validateRegisterForm()) return;
-    editedData.groups = selectedGroups;
     setApiLoading(true);
     try {
       const response = await fetch(`http://localhost:8000/api/v1/users`, {
@@ -326,7 +363,6 @@ const UserPage = () => {
     }
   };
 
-  // Handle Input Changes
   const handleUpdateInputChange = (field, value) => {
     setEditedData({ ...editedData, [field]: value });
   };
@@ -374,7 +410,7 @@ const UserPage = () => {
 
     return true;
   };
-  // Open Register User Modal
+
   const handleRegisterOpen = () => {
     setRegisterData({
       firstName: "",
@@ -443,15 +479,18 @@ const UserPage = () => {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          backgroundColor: "#001a99",
+          backgroundImage:
+            "linear-gradient(to left, #5A8DFF, #001a99, #000080)",
           color: "white",
           padding: "10px 20px",
           borderRadius: "5px",
         }}
       >
-        <Typography variant="h5" fontWeight="bold">
-          User Management
-        </Typography>
+        <Box sx={{ flex: 1, textAlign: "center" }}>
+          <Typography variant="h5" fontWeight="bold">
+            User Management
+          </Typography>
+        </Box>
         <Box>
           <Button
             variant="contained"
@@ -460,11 +499,6 @@ const UserPage = () => {
           >
             <Typography variant="h8" fontWeight="bold" color="#001a99">
               + Add User
-            </Typography>
-          </Button>
-          <Button variant="contained" sx={{ backgroundColor: "#ffffff" }}>
-            <Typography variant="h8" fontWeight="bold" color="#001a99">
-              + Add Group
             </Typography>
           </Button>
         </Box>
@@ -494,7 +528,7 @@ const UserPage = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {paginatedUsers &&
+              {paginatedUsers.length > 0 ? (
                 paginatedUsers.map((user, index) => (
                   <TableRow key={user.id}>
                     <TableCell>{index + 1}</TableCell>
@@ -569,7 +603,16 @@ const UserPage = () => {
                       </IconButton>
                     </TableCell>
                   </TableRow>
-                ))}
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={5} align="center">
+                    <Typography variant="body1" color="textSecondary">
+                      No users found.
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </TableContainer>
@@ -601,7 +644,8 @@ const UserPage = () => {
         >
           <Box
             sx={{
-              backgroundColor: "#001a99",
+              backgroundImage:
+                "linear-gradient(to left, #5A8DFF, #001a99, #000080)",
               color: "white",
               padding: "10px",
               display: "flex",
@@ -631,7 +675,7 @@ const UserPage = () => {
                   background: "linear-gradient(to right, #f12711, #f5af19)",
                   color: "white",
                 }}
-                onClick={handleDeleteClose}
+                onClick={handleDelete}
               >
                 Delete
               </Button>
@@ -657,7 +701,8 @@ const UserPage = () => {
         >
           <Box
             sx={{
-              backgroundColor: "#001a99",
+              backgroundImage:
+                "linear-gradient(to left, #5A8DFF, #001a99, #000080)",
               color: "white",
               padding: "10px",
               display: "flex",
@@ -687,7 +732,7 @@ const UserPage = () => {
                   background: "linear-gradient(to right, #f12711, #f5af19)",
                   color: "white",
                 }}
-                onClick={handleRejectClose}
+                onClick={handleReject}
               >
                 Reject
               </Button>
@@ -714,7 +759,8 @@ const UserPage = () => {
           {/* Header */}
           <Box
             sx={{
-              backgroundColor: "#001a99",
+              backgroundImage:
+                "linear-gradient(to left, #5A8DFF, #001a99, #000080)",
               color: "white",
               padding: "10px",
               display: "flex",
@@ -838,7 +884,8 @@ const UserPage = () => {
         >
           <Box
             sx={{
-              backgroundColor: "#001a99",
+              backgroundImage:
+                "linear-gradient(to left, #5A8DFF, #001a99, #000080)",
               color: "white",
               padding: "10px",
               display: "flex",
@@ -933,7 +980,8 @@ const UserPage = () => {
           {/* Header */}
           <Box
             sx={{
-              backgroundColor: "#001a99",
+              backgroundImage:
+                "linear-gradient(to left, #5A8DFF, #001a99, #000080)",
               color: "white",
               padding: "10px",
               display: "flex",
@@ -979,17 +1027,37 @@ const UserPage = () => {
                     handleUpdateInputChange("phone", e.target.value)
                   }
                 />
-
                 <FormControl fullWidth>
-                  <InputLabel>Group *</InputLabel>
+                  <InputLabel>Groups *</InputLabel>
                   <Select
-                    value={selectedGroups[0]}
-                    onChange={handleGroupSelect}
-                    renderValue={(selectedGroups) => {
-                      selectedGroups.map(
-                        (id) => groups.find((group) => group._id === id)?.name
-                      );
-                    }}
+                    multiple
+                    value={editedData.groups || []} // Bind multiple group IDs
+                    onChange={
+                      (e) => handleUpdateInputChange("groups", e.target.value) // Update multiple groups
+                    }
+                    renderValue={(selected) =>
+                      selected.map((id) => {
+                        const group = groups.find((group) => group._id === id);
+                        return group ? (
+                          <Box
+                            key={group._id}
+                            sx={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              padding: "2px 8px",
+                              margin: "2px",
+                              backgroundColor: "#e0e0e0",
+                              borderRadius: "16px",
+                              fontSize: "14px",
+                            }}
+                          >
+                            {group.name}
+                          </Box>
+                        ) : (
+                          "Select Groups"
+                        );
+                      })
+                    }
                     disabled={loadingGroups} // Disable dropdown while loading
                   >
                     {loadingGroups ? (
@@ -998,13 +1066,14 @@ const UserPage = () => {
                       </MenuItem>
                     ) : (
                       groups.map((group) => (
-                        <MenuItem key={group.id} value={group._id}>
+                        <MenuItem key={group._id} value={group._id}>
                           {group.name}
                         </MenuItem>
                       ))
                     )}
                   </Select>
                 </FormControl>
+
                 <Box sx={{ minWidth: 120 }}>
                   <FormControl fullWidth>
                     <InputLabel id="demo-simple-select-label">Role</InputLabel>
@@ -1068,7 +1137,8 @@ const UserPage = () => {
           {/* Header */}
           <Box
             sx={{
-              backgroundColor: "#001a99",
+              backgroundImage:
+                "linear-gradient(to left, #5A8DFF, #001a99, #000080)",
               color: "white",
               padding: "10px",
               display: "flex",

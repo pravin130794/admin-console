@@ -2,7 +2,7 @@
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Query
 from app.middleware.auth import JWTBearer
-from app.models import Group, Project, User,UserOTP,  UserLoginRequest, UserSignUpRequest, UserToken, SuperUserCreate, UserResponse, OTPVerify, UserApprove, RejectUserRequest, UserUpdateRequest 
+from app.models import Group, Project, User,UserOTP,  UserLoginRequest, UserSignUpRequest, UserToken, SuperUserCreate, UserResponse, OTPVerify, UserApprove, RejectUserRequest, UserUpdateRequest, InactivateUserRequest 
 from bson import ObjectId
 from beanie import PydanticObjectId
 import os
@@ -77,10 +77,10 @@ async def get_user_list(
     limit: int = Query(10, ge=1)  # Pagination: Number of items to fetch
 ):
     """
-    Get a paginated list of users based on the provided user_id's role.
-    - SuperAdmin: See all users.
-    - GroupAdmin: See users in groups they manage.
-    - Regular User: See users in the same groups.
+    Get a paginated list of active users based on the provided user_id's role.
+    - SuperAdmin: See all active users.
+    - GroupAdmin: See active users in groups they manage.
+    - Regular User: See active users in the same groups.
     """
     try:
         # Convert user_id to PydanticObjectId
@@ -93,23 +93,23 @@ async def get_user_list(
 
         user_list = []
 
-        # SuperAdmin: Fetch all users
+        # SuperAdmin: Fetch all active users
         if current_user.role == "SuperAdmin":
-            users = await User.find_all().skip(skip).limit(limit).to_list()
+            users = await User.find({"isActive": True}).skip(skip).limit(limit).to_list()
 
-        # GroupAdmin: Fetch users in groups managed by the admin
+        # GroupAdmin: Fetch active users in groups managed by the admin
         elif current_user.role == "GroupAdmin":
             group_ids = current_user.groupIds
             if not group_ids:
                 raise HTTPException(status_code=403, detail="No groups assigned to the GroupAdmin.")
-            users = await User.find({"groupIds": {"$in": group_ids}}).skip(skip).limit(limit).to_list()
+            users = await User.find({"groupIds": {"$in": group_ids}, "isActive": True}).skip(skip).limit(limit).to_list()
 
-        # Regular User: Fetch users in the same groups
+        # Regular User: Fetch active users in the same groups
         else:
             group_ids = current_user.groupIds
             if not group_ids:
                 raise HTTPException(status_code=403, detail="No groups associated with the user.")
-            users = await User.find({"groupIds": {"$in": group_ids}}).skip(skip).limit(limit).to_list()
+            users = await User.find({"groupIds": {"$in": group_ids}, "isActive": True}).skip(skip).limit(limit).to_list()
 
         # Prepare the user list response
         for user in users:
@@ -138,11 +138,11 @@ async def get_user_list(
             }
             user_list.append(user_data)
 
-        # Calculate total users for pagination context
+        # Calculate total active users for pagination context
         total_users = (
-            await User.find_all().count()
+            await User.find({"isActive": True}).count()
             if current_user.role == "SuperAdmin"
-            else await User.find({"groupIds": {"$in": current_user.groupIds}}).count()
+            else await User.find({"groupIds": {"$in": current_user.groupIds}, "isActive": True}).count()
         )
 
         return {
@@ -270,15 +270,36 @@ async def get_user_details(user_id: str):
 #     return updated_user
 
 # Delete a user by ID
-@router.delete("/{user_id}")
-async def delete_user(user_id: str):
-    if not ObjectId.is_valid(user_id):
-        raise HTTPException(status_code=400, detail="Invalid user ID")
-    user = await User.get(user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    await user.delete()
-    return {"message": "User deleted successfully"}
+@router.patch("/{user_id}/inactivate")
+async def inactivate_user(user_id: str, request: InactivateUserRequest):
+    """
+    Inactivate a user by setting isActive to False and storing the reason.
+    """
+    try:
+        # Validate and convert user_id to PydanticObjectId
+        if not PydanticObjectId.is_valid(user_id):
+            raise HTTPException(status_code=400, detail="Invalid user ID")
+        user_id = PydanticObjectId(user_id)
+
+        # Find the user in the database
+        user = await User.find_one(User.id == user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Update the user's status and add a reason for inactivation
+        user.isActive = False
+        user.reason = request.reason
+        user.updatedAt = datetime.utcnow()
+
+        # Save the changes
+        await user.save()
+
+        return {"message": "User inactivated successfully"}
+
+    except HTTPException as error:
+        raise error
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
 @router.put("/users")
 async def partial_update_user(user: UserUpdateRequest):
