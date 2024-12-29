@@ -1,14 +1,14 @@
 import React from "react";
 import { Box, Typography } from "@mui/material";
 
-const DashboardPage = () => {
+const ProjectsPage = () => {
   return (
     <Box>
       <Typography variant="h4" gutterBottom>
-        Welcome to the Dashboard
+        Welcome to the Projects
       </Typography>
     </Box>
   );
 };
 
-export default DashboardPage;
+export default ProjectsPage;

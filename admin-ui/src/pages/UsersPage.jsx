@@ -37,6 +37,10 @@ const UserPage = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [openEdit, setOpenEdit] = useState(false);
   const [editedData, setEditedData] = useState({});
+  const [approveData, setApproveData] = useState({
+    role: "",
+    reason: "",
+  });
   const [openApprove, setOpenApprove] = useState(false);
   const [reason, setReason] = useState("");
   const [role, setRole] = useState("");
@@ -62,9 +66,9 @@ const UserPage = () => {
     username: "",
     password: "",
     confirmPassword: "",
-    group: "",
     role: "",
     businessPurpose: "",
+    groups: [],
   });
 
   useEffect(() => {
@@ -242,7 +246,7 @@ const UserPage = () => {
 
   const handleApproveClose = () => {
     setOpenApprove(false);
-    setSelectedGroups([]);
+    setApproveData({});
     setRole("");
     setReason("");
   };
@@ -251,14 +255,13 @@ const UserPage = () => {
     const {
       target: { value },
     } = event;
-    console.log("Selected Groups:", event);
     setSelectedGroups(
       typeof value === "string" ? value.split(",") : value // Ensure multiple selections are handled correctly
     );
   };
 
   const handleApproveSave = async () => {
-    if (!selectedUser || selectedGroups.length === 0) {
+    if (!selectedUser || approveData.groups.length === 0) {
       setSnackbar({
         open: true,
         message: "Please select at least one group and provide a reason.",
@@ -271,9 +274,10 @@ const UserPage = () => {
     const requestBody = {
       approver_user_id: user_id, // Replace with actual approver ID
       user_id: selectedUser.id,
-      groups: selectedGroups, // Send selected group IDs
+      groups: approveData.groups, // Send selected group IDs
       projects: [], // Add projects if applicable
       email: selectedUser.email,
+      role: approveData.role,
     };
     setApiLoading(true);
     try {
@@ -367,6 +371,10 @@ const UserPage = () => {
     setEditedData({ ...editedData, [field]: value });
   };
 
+  const handleApproveInputChange = (field, value) => {
+    setApproveData({ ...editedData, [field]: value });
+  };
+
   const validateRegisterForm = () => {
     const {
       firstName,
@@ -376,38 +384,63 @@ const UserPage = () => {
       username,
       password,
       confirmPassword,
-      group,
+      groups,
       role,
     } = registerData;
 
-    if (
-      !firstName ||
-      !lastName ||
-      !email ||
-      !phone ||
-      !username ||
-      !password ||
-      !confirmPassword ||
-      !group ||
-      !role
-    ) {
+    // Helper function to show error in Snackbar
+    const showError = (message) => {
       setSnackbar({
         open: true,
-        message: "Please fill all required fields.",
-        severity: "warning",
-      });
-      return false;
-    }
-
-    if (password !== confirmPassword) {
-      setSnackbar({
-        open: true,
-        message: "Passwords do not match.",
+        message,
         severity: "error",
       });
       return false;
+    };
+
+    // Required Fields Validation
+    const requiredFields = [
+      { value: firstName, label: "First Name" },
+      { value: lastName, label: "Last Name" },
+      { value: phone, label: "Phone Number" },
+      { value: username, label: "Username" },
+      { value: password, label: "Password" },
+      { value: confirmPassword, label: "Confirm Password" },
+      { value: groups, label: "Groups" },
+      { value: role, label: "Role" },
+    ];
+
+    for (const field of requiredFields) {
+      if (!field.value) {
+        return showError(`${field.label} is required.`);
+      }
     }
 
+    // Email Validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      return showError("Invalid email format.");
+    }
+
+    // Password Validation
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+    if (!passwordRegex.test(password.trim())) {
+      return showError(
+        "Password must include a mix of a-z, A-Z, 0-9, special characters, and be at least 8 characters long."
+      );
+    }
+
+    // Confirm Password Validation
+    if (password !== confirmPassword) {
+      return showError("Passwords do not match.");
+    }
+
+    // Validation Passed
+    setSnackbar({
+      open: true,
+      message: "Validation successful!",
+      severity: "success",
+    });
     return true;
   };
 
@@ -420,7 +453,7 @@ const UserPage = () => {
       username: "",
       password: "",
       confirmPassword: "",
-      group: "",
+      groups: [],
       role: "",
       businessPurpose: "",
     });
@@ -902,15 +935,36 @@ const UserPage = () => {
           </Box>
           <Box p={3}>
             <FormControl fullWidth>
-              <InputLabel>Group *</InputLabel>
+              <InputLabel>Groups *</InputLabel>
               <Select
-                value={selectedGroups[0]}
-                onChange={handleGroupSelect}
-                // renderValue={(selected) => {
-                //   selected.map(
-                //     (id) => groups.find((group) => group._id === id)?.name
-                //   );
-                // }}
+                multiple
+                value={approveData.groups || []} // Bind multiple group IDs
+                onChange={
+                  (e) => handleApproveInputChange("groups", e.target.value) // Update multiple groups
+                }
+                renderValue={(selected) =>
+                  selected.map((id) => {
+                    const group = groups.find((group) => group._id === id);
+                    return group ? (
+                      <Box
+                        key={group._id}
+                        sx={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          padding: "2px 8px",
+                          margin: "2px",
+                          backgroundColor: "#e0e0e0",
+                          borderRadius: "16px",
+                          fontSize: "14px",
+                        }}
+                      >
+                        {group.name}
+                      </Box>
+                    ) : (
+                      "Select Groups"
+                    );
+                  })
+                }
                 disabled={loadingGroups} // Disable dropdown while loading
               >
                 {loadingGroups ? (
@@ -919,7 +973,7 @@ const UserPage = () => {
                   </MenuItem>
                 ) : (
                   groups.map((group) => (
-                    <MenuItem key={group.id} value={group._id}>
+                    <MenuItem key={group._id} value={group._id}>
                       {group.name}
                     </MenuItem>
                   ))
@@ -930,8 +984,10 @@ const UserPage = () => {
               fullWidth
               select
               label="Role *"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
+              value={approveData.role}
+              onChange={(e) =>
+                setApproveData({ ...approveData, role: e.target.value })
+              }
               margin="normal"
             >
               <MenuItem value="SuperAdmin">Super Admin</MenuItem>
@@ -941,8 +997,10 @@ const UserPage = () => {
             <TextField
               fullWidth
               label="Reason"
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
+              value={approveData.reason}
+              onChange={(e) =>
+                setApproveData({ ...approveData, reason: e.target.value })
+              }
               margin="normal"
               placeholder="Enter reason"
             />
@@ -1208,13 +1266,36 @@ const UserPage = () => {
                   handleRegisterInputChange("confirmPassword", e.target.value)
                 }
               />
-
               <FormControl fullWidth>
-                <InputLabel>Group *</InputLabel>
+                <InputLabel>Groups *</InputLabel>
                 <Select
-                  value={registerData.group}
-                  onChange={(e) =>
-                    handleRegisterInputChange("group", e.target.value)
+                  multiple
+                  value={registerData.groups || []} // Bind multiple group IDs
+                  onChange={
+                    (e) => handleRegisterInputChange("groups", e.target.value) // Update multiple groups
+                  }
+                  renderValue={(selected) =>
+                    selected.map((id) => {
+                      const group = groups.find((group) => group._id === id);
+                      return group ? (
+                        <Box
+                          key={group._id}
+                          sx={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            padding: "2px 8px",
+                            margin: "2px",
+                            backgroundColor: "#e0e0e0",
+                            borderRadius: "16px",
+                            fontSize: "14px",
+                          }}
+                        >
+                          {group.name}
+                        </Box>
+                      ) : (
+                        "Select Groups"
+                      );
+                    })
                   }
                   disabled={loadingGroups} // Disable dropdown while loading
                 >
@@ -1224,7 +1305,7 @@ const UserPage = () => {
                     </MenuItem>
                   ) : (
                     groups.map((group) => (
-                      <MenuItem key={group.id} value={group.name}>
+                      <MenuItem key={group._id} value={group._id}>
                         {group.name}
                       </MenuItem>
                     ))

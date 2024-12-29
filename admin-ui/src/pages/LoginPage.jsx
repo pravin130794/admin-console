@@ -95,10 +95,11 @@ const LoginPage = () => {
         return;
       }
 
-      const { access_token, user_id } = await response.json();
+      const { access_token, user_id, role, username } = await response.json();
 
       localStorage.setItem("authToken", access_token);
       localStorage.setItem("user_id", user_id);
+      localStorage.setItem("username", username);
 
       setSnackbar({
         open: true,
@@ -107,8 +108,8 @@ const LoginPage = () => {
       });
 
       setTimeout(() => {
-        login(formData.username);
-        navigate("/");
+        login(role);
+        navigate("/devices");
       }, 1000);
     } catch (error) {
       setSnackbar({

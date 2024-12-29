@@ -11,18 +11,18 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
     // Initialize user from localStorage
-    const storedUser = localStorage.getItem("user");
-    return storedUser ? JSON.parse(storedUser) : null;
+    const storedUserRole = localStorage.getItem("role");
+    return storedUserRole ? storedUserRole : null;
   });
 
   const login = (userData) => {
     setUser(userData);
-    localStorage.setItem("user", JSON.stringify(userData)); // Persist user
+    localStorage.setItem("role", userData); // Persist user
   };
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem("user"); // Clear user data
+    localStorage.clear();
   };
 
   return (

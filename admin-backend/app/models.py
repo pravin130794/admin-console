@@ -140,6 +140,7 @@ class UserApprove(BaseModel):
     groups: List[PydanticObjectId]  # List of group IDs
     projects: List[PydanticObjectId]  # List of project IDs
     email: EmailStr
+    role: str
 
 class RejectUserRequest(BaseModel):
     user_id: PydanticObjectId
@@ -159,3 +160,15 @@ class UserUpdateRequest(BaseModel):
 # Request schema for deactivating a user
 class InactivateUserRequest(BaseModel):
     reason: Optional[str] = None  # Reason for inactivation
+
+# Request schema for creating a user
+class CreateUserRequest(BaseModel):
+    firstName: str
+    lastName: str
+    email: EmailStr
+    phone: str
+    username: str
+    password: str
+    role: str  # Role of the user (e.g., "SuperAdmin", "GroupAdmin", "User")
+    groups: List[PydanticObjectId] = [] # List of group IDs to assign to the user
+    businessPurpose: str

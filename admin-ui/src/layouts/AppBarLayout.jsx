@@ -17,6 +17,7 @@ import { useAuth } from "../context/Auth";
 const AppBarLayout = () => {
   const navigate = useNavigate();
   const { logout } = useAuth();
+  const username = localStorage.getItem("username");
 
   const handleLogout = () => {
     localStorage.removeItem("authToken");
@@ -47,6 +48,18 @@ const AppBarLayout = () => {
             <Box display="flex">
               <Button
                 component={Link}
+                to="/devices"
+                sx={{
+                  color: "white",
+                  marginRight: "16px",
+                  textTransform: "none",
+                  fontSize: "16px",
+                }}
+              >
+                Devices
+              </Button>
+              <Button
+                component={Link}
                 to="/users"
                 sx={{
                   color: "white",
@@ -71,14 +84,15 @@ const AppBarLayout = () => {
               </Button>
               <Button
                 component={Link}
-                to="/devices"
+                to="/projects"
                 sx={{
                   color: "white",
+                  marginRight: "16px",
                   textTransform: "none",
                   fontSize: "16px",
                 }}
               >
-                Devices
+                Projects
               </Button>
             </Box>
           </Box>
@@ -91,6 +105,7 @@ const AppBarLayout = () => {
                 color: "white",
               }}
             >
+              <Typography sx={{ marginRight: "8px" }}>{username}</Typography>
               <LogoutIcon />
             </IconButton>
           </Box>

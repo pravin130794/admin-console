@@ -2,7 +2,7 @@
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Query
 from app.middleware.auth import JWTBearer
-from app.models import Group, Project, User,UserOTP,  UserLoginRequest, UserSignUpRequest, UserToken, SuperUserCreate, UserResponse, OTPVerify, UserApprove, RejectUserRequest, UserUpdateRequest, InactivateUserRequest 
+from app.models import Group, Project, User,UserOTP,  UserLoginRequest, UserSignUpRequest, UserToken, SuperUserCreate, UserResponse, OTPVerify, UserApprove, RejectUserRequest, UserUpdateRequest, InactivateUserRequest, CreateUserRequest 
 from bson import ObjectId
 from beanie import PydanticObjectId
 import os
@@ -60,15 +60,50 @@ async def create_superuser(user: SuperUserCreate):
         raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
 
 # Create a new user
-@router.post("/users", response_model=User)
-async def create_user(user: User):
-    existing_user = await User.find_one(User.email == user.email)
-    if existing_user:
-        raise HTTPException(status_code=400, detail="Email already exists")
-    if user.role == "SuperAdmin":
-        user.isApproved = True
-    await user.create()
-    return user
+@router.post("/users")
+async def create_user(user: CreateUserRequest):
+    """
+    Create a new user with group associations and other details.
+    """
+    try:
+        # Check if the email already exists
+        existing_user = await User.find_one(User.email == user.email)
+        if existing_user:
+            raise HTTPException(status_code=400, detail="Email already exists")
+
+        # Validate and fetch groups
+        groups = await Group.find({"_id": {"$in": user.groups}}).to_list()
+        if len(groups) != len(user.groups):
+            raise HTTPException(status_code=404, detail="Some groups not found")
+
+        encpt_password = encrypt_password(user.password)
+        # Prepare the new user
+        new_user = User(
+            firstName=user.firstName,
+            lastName=user.lastName,
+            email=user.email,
+            phone=user.phone,
+            username=user.username,
+            password=encpt_password, 
+            role=user.role,
+            groupIds=user.groups,
+            businessPurpose=user.businessPurpose,
+            isApproved=True if user.role == "SuperAdmin" else False,
+            isActive=True,
+            status="Approved",
+            createdAt=datetime.utcnow(),
+            updatedAt=datetime.utcnow(),
+        )
+
+        # Save the user to the database
+        await new_user.create()
+
+        return {"message": "User created successfully"}
+
+    except HTTPException as error:
+        raise error
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
 @router.get("/users")
 async def get_user_list(
@@ -326,7 +361,6 @@ async def partial_update_user(user: UserUpdateRequest):
         if user.businessPurpose is not None:
             existing_user.businessPurpose = user.businessPurpose
 
-        print(user)
         # Update user groups if provided
         if user.groups is not None:
             groups = await Group.find({"_id": {"$in": user.groups}}).to_list()
@@ -376,7 +410,6 @@ async def sign_up(user: UserSignUpRequest):
         username=user.username,
         email=user.email,
         password=encpt_password,
-        isActive=False,  # User is inactive until approved by admin
         groupIds=[],  # Initialize with no groups
         projectIds=[]  # Initialize with no projects
     )
@@ -405,7 +438,7 @@ async def login(user: UserLoginRequest):
     # ).to_list(limit=1)
 
     if valid_token and valid_token.expires_at > datetime.utcnow(): # Extract the first document from the list
-        return {"message": "Login successful.", "access_token": valid_token.token, "user_id":str(db_user.id)}
+        return {"message": "Login successful.", "access_token": valid_token.token, "user_id":str(db_user.id),"role":db_user.role,"username":db_user.username}
 
     # Generate a new JWT token
     token = create_access_token({"sub": str(db_user.id), "username": db_user.username})
@@ -420,7 +453,7 @@ async def login(user: UserLoginRequest):
     user_token = UserToken(user_id=str(db_user.id), token=token, expires_at=expires_at)
     await user_token.create()
 
-    return {"message": "Login successful.", "access_token": token,"user_id":str(db_user.id)}
+    return {"message": "Login successful.", "access_token": token,"user_id":str(db_user.id),"role":db_user.role,"username":db_user.username}
 
 @router.post("/logout")
 async def logout(current_token: str = Depends(JWTBearer())):
@@ -496,6 +529,8 @@ async def approve_user(request: UserApprove):
         user.isApproved = True
         user.isActive = True
         user.status = 'Approved'
+        user.role = request.role
+
 
         # Assign the user to the specified groups
         groups = await Group.find({"_id": {"$in": request.groups}}).to_list()

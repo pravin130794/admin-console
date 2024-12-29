@@ -68,7 +68,11 @@ const SidebarLayout = () => {
         navigate("/login");
       }, 1000);
     } catch (error) {
-      console.log("🚀 ~ handleLogout ~ error:", error);
+      setSnackbar({
+        open: true,
+        message: error.message || "Logout failed",
+        severity: "error",
+      });
     }
   };
 
@@ -91,12 +95,6 @@ const SidebarLayout = () => {
       >
         {/* Sidebar Menu */}
         <List>
-          <ListItem button component={Link} to="/">
-            <ListItemIcon>
-              <DashboardIcon />
-            </ListItemIcon>
-            <ListItemText primary="Dashboard" />
-          </ListItem>
           <ListItem button component={Link} to="/users">
             <ListItemIcon>
               <GroupIcon />

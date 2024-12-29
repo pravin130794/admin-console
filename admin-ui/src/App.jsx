@@ -1,9 +1,9 @@
 import React from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import AppBarLayout from "./layouts/AppBarLayout";
-import DashboardPage from "./pages/DashboardPage";
 import UsersPage from "./pages/UsersPage";
 import GroupsPage from "./pages/GroupsPage";
+import ProjectsPage from "./pages/ProjectsPage";
 import DevicesPage from "./pages/DevicesPage";
 import LoginPage from "./pages/LoginPage";
 import SignUp from "./pages/SignUp";
@@ -45,9 +45,9 @@ const App = () => {
         {/* Protected Routes with Sidebar */}
         <Route element={<AppBarLayout />}>
           <Route element={<RequireAuth />}>
-            <Route path="/" element={<DashboardPage />} />
             <Route path="/users" element={<UsersPage />} />
             <Route path="/groups" element={<GroupsPage />} />
+            <Route path="/projects" element={<ProjectsPage />} />
             <Route path="/devices" element={<DevicesPage />} />
           </Route>
         </Route>

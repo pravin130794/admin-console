@@ -96,7 +96,6 @@ const SignUp = () => {
       }
 
       const result = await response.json();
-      console.log(result);
 
       setSnackbar({
         open: true,
