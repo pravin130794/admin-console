@@ -59,7 +59,7 @@ const DevicesPage = () => {
       },
     },
   ];
-  
+
   const [selectedDevice, setSelectedDevice] = useState("");
   const [selectedDeviceBody, setSelectedDeviceBody] = useState(
     deviceList[0].body
@@ -113,11 +113,10 @@ const DevicesPage = () => {
         alignItems="center"
         p={2}
         overflow="hidden"
-        bgcolor="#f8f9fa"
       >
         <Box
           position="relative"
-          width="370px" // Adjusted width for accuracy
+          width="370px"
           height="810px" // Adjusted height for accuracy
           sx={{
             backgroundImage: `url(${selectedDeviceBody.image})`,

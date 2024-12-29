@@ -140,24 +140,30 @@ const SignUp = () => {
       }}
     >
       {/* Background Video */}
-      <video
-        autoPlay
-        loop
-        muted
-        playsInline
-        style={{
-          position: "absolute",
+      <Box
+        sx={{
+          position: "fixed",
           top: 0,
           left: 0,
-          width: "100%",
-          height: "100%",
-          objectFit: "cover",
+          width: "100vw",
+          height: "100vh",
+          overflow: "hidden",
           zIndex: -1,
         }}
       >
-        <source src={videoBg} autoPlay loop muted />
-        Your browser does not support the video tag.
-      </video>
+        <video
+          src={videoBg}
+          autoPlay
+          muted
+          loop
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+          }}
+        />
+      </Box>
+
       {/* Logo Section */}
       <Box
         sx={{

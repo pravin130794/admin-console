@@ -18,11 +18,9 @@ const RequireOtpParams = ({ children }) => {
   const email = searchParams.get("email");
 
   if (!email) {
-    // Redirect to login if the required query parameter is missing
     return <Navigate to="/login" replace />;
   }
 
-  // If the required query parameter is present, render the children
   return children;
 };
 

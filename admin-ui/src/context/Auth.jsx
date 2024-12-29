@@ -1,13 +1,13 @@
 import { createContext, useContext, useState } from "react";
 import { useLocation, Navigate, Outlet } from "react-router-dom";
 
-// Create Auth Context
+
 const AuthContext = createContext(null);
 
-// Custom Hook to Use Auth Context
+
 export const useAuth = () => useContext(AuthContext);
 
-// AuthProvider to Wrap the App
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
     // Initialize user from localStorage
