@@ -828,8 +828,10 @@ const UserPage = () => {
                   </span>
                 </Typography>
                 <Typography fontWeight="bold">
-                  Group:{" "}
-                  <span style={{ color: "orange" }}>{selectedUser.group}</span>
+                  Groups:{" "}
+                  <span style={{ color: "orange" }}>
+                    {selectedUser.groups.map((group) => group.name).join(", ")}
+                  </span>
                 </Typography>
               </Box>
 
