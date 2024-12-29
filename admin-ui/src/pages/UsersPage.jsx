@@ -139,6 +139,14 @@ const UserPage = () => {
   };
 
   const handleDelete = async () => {
+    if (!reason) {
+      setSnackbar({
+        open: true,
+        message: "Please provide a reason for deletion.",
+        severity: "warning",
+      });
+      return;
+    }
     setApiLoading(true);
     try {
       const user_id = selectedUser.id;
@@ -201,6 +209,14 @@ const UserPage = () => {
   };
 
   const handleReject = async () => {
+    if (!reason) {
+      setSnackbar({
+        open: true,
+        message: "Please provide a reason for rejection.",
+        severity: "warning",
+      });
+      return;
+    }
     setApiLoading(true);
     try {
       const response = await fetch("http://localhost:8000/api/v1/reject_user", {
@@ -261,10 +277,16 @@ const UserPage = () => {
   };
 
   const handleApproveSave = async () => {
-    if (!selectedUser || approveData.groups.length === 0) {
+    console.log("click....");
+
+    if (
+      !selectedUser ||
+      approveData?.groups?.length === 0 ||
+      !approveData.role
+    ) {
       setSnackbar({
         open: true,
-        message: "Please select at least one group and provide a reason.",
+        message: "Please select at least one group and role for approval.",
         severity: "warning",
       });
       return;

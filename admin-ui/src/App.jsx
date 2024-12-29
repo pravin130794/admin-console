@@ -53,6 +53,7 @@ const App = () => {
         </Route>
 
         {/* Catch-all and Unauthorized Routes */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="*" element={<NotFoundPage />} />
         <Route path="/unauthorized" element={<UnauthorizedPage />} />
       </Routes>
