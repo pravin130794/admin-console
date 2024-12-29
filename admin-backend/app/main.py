@@ -7,7 +7,7 @@ load_dotenv()
 
 
 
-app = FastAPI()
+app = FastAPI(title='Sapphire API')
 
 app.add_middleware(
     CORSMiddleware,

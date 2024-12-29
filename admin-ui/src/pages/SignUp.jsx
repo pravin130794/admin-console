@@ -67,6 +67,12 @@ const SignUp = () => {
       errors.phone = "Phone number is required.";
     }
 
+    // Phone Number Validation
+    const phoneRegex = /^[+]?[0-9]{10,15}$/; // Allows optional "+" and validates 10 to 15 numeric digits
+    if (!phoneRegex.test(formData.phone.trim())) {
+      return showError("Invalid phone number. Must be 10-15 digits long.");
+    }
+
     // Email Validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!formData.email.trim()) {

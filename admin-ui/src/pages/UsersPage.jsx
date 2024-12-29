@@ -141,7 +141,7 @@ const UserPage = () => {
   const handleDelete = async () => {
     setApiLoading(true);
     try {
-      const user_id = localStorage.getItem("user_id");
+      const user_id = selectedUser.id;
       const response = await fetch(
         `http://localhost:8000/api/v1/${user_id}/inactivate`,
         {
@@ -416,6 +416,11 @@ const UserPage = () => {
       }
     }
 
+    // Phone Number Validation
+    const phoneRegex = /^[+]?[0-9]{10,15}$/; // Allows optional "+" and validates 10 to 15 numeric digits
+    if (!phoneRegex.test(phone.trim())) {
+      return showError("Invalid phone number. Must be 10-15 digits long.");
+    }
     // Email Validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email.trim())) {
