@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -7,63 +7,92 @@ import {
   ListItemText,
   Divider,
 } from "@mui/material";
-import iphone_13 from "../assets/iphone_13.png";
-import galaxy_s24 from "../assets/samsung-galaxy-s24-ultra.png";
-import iphone_8 from "../assets/apple-iphone-8-gold-portrait.png";
 
 const DevicesPage = () => {
-  const deviceList = [
-    {
-      name: "Iphone 13",
-      details: "IOS 18",
-      url: "https://fr.wikipedia.org/wiki/IPhone_13",
-      body: {
-        image: iphone_13,
-        frameStyles: {
-          top: "7.8%",
-          left: "6.5%",
-          width: "87%",
-          height: "84.9%",
-          borderRadius: "45px",
-        },
-      },
-    },
-    {
-      name: "Galaxy S7",
-      details: "Android 6.0",
-      url: "https://fr.wikipedia.org/wiki/Samsung_Galaxy_S7",
-      body: {
-        image: galaxy_s24,
-        frameStyles: {
-          top: "8%",
-          left: "6%",
-          width: "86%",
-          height: "85%",
-          borderRadius: "1px",
-        },
-      },
-    },
-    {
-      name: "Iphone 8",
-      details: "IOS",
-      url: "https://fr.wikipedia.org/wiki/Samsung_Galaxy_S7",
-      body: {
-        image: iphone_8,
-        frameStyles: {
-          top: "15%",
-          left: "7%",
-          width: "86%",
-          height: "70%",
-          borderRadius: "1px",
-        },
-      },
-    },
-  ];
-
+  const [deviceList, setDeviceList] = useState([]);
   const [selectedDevice, setSelectedDevice] = useState("");
-  const [selectedDeviceBody, setSelectedDeviceBody] = useState(
-    deviceList[0].body
-  );
+  const [selectedDeviceBody, setSelectedDeviceBody] = useState({});
+
+  useEffect(() => {
+    const ws = new WebSocket("ws://localhost:8000/ws"); // Replace with your WebSocket server URL
+
+    ws.onopen = () => {
+      console.log("WebSocket connection established");
+    };
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      console.log("Received WebSocket update:", data);
+
+      if (data) {
+        setDeviceList((prevList) => {
+          let updatedList = [...prevList];
+
+          if (data.operationType === "delete") {
+            // Handle delete operation
+            updatedList = updatedList.filter(
+              (device) => device.fullDocument._id !== data.documentKey._id
+            );
+
+            // Reset selection if the deleted device was selected
+            if (
+              selectedDevice &&
+              selectedDevice ===
+                prevList.find(
+                  (device) => device.fullDocument._id === data.documentKey._id
+                )?.fullDocument.url
+            ) {
+              setSelectedDevice("");
+              setSelectedDeviceBody({});
+            }
+          } else if (data.operationType === "update") {
+            // Handle update operation
+            const existingIndex = updatedList.findIndex(
+              (device) => device.fullDocument._id === data.fullDocument._id
+            );
+
+            if (existingIndex !== -1) {
+              updatedList[existingIndex] = data; // Update the existing record
+            }
+          } else if (data.operationType === "insert") {
+            // Handle insert operation
+            const existingIndex = updatedList.findIndex(
+              (device) => device.fullDocument._id === data.fullDocument._id
+            );
+
+            if (existingIndex === -1) {
+              updatedList.push(data); // Add the new record if it doesn't exist
+            }
+          }
+
+          // Automatically select the first device if none is selected
+          if (updatedList.length > 0 && !selectedDevice) {
+            setSelectedDevice(updatedList[0].fullDocument.url);
+            setSelectedDeviceBody(updatedList[0].fullDocument.body);
+          }
+
+          return updatedList;
+        });
+      }
+    };
+
+    ws.onerror = (error) => {
+      console.error("WebSocket error:", error);
+    };
+
+    ws.onclose = () => {
+      console.log("WebSocket connection closed");
+    };
+
+    return () => {
+      ws.close();
+    };
+  }, [selectedDevice]);
+
+  const handleDeviceClick = (device) => {
+    setSelectedDevice(device.url);
+    setSelectedDeviceBody(device.body);
+  };
 
   return (
     <Box display="flex" height="100vh" overflow="hidden">
@@ -82,12 +111,9 @@ const DevicesPage = () => {
         <List>
           {deviceList.map((device, index) => (
             <ListItem
-              key={index}
+              key={device.fullDocument._id || `device-${index}`}
               button
-              onClick={() => {
-                setSelectedDevice(device.url);
-                setSelectedDeviceBody(device.body);
-              }}
+              onClick={() => handleDeviceClick(device.fullDocument)}
               sx={{
                 mb: 1,
                 border: "1px solid #ddd",
@@ -95,9 +121,19 @@ const DevicesPage = () => {
                 "&:hover": { backgroundColor: "#f5f5f5" },
               }}
             >
+              <Box
+                sx={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: "50%",
+                  backgroundColor:
+                    device.fullDocument.status === "true" ? "green" : "red",
+                  marginRight: "10px",
+                }}
+              />
               <ListItemText
-                primary={device.name}
-                secondary={device.details}
+                primary={device.fullDocument.name}
+                secondary={device.fullDocument.details}
                 primaryTypographyProps={{ fontWeight: "bold" }}
               />
             </ListItem>
@@ -114,34 +150,42 @@ const DevicesPage = () => {
         p={2}
         overflow="hidden"
       >
-        <Box
-          position="relative"
-          width="370px"
-          height="810px" // Adjusted height for accuracy
-          sx={{
-            backgroundImage: `url(${selectedDeviceBody.image})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
-        >
+        {selectedDevice ? (
           <Box
-            position="absolute"
+            position="relative"
+            width="370px"
+            height="810px"
             sx={{
-              ...selectedDeviceBody.frameStyles, // Apply dynamic styles
-              overflow: "auto",
+              backgroundImage: `url(../src/assets/${
+                selectedDeviceBody?.image || ""
+              })`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
             }}
           >
-            <iframe
-              src={selectedDevice}
-              title="Device Frame"
-              style={{
-                width: "100%",
-                height: "100%",
-                border: "none",
+            <Box
+              position="absolute"
+              sx={{
+                ...selectedDeviceBody?.frameStyles, // Apply dynamic styles
+                overflow: "auto",
               }}
-            />
+            >
+              <iframe
+                src={selectedDevice}
+                title="Device Frame"
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  border: "none",
+                }}
+              />
+            </Box>
           </Box>
-        </Box>
+        ) : (
+          <Typography variant="h6" color="textSecondary">
+            No device selected.
+          </Typography>
+        )}
       </Box>
     </Box>
   );

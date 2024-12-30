@@ -3,6 +3,20 @@ from beanie import init_beanie
 from app.models import User, Group, Project, UserToken, UserOTP  # Import models
 from app.config import settings
 
+# Initialize a global Motor Client instance
+motor_client = AsyncIOMotorClient(settings.MONGO_URI)
+
 async def init_db():
-    client = AsyncIOMotorClient(settings.MONGO_URI)
-    await init_beanie(database=client[settings.MONGO_DB_NAME], document_models=[User, Group, Project, UserToken, UserOTP])
+    """
+    Initialize Beanie with the Motor Client and database models.
+    """
+    await init_beanie(
+        database=motor_client[settings.MONGO_DB_NAME],
+        document_models=[User, Group, Project, UserToken, UserOTP]
+    )
+
+def get_motor_client():
+    """
+    Provide the Motor Client for dependency injection.
+    """
+    return motor_client

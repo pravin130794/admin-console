@@ -172,3 +172,10 @@ class CreateUserRequest(BaseModel):
     role: str  # Role of the user (e.g., "SuperAdmin", "GroupAdmin", "User")
     groups: List[PydanticObjectId] = [] # List of group IDs to assign to the user
     businessPurpose: str
+
+class Devices(Document):
+    name: str
+    status: bool = True
+
+    class Settings:
+        name = "devices"
