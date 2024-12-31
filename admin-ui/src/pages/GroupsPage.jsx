@@ -22,6 +22,7 @@ const GroupsPage = () => {
   const [groups, setGroups] = useState([]);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [totalGroups, setTotalGroups] = useState(0);
   const [loadingGroups, setLoadingGroups] = useState(false);
   const [apiLoading, setApiLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({
@@ -30,16 +31,9 @@ const GroupsPage = () => {
     severity: "info",
   });
 
-  console.log("groups---->", groups);
-
-  const paginatedGroups = groups.slice(
-    page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage
-  );
-
   useEffect(() => {
     fetchGroups();
-  }, []);
+  }, [page, rowsPerPage]);
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -59,12 +53,13 @@ const GroupsPage = () => {
     try {
       const user_id = localStorage.getItem("user_id");
       const response = await fetch(
-        `http://localhost:8000/api/v1/groups?user_id=${user_id}`
-      ); // Replace with your API
+        `http://localhost:8000/api/v1/groups?user_id=${user_id}&skip=${page}&limit=${rowsPerPage}`
+      );
       const data = await response.json();
       console.log(data.groups);
 
-      setGroups(data.groups); // Assuming API returns an array of groups
+      setGroups(data.groups);
+      setTotalGroups(data.total || 0);
     } catch (error) {
       console.error("Error fetching groups:", error);
     } finally {
@@ -125,10 +120,10 @@ const GroupsPage = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {paginatedGroups.length > 0 ? (
-                paginatedGroups.map((group, index) => (
+              {groups.length > 0 ? (
+                groups.map((group, index) => (
                   <TableRow key={group.id || `group-${index}`}>
-                    <TableCell>{index + 1}</TableCell>
+                    <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                     <TableCell>{group.name}</TableCell>
                     <TableCell>{group.description}</TableCell>
                     <TableCell>
@@ -157,7 +152,7 @@ const GroupsPage = () => {
       {/* Pagination */}
       <TablePagination
         component="div"
-        count={groups.length}
+        count={totalGroups}
         page={page}
         onPageChange={handleChangePage}
         rowsPerPage={rowsPerPage}

@@ -50,8 +50,10 @@ const UserPage = () => {
   const [apiLoading, setApiLoading] = useState(false);
   const [selectedGroups, setSelectedGroups] = useState([]);
   const [groups, setGroups] = useState([]);
+  const [visibleItems, setVisibleItems] = useState([]);
   const [loadingGroups, setLoadingGroups] = useState(false);
   const [users, setUsers] = useState([]);
+  const [totalUsers, setTotalUsers] = useState(0); // Total count of users
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -79,7 +81,7 @@ const UserPage = () => {
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [page, rowsPerPage]);
 
   const handleCloseSnackbar = () => {
     setSnackbar((prev) => ({ ...prev, open: false }));
@@ -102,9 +104,13 @@ const UserPage = () => {
   const fetchGroups = async () => {
     setLoadingGroups(true);
     try {
-      const response = await fetch("http://localhost:8000/api/v1/groups"); // Replace with your API
+      const user_id = localStorage.getItem("user_id");
+      const response = await fetch(
+        `http://localhost:8000/api/v1/groups?user_id=${user_id}`
+      );
       const data = await response.json();
-      setGroups(data); // Assuming API returns an array of groups
+      setGroups(data.groups);
+      setVisibleItems(data.groups.slice(0, 10));
     } catch (error) {
       console.error("Error fetching groups:", error);
     } finally {
@@ -112,15 +118,27 @@ const UserPage = () => {
     }
   };
 
+  const handleScroll = (event) => {
+    const bottom =
+      event.target.scrollHeight - event.target.scrollTop <=
+      event.target.clientHeight + 10; // Adjust tolerance
+    if (bottom && visibleItems.length < groups.length) {
+      setVisibleItems((prevVisibleItems) => [
+        ...prevVisibleItems,
+        ...groups.slice(prevVisibleItems.length, prevVisibleItems.length + 10),
+      ]);
+    }
+  };
   const fetchUsers = async () => {
     setLoadingUsers(true);
     try {
       const user_id = localStorage.getItem("user_id");
       const response = await fetch(
-        `http://localhost:8000/api/v1/users?user_id=${user_id}`
-      ); // Replace with your API
+        `http://localhost:8000/api/v1/users?user_id=${user_id}&skip=${page}&limit=${rowsPerPage}`
+      );
       const data = await response.json();
-      setUsers(data.users); // Assuming API returns an array of users
+      setUsers(data.users);
+      setTotalUsers(data.total || 0);
     } catch (error) {
       console.error("Error fetching users:", error);
     } finally {
@@ -680,7 +698,7 @@ const UserPage = () => {
       {/* Pagination */}
       <TablePagination
         component="div"
-        count={users.length}
+        count={totalUsers}
         page={page}
         onPageChange={handleChangePage}
         rowsPerPage={rowsPerPage}
@@ -994,6 +1012,12 @@ const UserPage = () => {
                     );
                   })
                 }
+                MenuProps={{
+                  PaperProps: {
+                    onScroll: handleScroll,
+                    style: { maxHeight: 150, overflowY: "auto" },
+                  },
+                }}
                 disabled={loadingGroups} // Disable dropdown while loading
               >
                 {loadingGroups ? (
@@ -1001,7 +1025,7 @@ const UserPage = () => {
                     <CircularProgress size={20} /> Loading...
                   </MenuItem>
                 ) : (
-                  groups.map((group) => (
+                  visibleItems.map((group) => (
                     <MenuItem key={group._id} value={group._id}>
                       {group.name}
                     </MenuItem>
@@ -1145,6 +1169,12 @@ const UserPage = () => {
                         );
                       })
                     }
+                    MenuProps={{
+                      PaperProps: {
+                        onScroll: handleScroll,
+                        style: { maxHeight: 150, overflowY: "auto" },
+                      },
+                    }}
                     disabled={loadingGroups} // Disable dropdown while loading
                   >
                     {loadingGroups ? (
@@ -1152,7 +1182,7 @@ const UserPage = () => {
                         <CircularProgress size={20} /> Loading...
                       </MenuItem>
                     ) : (
-                      groups.map((group) => (
+                      visibleItems.map((group) => (
                         <MenuItem key={group._id} value={group._id}>
                           {group.name}
                         </MenuItem>
@@ -1326,6 +1356,12 @@ const UserPage = () => {
                       );
                     })
                   }
+                  MenuProps={{
+                    PaperProps: {
+                      onScroll: handleScroll,
+                      style: { maxHeight: 150, overflowY: "auto" },
+                    },
+                  }}
                   disabled={loadingGroups} // Disable dropdown while loading
                 >
                   {loadingGroups ? (
@@ -1333,7 +1369,7 @@ const UserPage = () => {
                       <CircularProgress size={20} /> Loading...
                     </MenuItem>
                   ) : (
-                    groups.map((group) => (
+                    visibleItems.map((group) => (
                       <MenuItem key={group._id} value={group._id}>
                         {group.name}
                       </MenuItem>

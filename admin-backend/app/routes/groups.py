@@ -47,7 +47,10 @@ async def list_user_groups(
             })
 
         # Fetch groups with pagination
-        groups = await groups_query.skip(skip).limit(limit).to_list()
+        if skip is not None and limit is not None:
+            groups = await groups_query.skip(skip).limit(limit).to_list()
+        else:
+            groups = await groups_query.to_list()
 
         # Get the total count of groups (without pagination)
         total_count = await groups_query.count()
