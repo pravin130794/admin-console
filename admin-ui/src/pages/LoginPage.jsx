@@ -15,6 +15,7 @@ import LockIcon from "@mui/icons-material/Lock";
 import EmailIcon from "@mui/icons-material/Email";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/Auth";
+import SapphireLogo from "../assets/SapphireLogo.png";
 import logo from "../assets/logo.png";
 
 const LoginPage = () => {
@@ -169,121 +170,154 @@ const LoginPage = () => {
       <Box
         sx={{
           position: "absolute",
-          top: 16,
-          right: 16,
+          top: -10,
+          width: "100%",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          px: 4,
           zIndex: 10,
+          backgroundColor: "rgba(15, 14, 17, 0.6)",
         }}
       >
-        <img src={logo} alt="Sapphire Logo" style={{ height: "10rem" }} />
+        {/* Sapphire Logo */}
+        <img
+          src={SapphireLogo}
+          alt="Sapphire Logo"
+          style={{ height: "100px", marginLeft: "20px" }}
+        />
+
+        {/* Verizon Logo */}
+        <img
+          src={logo}
+          alt="Verizon Logo"
+          style={{ height: "100px", marginRight: "20px" }}
+        />
       </Box>
-      {/* Login Card */}
-      <Paper
+
+      <Box
         sx={{
           position: "relative",
-          zIndex: 2,
-          padding: "40px",
-          borderRadius: "10px",
-          width: "100%",
-          maxWidth: "400px",
-          backgroundColor: "rgba(255, 255, 255, 0.9)",
-          textAlign: "center",
-          boxShadow: "0 4px 10px rgba(0, 0, 0, 0.2)",
+          zIndex: 1,
+          padding: "3%",
+          borderRadius: "20px",
+          backgroundColor: "rgba(255, 255, 255, 0.2)", // Light transparent background
+          backdropFilter: "blur(10px)", // Adds blur effect
+          maxWidth: "60%",
+          marginTop: "5%",
         }}
       >
-        <Box
+        {/* Login Card */}
+        <Paper
           sx={{
-            position: "absolute",
-            top: "-50px",
-            left: "50%",
-            transform: "translate(-50%, 0)",
-            backgroundColor: "#001a99",
-            color: "white",
-            width: "100px",
-            height: "100px",
-            borderRadius: "50%",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            boxShadow: "0 4px 6px rgba(0, 0, 0, 0.2)",
+            position: "relative",
+            zIndex: 2,
+            padding: "40px",
+            borderRadius: "10px",
+            width: "90%",
+            maxWidth: "300px",
+            maxHeight: "auto",
+            backgroundColor: "rgba(255, 255, 255, 0.9)",
+            textAlign: "center",
+            boxShadow: "0 4px 10px rgba(0, 0, 0, 0.2)",
+            marginTop: "5%",
           }}
         >
-          <AccountCircleIcon fontSize="small" sx={{ fontSize: "50px" }} />
-        </Box>
-
-        <Box mt={3}>
-          <Typography variant="h5" fontWeight="bold" mb={2}>
-            Login
-          </Typography>
-
-          {/* Username Field */}
-          <TextField
-            variant="outlined"
-            fullWidth
-            placeholder="Username"
-            name="username"
-            value={formData.username}
-            onChange={handleChange}
-            error={!!formErrors.username}
-            helperText={formErrors.username}
-            sx={{ marginBottom: 2 }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <EmailIcon />
-                </InputAdornment>
-              ),
-            }}
-          />
-
-          {/* Password Field */}
-          <TextField
-            variant="outlined"
-            fullWidth
-            type="password"
-            placeholder="Password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            error={!!formErrors.password}
-            helperText={formErrors.password}
-            sx={{ marginBottom: 3 }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <LockIcon />
-                </InputAdornment>
-              ),
-            }}
-          />
-
-          {/* Login Button */}
-          <Button
-            variant="contained"
-            fullWidth
-            onClick={handleSubmit}
-            disabled={loading}
+          <Box
             sx={{
+              position: "absolute",
+              top: "-50px",
+              left: "50%",
+              transform: "translate(-50%, 0)",
               backgroundColor: "#001a99",
               color: "white",
-              fontWeight: "bold",
-              "&:hover": { backgroundColor: "#0026d1" },
+              width: "100px",
+              height: "100px",
+              borderRadius: "50%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 4px 6px rgba(0, 0, 0, 0.2)",
             }}
           >
-            {loading ? "Logging in..." : "Login"}
-          </Button>
+            <AccountCircleIcon fontSize="small" sx={{ fontSize: "50px" }} />
+          </Box>
 
-          {/* Register Link */}
-          <Typography mt={2} variant="body2" color="gray">
-            Don’t have an account?{" "}
-            <span
-              style={{ color: "#001a99", cursor: "pointer" }}
-              onClick={handleNavigateToSignup}
+          <Box mt={3}>
+            <Typography variant="h5" fontWeight="bold" mb={2}>
+              Login
+            </Typography>
+
+            {/* Username Field */}
+            <TextField
+              variant="outlined"
+              fullWidth
+              placeholder="Username"
+              name="username"
+              value={formData.username}
+              onChange={handleChange}
+              error={!!formErrors.username}
+              helperText={formErrors.username}
+              sx={{ marginBottom: 2 }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <EmailIcon />
+                  </InputAdornment>
+                ),
+              }}
+            />
+
+            {/* Password Field */}
+            <TextField
+              variant="outlined"
+              fullWidth
+              type="password"
+              placeholder="Password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              error={!!formErrors.password}
+              helperText={formErrors.password}
+              sx={{ marginBottom: 3 }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <LockIcon />
+                  </InputAdornment>
+                ),
+              }}
+            />
+
+            {/* Login Button */}
+            <Button
+              variant="contained"
+              fullWidth
+              onClick={handleSubmit}
+              disabled={loading}
+              sx={{
+                backgroundColor: "#001a99",
+                color: "white",
+                fontWeight: "bold",
+                "&:hover": { backgroundColor: "#0026d1" },
+              }}
             >
-              Register User
-            </span>
-          </Typography>
-        </Box>
-      </Paper>
+              {loading ? "Logging in..." : "Login"}
+            </Button>
+
+            {/* Register Link */}
+            <Typography mt={2} variant="body2" color="gray">
+              Don’t have an account?{" "}
+              <span
+                style={{ color: "#001a99", cursor: "pointer" }}
+                onClick={handleNavigateToSignup}
+              >
+                Register User
+              </span>
+            </Typography>
+          </Box>
+        </Paper>
+      </Box>
 
       {/* Snackbar for Alerts */}
       <Snackbar

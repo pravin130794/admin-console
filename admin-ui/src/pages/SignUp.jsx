@@ -12,6 +12,7 @@ import videoBg from "../assets/bgvideo.mp4";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/logo.png";
+import SapphireLogo from "../assets/SapphireLogo.png";
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -34,7 +35,7 @@ const SignUp = () => {
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
-    severity: "info", // Can be 'success', 'error', 'warning', 'info'
+    severity: "info",
   });
 
   const handleChange = (e) => {
@@ -68,16 +69,14 @@ const SignUp = () => {
     }
 
     // Phone Number Validation
-    const phoneRegex = /^[+]?[0-9]{10,15}$/; // Allows optional "+" and validates 10 to 15 numeric digits
+    const phoneRegex = /^[+]?[0-9]{10,15}$/;
     if (!phoneRegex.test(formData.phone.trim())) {
-      return showError("Invalid phone number. Must be 10-15 digits long.");
+      errors.phone = "Invalid phone number. Must be 10-15 digits long.";
     }
 
     // Email Validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!formData.email.trim()) {
-      errors.email = "Email is required.";
-    } else if (!emailRegex.test(formData.email)) {
+    if (!emailRegex.test(formData.email)) {
       errors.email = "Invalid email format.";
     }
 
@@ -168,140 +167,174 @@ const SignUp = () => {
       <Box
         sx={{
           position: "absolute",
-          top: 16,
-          right: 16,
+          top: -10,
+          width: "100%",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          px: 4,
           zIndex: 10,
+          backgroundColor: "rgba(15, 14, 17, 0.6)",
         }}
       >
-        <img src={logo} alt="Sapphire Logo" style={{ height: "10rem" }} />
+        {/* Sapphire Logo */}
+        <img
+          src={SapphireLogo}
+          alt="Sapphire Logo"
+          style={{ height: "100px", marginLeft: "20px" }}
+        />
+
+        {/* Verizon Logo */}
+        <img
+          src={logo}
+          alt="Verizon Logo"
+          style={{ height: "100px", marginRight: "20px" }}
+        />
       </Box>
-      {/* Sign Up Card */}
-      <Paper
+
+      <Box
         sx={{
           position: "relative",
-          zIndex: 2,
-          padding: "40px",
-          borderRadius: "10px",
-          width: "100%",
-          maxWidth: "400px",
-          backgroundColor: "rgba(255, 255, 255, 0.9)",
-          textAlign: "center",
-          boxShadow: "0 4px 10px rgba(0, 0, 0, 0.2)",
+          zIndex: 1,
+          padding: "3%",
+          borderRadius: "20px",
+          backgroundColor: "rgba(255, 255, 255, 0.2)", // Light transparent background
+          backdropFilter: "blur(10px)", // Adds blur effect
+          maxWidth: "60%",
+          marginTop: "6%",
         }}
       >
-        {/* Centered Logo */}
-        <Box
+        {/* Sign Up Card */}
+        <Paper
           sx={{
-            position: "absolute",
-            top: "-50px",
-            left: "50%",
-            transform: "translate(-50%, 0)",
-            backgroundColor: "#001a99",
-            color: "white",
-            width: "100px",
-            height: "100px",
-            borderRadius: "50%",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            boxShadow: "0 4px 6px rgba(0, 0, 0, 0.2)",
+            position: "relative",
+            zIndex: 2,
+            padding: "40px",
+            borderRadius: "10px",
+            width: "90%",
+            maxWidth: "300px",
+            maxHeight: "auto",
+            backgroundColor: "rgba(255, 255, 255, 0.9)",
+            textAlign: "center",
+            boxShadow: "0 4px 10px rgba(0, 0, 0, 0.2)",
+            marginTop: "5%",
           }}
         >
-          <AccountCircleIcon fontSize="small" sx={{ fontSize: "50px" }} />
-        </Box>
-
-        <Box mt={3}>
-          <Typography variant="h5" fontWeight="bold" mb={2}>
-            Register
-          </Typography>
-
-          <TextField
-            required
-            variant="outlined"
-            fullWidth
-            label="First Name"
-            name="firstname"
-            value={formData.firstname}
-            error={!!formErrors.firstname}
-            helperText={formErrors.firstname}
-            onChange={handleChange}
-            sx={{ marginBottom: 2 }}
-          />
-          <TextField
-            required
-            variant="outlined"
-            fullWidth
-            label="Last Name"
-            name="lastname"
-            value={formData.lastname}
-            error={!!formErrors.lastname}
-            helperText={formErrors.lastname}
-            onChange={handleChange}
-            sx={{ marginBottom: 2 }}
-          />
-          <TextField
-            required
-            variant="outlined"
-            fullWidth
-            label="Username"
-            name="username"
-            value={formData.username}
-            error={!!formErrors.username}
-            helperText={formErrors.username}
-            onChange={handleChange}
-            sx={{ marginBottom: 2 }}
-          />
-          <TextField
-            required
-            variant="outlined"
-            fullWidth
-            label="Email"
-            name="email"
-            value={formData.email}
-            error={!!formErrors.email}
-            helperText={formErrors.email}
-            onChange={handleChange}
-            sx={{ marginBottom: 2 }}
-          />
-          <TextField
-            required
-            variant="outlined"
-            fullWidth
-            label="Phone Number"
-            name="phone"
-            value={formData.phone}
-            error={!!formErrors.phone}
-            helperText={formErrors.phone}
-            onChange={handleChange}
-            sx={{ marginBottom: 2 }}
-          />
-
-          <Typography mt={2} variant="body2" color="gray">
-            Already have an account?{" "}
-            <span
-              style={{ color: "#001a99", cursor: "pointer" }}
-              onClick={handleNavigateToLogin}
-            >
-              Login
-            </span>
-          </Typography>
-
-          <Button
-            variant="contained"
-            fullWidth
-            onClick={handleSubmit}
+          {/* Centered Logo */}
+          <Box
             sx={{
-              marginTop: 3,
+              position: "absolute",
+              top: "-50px",
+              left: "50%",
+              transform: "translate(-50%, 0)",
               backgroundColor: "#001a99",
               color: "white",
-              fontWeight: "bold",
-              "&:hover": { backgroundColor: "#0026d1" },
+              width: "100px",
+              height: "100px",
+              borderRadius: "50%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 4px 6px rgba(0, 0, 0, 0.2)",
             }}
           >
-            Sign Up
-          </Button>
-        </Box>
-      </Paper>
+            <AccountCircleIcon fontSize="small" sx={{ fontSize: "50px" }} />
+          </Box>
+
+          <Box mt={3}>
+            <Typography variant="h5" fontWeight="bold" mb={2}>
+              Register
+            </Typography>
+
+            {/* Form Fields */}
+            <TextField
+              required
+              variant="outlined"
+              fullWidth
+              label="First Name"
+              name="firstname"
+              value={formData.firstname}
+              error={!!formErrors.firstname}
+              helperText={formErrors.firstname}
+              onChange={handleChange}
+              sx={{ marginBottom: 2 }}
+            />
+            <TextField
+              required
+              variant="outlined"
+              fullWidth
+              label="Last Name"
+              name="lastname"
+              value={formData.lastname}
+              error={!!formErrors.lastname}
+              helperText={formErrors.lastname}
+              onChange={handleChange}
+              sx={{ marginBottom: 2 }}
+            />
+            <TextField
+              required
+              variant="outlined"
+              fullWidth
+              label="Username"
+              name="username"
+              value={formData.username}
+              error={!!formErrors.username}
+              helperText={formErrors.username}
+              onChange={handleChange}
+              sx={{ marginBottom: 2 }}
+            />
+            <TextField
+              required
+              variant="outlined"
+              fullWidth
+              label="Email"
+              name="email"
+              value={formData.email}
+              error={!!formErrors.email}
+              helperText={formErrors.email}
+              onChange={handleChange}
+              sx={{ marginBottom: 2 }}
+            />
+            <TextField
+              required
+              variant="outlined"
+              fullWidth
+              label="Phone Number"
+              name="phone"
+              value={formData.phone}
+              error={!!formErrors.phone}
+              helperText={formErrors.phone}
+              onChange={handleChange}
+              sx={{ marginBottom: 2 }}
+            />
+
+            <Typography mt={2} variant="body2" color="gray">
+              Already have an account?{" "}
+              <span
+                style={{ color: "#001a99", cursor: "pointer" }}
+                onClick={handleNavigateToLogin}
+              >
+                Login
+              </span>
+            </Typography>
+
+            <Button
+              variant="contained"
+              fullWidth
+              onClick={handleSubmit}
+              sx={{
+                marginTop: 3,
+                backgroundColor: "#001a99",
+                color: "white",
+                fontWeight: "bold",
+                "&:hover": { backgroundColor: "#0026d1" },
+              }}
+            >
+              Sign Up
+            </Button>
+          </Box>
+        </Paper>
+      </Box>
 
       {/* Snackbar for Alerts */}
       <Snackbar
