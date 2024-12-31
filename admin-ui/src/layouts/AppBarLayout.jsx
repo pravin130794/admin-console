@@ -5,25 +5,27 @@ import {
   Typography,
   Box,
   Button,
-  Avatar,
   IconButton,
 } from "@mui/material";
 import LogoutIcon from "@mui/icons-material/Logout";
 import SapphireLogo from "../assets/SapphireLogo.png";
-import { Link, Outlet, useNavigate } from "react-router-dom";
-import AndroidIcon from "@mui/icons-material/Android";
+import { Link, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/Auth";
 
 const AppBarLayout = () => {
   const navigate = useNavigate();
   const { logout } = useAuth();
   const username = localStorage.getItem("username");
+  const location = useLocation(); // Get the current location
 
   const handleLogout = () => {
     localStorage.removeItem("authToken");
     logout();
     navigate("/login");
   };
+
+  // Function to check if a link is active
+  const isActive = (path) => location.pathname === path;
 
   return (
     <Box sx={{ flexGrow: 1 }}>
@@ -50,10 +52,20 @@ const AppBarLayout = () => {
                 component={Link}
                 to="/devices"
                 sx={{
+                  backgroundColor: isActive("/devices")
+                    ? "#3480eb"
+                    : "transparent", // Highlight active button
                   color: "white",
                   marginRight: "16px",
                   textTransform: "none",
                   fontSize: "16px",
+                  borderRadius: "5px",
+                  fontWeight: "bold",
+                  "&:hover": {
+                    backgroundColor: isActive("/devices")
+                      ? "#3480eb"
+                      : "#0026d1",
+                  },
                 }}
               >
                 Devices
@@ -62,10 +74,18 @@ const AppBarLayout = () => {
                 component={Link}
                 to="/users"
                 sx={{
+                  backgroundColor: isActive("/users")
+                    ? "#3480eb"
+                    : "transparent",
                   color: "white",
                   marginRight: "16px",
                   textTransform: "none",
                   fontSize: "16px",
+                  borderRadius: "5px",
+                  fontWeight: "bold",
+                  "&:hover": {
+                    backgroundColor: isActive("/users") ? "#3480eb" : "#0026d1",
+                  },
                 }}
               >
                 Users
@@ -74,10 +94,20 @@ const AppBarLayout = () => {
                 component={Link}
                 to="/groups"
                 sx={{
+                  backgroundColor: isActive("/groups")
+                    ? "#3480eb"
+                    : "transparent",
                   color: "white",
                   marginRight: "16px",
                   textTransform: "none",
                   fontSize: "16px",
+                  borderRadius: "5px",
+                  fontWeight: "bold",
+                  "&:hover": {
+                    backgroundColor: isActive("/groups")
+                      ? "#3480eb"
+                      : "#0026d1",
+                  },
                 }}
               >
                 Groups
@@ -86,10 +116,20 @@ const AppBarLayout = () => {
                 component={Link}
                 to="/projects"
                 sx={{
+                  backgroundColor: isActive("/projects")
+                    ? "#3480eb"
+                    : "transparent",
                   color: "white",
                   marginRight: "16px",
                   textTransform: "none",
                   fontSize: "16px",
+                  borderRadius: "5px",
+                  fontWeight: "bold",
+                  "&:hover": {
+                    backgroundColor: isActive("/projects")
+                      ? "#3480eb"
+                      : "#0026d1",
+                  },
                 }}
               >
                 Projects
