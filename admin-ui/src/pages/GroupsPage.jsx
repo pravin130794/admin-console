@@ -30,6 +30,8 @@ const GroupsPage = () => {
     severity: "info",
   });
 
+  console.log("groups---->", groups);
+
   const paginatedGroups = groups.slice(
     page * rowsPerPage,
     page * rowsPerPage + rowsPerPage
@@ -55,9 +57,14 @@ const GroupsPage = () => {
   const fetchGroups = async () => {
     setLoadingGroups(true);
     try {
-      const response = await fetch("http://localhost:8000/api/v1/groups"); // Replace with your API
+      const user_id = localStorage.getItem("user_id");
+      const response = await fetch(
+        `http://localhost:8000/api/v1/groups?user_id=${user_id}`
+      ); // Replace with your API
       const data = await response.json();
-      setGroups(data); // Assuming API returns an array of groups
+      console.log(data.groups);
+
+      setGroups(data.groups); // Assuming API returns an array of groups
     } catch (error) {
       console.error("Error fetching groups:", error);
     } finally {
