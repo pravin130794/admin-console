@@ -49,48 +49,50 @@ async def list_user_groups(
     limit: int = Query(10, ge=1)  # Number of items to fetch
 ):
     """
-    Get a paginated list of groups the user created or has been assigned to.
-    If the user is a SuperAdmin, fetch all groups.
+    Get a paginated list of groups created by the user or where the user is a member.
+    SuperAdmin can see all active groups.
     """
     try:
         # Convert user_id to PydanticObjectId
         user_id = PydanticObjectId(user_id)
-        group_list = []
+
         # Fetch the user from the database
         user = await User.find_one(User.id == user_id)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 
-        # Initialize groups query
+        # Initialize query based on user role
         if user.role == "SuperAdmin":
-            # SuperAdmin fetches all groups
-            groups_query = Group.find_all({"isActive": True})
+            # SuperAdmin fetches all active groups
+            groups_query = Group.find({"isActive": True})
         else:
-            # Fetch groups created by or assigned to the user
+            # Fetch groups created by the user or where the user is a member
             groups_query = Group.find({
+                "isActive": True,
                 "$or": [
                     {"createdBy": user_id},
-                    {"members": {"$in": [user_id]}},
-                     {"isActive": True}
+                    {"members": {"$in": [user_id]}}
                 ]
             })
 
-        # Fetch groups with pagination
-        if skip is not None and limit is not None:
-            groups = await groups_query.find({ "isActive": True}).skip(skip).limit(limit).to_list()
-        else:
-            groups = await groups_query.to_list()
+        # Apply pagination
+        groups = await groups_query.skip(skip).limit(limit).to_list()
 
-        for group in groups:
-            group_data = {
+        # Get the total count of matching groups (without pagination)
+        total_count = await groups_query.count()
+
+        # Prepare the response data
+        group_list = [
+            {
                 "id": str(group.id),
                 "name": group.name,
                 "description": group.description,
+                "createdBy": str(group.createdBy),
+                "members": [str(member) for member in group.members],
+                "isActive": group.isActive
             }
-            group_list.append(group_data)
-
-        # Get the total count of groups (without pagination)
-        total_count = await groups_query.count()
+            for group in groups
+        ]
 
         return {
             "total": total_count,
