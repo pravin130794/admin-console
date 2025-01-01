@@ -305,7 +305,7 @@ async def get_user_details(user_id: str):
 #     return updated_user
 
 # Delete a user by ID
-@router.patch("/{user_id}/inactivate")
+@router.patch("/user/{user_id}/inactivate")
 async def inactivate_user(user_id: str, request: InactivateUserRequest):
     """
     Inactivate a user by setting isActive to False and storing the reason.

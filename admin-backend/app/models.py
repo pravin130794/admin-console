@@ -73,6 +73,8 @@ class Group(Document):
     description: str
     createdBy: PydanticObjectId
     groupAdmin: PydanticObjectId
+    isActive: bool = True
+    reason: Optional[str] = None  # Optional field
     members: List[PydanticObjectId] = []
     projects: List[PydanticObjectId] = []  # List of project IDs
     createdAt: datetime = Field(default_factory=datetime.utcnow)
@@ -156,9 +158,23 @@ class UserUpdateRequest(BaseModel):
     businessPurpose: Optional[str] = None
     groups: List[PydanticObjectId]= []  # List of group IDs
     projects: List[PydanticObjectId]= []  # List of project IDs
-    
+
+class GroupUpdateRequest(BaseModel):
+    id: PydanticObjectId
+    reason: Optional[str] = None
+    name: Optional[str] = None
+    description: Optional[str] = None
+    createdBy: Optional[PydanticObjectId] = None
+    groupAdmin: Optional[PydanticObjectId] = None
+    members: List[PydanticObjectId]= []
+    projects: List[PydanticObjectId]= []  # List of project IDs
+
 # Request schema for deactivating a user
 class InactivateUserRequest(BaseModel):
+    reason: Optional[str] = None  # Reason for inactivation
+
+# Request schema for deactivating a group
+class InactivateGroupRequest(BaseModel):
     reason: Optional[str] = None  # Reason for inactivation
 
 # Request schema for creating a user
@@ -172,6 +188,16 @@ class CreateUserRequest(BaseModel):
     role: str  # Role of the user (e.g., "SuperAdmin", "GroupAdmin", "User")
     groups: List[PydanticObjectId] = [] # List of group IDs to assign to the user
     businessPurpose: str
+
+# Request schema for creating a groups
+class CreateGroupRequest(BaseModel):
+    reason: Optional[str] = None
+    name: Optional[str] = None
+    description: Optional[str] = None
+    createdBy: Optional[PydanticObjectId] = None
+    groupAdmin: Optional[PydanticObjectId] = None
+    members: List[PydanticObjectId]= []
+    projects: List[PydanticObjectId]= [] 
 
 class Devices(Document):
     name: str

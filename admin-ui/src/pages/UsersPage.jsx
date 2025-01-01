@@ -169,7 +169,7 @@ const UserPage = () => {
     try {
       const user_id = selectedUser.id;
       const response = await fetch(
-        `http://localhost:8000/api/v1/${user_id}/inactivate`,
+        `http://localhost:8000/api/v1/user/${user_id}/inactivate`,
         {
           method: "PATCH",
           headers: {
@@ -183,7 +183,7 @@ const UserPage = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.detail || "Failed to add user.");
+        throw new Error(errorData.detail || "Failed to delete user.");
       }
 
       setSnackbar({
@@ -295,8 +295,6 @@ const UserPage = () => {
   };
 
   const handleApproveSave = async () => {
-    console.log("click....");
-
     if (
       !selectedUser ||
       approveData?.groups?.length === 0 ||
