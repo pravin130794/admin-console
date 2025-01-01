@@ -1024,12 +1024,14 @@ const UserPage = () => {
                   <MenuItem disabled>
                     <CircularProgress size={20} /> Loading...
                   </MenuItem>
-                ) : (
+                ) : visibleItems.length > 0 ? (
                   visibleItems.map((group) => (
                     <MenuItem key={group._id} value={group._id}>
                       {group.name}
                     </MenuItem>
                   ))
+                ) : (
+                  <MenuItem>No groups found</MenuItem>
                 )}
               </Select>
             </FormControl>
@@ -1181,12 +1183,14 @@ const UserPage = () => {
                       <MenuItem disabled>
                         <CircularProgress size={20} /> Loading...
                       </MenuItem>
-                    ) : (
+                    ) : visibleItems.length > 0 ? (
                       visibleItems.map((group) => (
                         <MenuItem key={group._id} value={group._id}>
                           {group.name}
                         </MenuItem>
                       ))
+                    ) : (
+                      <MenuItem>No groups found</MenuItem>
                     )}
                   </Select>
                 </FormControl>
@@ -1368,12 +1372,14 @@ const UserPage = () => {
                     <MenuItem disabled>
                       <CircularProgress size={20} /> Loading...
                     </MenuItem>
-                  ) : (
+                  ) : visibleItems.length > 0 ? (
                     visibleItems.map((group) => (
                       <MenuItem key={group._id} value={group._id}>
                         {group.name}
                       </MenuItem>
                     ))
+                  ) : (
+                    <MenuItem>No groups found</MenuItem>
                   )}
                 </Select>
               </FormControl>

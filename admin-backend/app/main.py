@@ -22,7 +22,7 @@ app.add_middleware(
 )
 
 # MongoDB database reference
-db = motor_client["mydb"]
+db = motor_client["Sapphire_db"]
 
 
 def serialize_object_id(document):
