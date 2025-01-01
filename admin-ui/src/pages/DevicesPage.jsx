@@ -50,9 +50,10 @@ const DevicesPage = () => {
             const existingIndex = updatedList.findIndex(
               (device) => device.fullDocument._id === data.fullDocument._id
             );
-
             if (existingIndex !== -1) {
               updatedList[existingIndex] = data; // Update the existing record
+            } else {
+              updatedList.push(data); // Add the new record if it doesn't exist
             }
           } else if (data.operationType === "insert") {
             // Handle insert operation
