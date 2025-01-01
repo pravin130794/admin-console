@@ -1,7 +1,8 @@
-import React from "react";
+import { React, useState } from "react";
 import {
   AppBar,
   Toolbar,
+  Alert,
   Typography,
   Box,
   Button,
@@ -11,22 +12,36 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import SapphireLogo from "../assets/SapphireLogo.png";
 import { Link, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/Auth";
+import SnackbarComponent from "../components/Snackbar";
 
 const AppBarLayout = () => {
   const navigate = useNavigate();
   const { logout } = useAuth();
   const username = localStorage.getItem("username");
   const location = useLocation(); // Get the current location
-
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "info",
+  });
   const handleLogout = () => {
-    localStorage.removeItem("authToken");
-    logout();
-    navigate("/login");
+    setSnackbar({
+      open: true,
+      message: "Logout successful!",
+      severity: "success",
+    });
+    setTimeout(() => {
+      logout();
+      navigate("/login");
+    }, 1000);
   };
 
   // Function to check if a link is active
   const isActive = (path) => location.pathname === path;
 
+  const handleCloseSnackbar = () => {
+    setSnackbar((prev) => ({ ...prev, open: false }));
+  };
   return (
     <Box sx={{ flexGrow: 1 }}>
       <AppBar position="static" sx={{ backgroundColor: "#001a99" }}>
@@ -156,6 +171,12 @@ const AppBarLayout = () => {
       <Box component="main" sx={{ p: 3 }}>
         <Outlet />
       </Box>
+      <SnackbarComponent
+        open={snackbar.open}
+        message={snackbar.message}
+        severity={snackbar.severity}
+        onClose={handleCloseSnackbar}
+      />
     </Box>
   );
 };

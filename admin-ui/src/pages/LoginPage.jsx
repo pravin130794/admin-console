@@ -5,7 +5,6 @@ import {
   Typography,
   Button,
   Paper,
-  Snackbar,
   Alert,
   InputAdornment,
 } from "@mui/material";
@@ -17,6 +16,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/Auth";
 import SapphireLogo from "../assets/SapphireLogo.png";
 import logo from "../assets/logo.png";
+import SnackbarComponent from "../components/Snackbar";
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -319,20 +319,12 @@ const LoginPage = () => {
         </Paper>
       </Box>
 
-      {/* Snackbar for Alerts */}
-      <Snackbar
+      <SnackbarComponent
         open={snackbar.open}
-        autoHideDuration={3000}
+        message={snackbar.message}
+        severity={snackbar.severity}
         onClose={handleCloseSnackbar}
-      >
-        <Alert
-          onClose={handleCloseSnackbar}
-          severity={snackbar.severity}
-          sx={{ width: "100%" }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
+      />
     </Box>
   );
 };

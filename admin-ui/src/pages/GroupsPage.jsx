@@ -633,7 +633,7 @@ const GroupsPage = () => {
                 }
               />
               <TextField
-                label="Description"
+                label="Description *"
                 value={registerData.description}
                 onChange={(e) =>
                   handleRegisterInputChange("description", e.target.value)
