@@ -1,7 +1,7 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import init_db, motor_client
-from app.routes import users, groups, projects
+from app.routes import users, groups, projects, devices
 from dotenv import load_dotenv
 from datetime import datetime
 from bson import ObjectId
@@ -20,9 +20,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# MongoDB database reference
-db = motor_client["Sapphire_db"]
 
 
 def serialize_object_id(document):
@@ -51,8 +48,11 @@ async def websocket_endpoint(websocket: WebSocket):
     """
     await websocket.accept()
     try:
+        # MongoDB database reference
+        db = motor_client["agent"]
+        collection = db["device"]
         # Watch the "devices" collection with fullDocument enabled for updates
-        change_stream = db["devices"].watch(full_document="updateLookup")
+        change_stream = collection.watch(full_document="updateLookup")
 
         async for change in change_stream:
             # Serialize ObjectId fields in the change stream event
@@ -86,3 +86,4 @@ def health_check():
 app.include_router(users.router, prefix="/api/v1", tags=["Users"])
 app.include_router(groups.router, prefix="/api/v1", tags=["Groups"])
 app.include_router(projects.router, prefix="/api/v1", tags=["Projects"])
+app.include_router(devices.router, prefix="/api/v1", tags=["Devices"])

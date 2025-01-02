@@ -106,7 +106,7 @@ const UserPage = () => {
     try {
       const user_id = localStorage.getItem("user_id");
       const response = await fetch(
-        `http://localhost:8000/api/v1/groups?user_id=${user_id}`
+        `http://localhost:8001/api/v1/groups?user_id=${user_id}`
       );
       const data = await response.json();
       setGroups(data.groups);
@@ -134,7 +134,7 @@ const UserPage = () => {
     try {
       const user_id = localStorage.getItem("user_id");
       const response = await fetch(
-        `http://localhost:8000/api/v1/users?user_id=${user_id}&skip=${page}&limit=${rowsPerPage}`
+        `http://localhost:8001/api/v1/users?user_id=${user_id}&skip=${page}&limit=${rowsPerPage}`
       );
       const data = await response.json();
       setUsers(data.users);
@@ -169,7 +169,7 @@ const UserPage = () => {
     try {
       const user_id = selectedUser.id;
       const response = await fetch(
-        `http://localhost:8000/api/v1/user/${user_id}/inactivate`,
+        `http://localhost:8001/api/v1/user/${user_id}/inactivate`,
         {
           method: "PATCH",
           headers: {
@@ -237,7 +237,7 @@ const UserPage = () => {
     }
     setApiLoading(true);
     try {
-      const response = await fetch("http://localhost:8000/api/v1/reject_user", {
+      const response = await fetch("http://localhost:8001/api/v1/reject_user", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -320,7 +320,7 @@ const UserPage = () => {
     setApiLoading(true);
     try {
       const response = await fetch(
-        "http://localhost:8000/api/v1/approve_user",
+        "http://localhost:8001/api/v1/approve_user",
         {
           method: "POST",
           headers: {
@@ -372,7 +372,7 @@ const UserPage = () => {
   const handleEditSave = async () => {
     setApiLoading(true);
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/users`, {
+      const response = await fetch(`http://localhost:8001/api/v1/users`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -511,7 +511,7 @@ const UserPage = () => {
     if (!validateRegisterForm()) return;
     setApiLoading(true);
     try {
-      const response = await fetch("http://localhost:8000/api/v1/users", {
+      const response = await fetch("http://localhost:8001/api/v1/users", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

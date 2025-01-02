@@ -6,15 +6,19 @@ import {
   ListItem,
   ListItemText,
   Divider,
+  Backdrop,
 } from "@mui/material";
+
+import CircularProgress from "@mui/material/CircularProgress";
 
 const DevicesPage = () => {
   const [deviceList, setDeviceList] = useState([]);
   const [selectedDevice, setSelectedDevice] = useState("");
   const [selectedDeviceBody, setSelectedDeviceBody] = useState({});
+  const [apiLoading, setApiLoading] = useState(false);
 
   useEffect(() => {
-    const ws = new WebSocket("ws://localhost:8000/ws"); // Replace with your WebSocket server URL
+    const ws = new WebSocket("ws://localhost:8001/ws"); // Replace with your WebSocket server URL
 
     ws.onopen = () => {
       console.log("WebSocket connection established");
@@ -31,7 +35,7 @@ const DevicesPage = () => {
           if (data.operationType === "delete") {
             // Handle delete operation
             updatedList = updatedList.filter(
-              (device) => device.fullDocument._id !== data.documentKey._id
+              (device) => device.fullDocument?._id !== data.documentKey._id
             );
 
             // Reset selection if the deleted device was selected
@@ -39,8 +43,8 @@ const DevicesPage = () => {
               selectedDevice &&
               selectedDevice ===
                 prevList.find(
-                  (device) => device.fullDocument._id === data.documentKey._id
-                )?.fullDocument.url
+                  (device) => device.fullDocument?._id === data.documentKey._id
+                )?.fullDocument?.url
             ) {
               setSelectedDevice("");
               setSelectedDeviceBody({});
@@ -48,7 +52,7 @@ const DevicesPage = () => {
           } else if (data.operationType === "update") {
             // Handle update operation
             const existingIndex = updatedList.findIndex(
-              (device) => device.fullDocument._id === data.fullDocument._id
+              (device) => device.fullDocument?._id === data.fullDocument?._id
             );
             if (existingIndex !== -1) {
               updatedList[existingIndex] = data; // Update the existing record
@@ -58,7 +62,7 @@ const DevicesPage = () => {
           } else if (data.operationType === "insert") {
             // Handle insert operation
             const existingIndex = updatedList.findIndex(
-              (device) => device.fullDocument._id === data.fullDocument._id
+              (device) => device.fullDocument?._id === data.fullDocument?._id
             );
 
             if (existingIndex === -1) {
@@ -68,8 +72,8 @@ const DevicesPage = () => {
 
           // Automatically select the first device if none is selected
           if (updatedList.length > 0 && !selectedDevice) {
-            setSelectedDevice(updatedList[0].fullDocument.url);
-            setSelectedDeviceBody(updatedList[0].fullDocument.body);
+            setSelectedDevice(updatedList[0].fullDocument?.url);
+            setSelectedDeviceBody(updatedList[0].fullDocument?.body);
           }
 
           return updatedList;
@@ -89,6 +93,26 @@ const DevicesPage = () => {
       ws.close();
     };
   }, [selectedDevice]);
+
+  const fetchDevices = async () => {
+    setApiLoading(true);
+    try {
+      const response = await fetch(`http://localhost:8001/api/v1/devices`);
+      const data = await response.json();
+      const respData = data.map((device) => {
+        return { fullDocument: device };
+      });
+      setDeviceList(respData);
+    } catch (error) {
+      console.error("Error fetching device:", error);
+    } finally {
+      setApiLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDevices();
+  }, []);
 
   const handleDeviceClick = (device) => {
     setSelectedDevice(device.url);
@@ -112,7 +136,7 @@ const DevicesPage = () => {
         <List>
           {deviceList.map((device, index) => (
             <ListItem
-              key={device.fullDocument._id || `device-${index}`}
+              key={device.fullDocument?._id || `device-${index}`}
               button
               onClick={() => handleDeviceClick(device.fullDocument)}
               sx={{
@@ -128,13 +152,15 @@ const DevicesPage = () => {
                   height: 10,
                   borderRadius: "50%",
                   backgroundColor:
-                    device.fullDocument.status === "true" ? "green" : "red",
+                    device.fullDocument?.state === "Connected"
+                      ? "green"
+                      : "red",
                   marginRight: "10px",
                 }}
               />
               <ListItemText
-                primary={device.fullDocument.name}
-                secondary={device.fullDocument.details}
+                primary={device.fullDocument?.model}
+                secondary={device.fullDocument?.manufacturer}
                 primaryTypographyProps={{ fontWeight: "bold" }}
               />
             </ListItem>
@@ -188,6 +214,10 @@ const DevicesPage = () => {
           </Typography>
         )}
       </Box>
+      {/* Backdrop Loader */}
+      <Backdrop open={apiLoading} sx={{ color: "#fff", zIndex: 1301 }}>
+        <CircularProgress color="inherit" />
+      </Backdrop>
     </Box>
   );
 };

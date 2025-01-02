@@ -92,7 +92,7 @@ const OTPPage = () => {
     setApiLoading(true);
     try {
       requestBody.email = email;
-      const response = await fetch("http://localhost:8000/api/v1/verify-otp", {
+      const response = await fetch("http://localhost:8001/api/v1/verify-otp", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

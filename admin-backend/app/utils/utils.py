@@ -34,8 +34,8 @@ def generate_otp() -> str:
 
 # Function to send email with OTP
 async def send_otp_email(to_email: str, otp: str):
-    from_email = os.getenv('FROM_EMAIL',"anku130794@gmail.com")  # Replace with your email
-    from_password = os.getenv('FROM_PASSWORD',"xhlexropodjtdwbf")  # Replace with your email password
+    from_email = os.getenv('FROM_EMAIL',"sapphire.admn1@gmail.com")  # Replace with your email
+    from_password = os.getenv('FROM_PASSWORD',"syhwgvdwabasmjxy")  # Replace with your email password
     smtp_server = os.getenv('SMTP_SERVER',"smtp.gmail.com")  # Use the SMTP server for your email provider
     smtp_port = os.getenv('SMTP_PORT',587)  # SMTP port for sending email (typically 587 for TLS)
 

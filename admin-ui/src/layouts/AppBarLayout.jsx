@@ -44,7 +44,7 @@ const AppBarLayout = () => {
   };
   return (
     <Box sx={{ flexGrow: 1 }}>
-      <AppBar position="static" sx={{ backgroundColor: "#001a99" }}>
+      <AppBar position="static" sx={{ backgroundColor: "#5a8dff" }}>
         <Toolbar>
           {/* Logo and Navigation Links */}
           <Box display="flex" alignItems="center" sx={{ flexGrow: 1 }}>
@@ -68,7 +68,7 @@ const AppBarLayout = () => {
                 to="/devices"
                 sx={{
                   backgroundColor: isActive("/devices")
-                    ? "#3480eb"
+                    ? "#0026d1"
                     : "transparent", // Highlight active button
                   color: "white",
                   marginRight: "16px",
@@ -78,7 +78,7 @@ const AppBarLayout = () => {
                   fontWeight: "bold",
                   "&:hover": {
                     backgroundColor: isActive("/devices")
-                      ? "#3480eb"
+                      ? "#000080"
                       : "#0026d1",
                   },
                 }}
@@ -90,7 +90,7 @@ const AppBarLayout = () => {
                 to="/users"
                 sx={{
                   backgroundColor: isActive("/users")
-                    ? "#3480eb"
+                    ? "#0026d1"
                     : "transparent",
                   color: "white",
                   marginRight: "16px",
@@ -99,7 +99,7 @@ const AppBarLayout = () => {
                   borderRadius: "5px",
                   fontWeight: "bold",
                   "&:hover": {
-                    backgroundColor: isActive("/users") ? "#3480eb" : "#0026d1",
+                    backgroundColor: isActive("/users") ? "#000080" : "#0026d1",
                   },
                 }}
               >
@@ -110,7 +110,7 @@ const AppBarLayout = () => {
                 to="/groups"
                 sx={{
                   backgroundColor: isActive("/groups")
-                    ? "#3480eb"
+                    ? "#0026d1"
                     : "transparent",
                   color: "white",
                   marginRight: "16px",
@@ -120,7 +120,7 @@ const AppBarLayout = () => {
                   fontWeight: "bold",
                   "&:hover": {
                     backgroundColor: isActive("/groups")
-                      ? "#3480eb"
+                      ? "#000080"
                       : "#0026d1",
                   },
                 }}
@@ -132,7 +132,7 @@ const AppBarLayout = () => {
                 to="/projects"
                 sx={{
                   backgroundColor: isActive("/projects")
-                    ? "#3480eb"
+                    ? "#0026d1"
                     : "transparent",
                   color: "white",
                   marginRight: "16px",
@@ -142,7 +142,7 @@ const AppBarLayout = () => {
                   fontWeight: "bold",
                   "&:hover": {
                     backgroundColor: isActive("/projects")
-                      ? "#3480eb"
+                      ? "#000080"
                       : "#0026d1",
                   },
                 }}

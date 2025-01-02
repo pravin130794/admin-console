@@ -89,7 +89,7 @@ const SignUp = () => {
       return;
     }
     try {
-      const response = await fetch("http://localhost:8000/api/v1/sign-up", {
+      const response = await fetch("http://localhost:8001/api/v1/sign-up", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

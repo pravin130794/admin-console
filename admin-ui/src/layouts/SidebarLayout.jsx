@@ -37,7 +37,7 @@ const SidebarLayout = () => {
       // Call the logout API
 
       const token = localStorage.getItem("authToken");
-      const response = await fetch("http://localhost:8000/api/v1/logout", {
+      const response = await fetch("http://localhost:8001/api/v1/logout", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -1,6 +1,6 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 from beanie import init_beanie
-from app.models import User, Group, Project, UserToken, UserOTP  # Import models
+from app.models import User, Group, Project, UserToken, UserOTP, Devices  # Import models
 from app.config import settings
 
 # Initialize a global Motor Client instance
@@ -12,7 +12,7 @@ async def init_db():
     """
     await init_beanie(
         database=motor_client[settings.MONGO_DB_NAME],
-        document_models=[User, Group, Project, UserToken, UserOTP]
+        document_models=[User, Group, Project, UserToken, UserOTP, Devices]
     )
 
 def get_motor_client():

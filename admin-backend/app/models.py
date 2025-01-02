@@ -200,8 +200,14 @@ class CreateGroupRequest(BaseModel):
     projects: List[PydanticObjectId]= [] 
 
 class Devices(Document):
-    name: str
-    status: bool = True
+    udid: str
+    last_update: datetime
+    state: str
+    cpu: str
+    manufacturer: str
+    model: str
+    os_version: str
+    sdk_version: str
 
     class Settings:
-        name = "devices"
+        name = "device"
