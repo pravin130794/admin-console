@@ -277,6 +277,7 @@ const LoginPage = () => {
               name="password"
               value={formData.password}
               onChange={handleChange}
+              onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
               error={!!formErrors.password}
               helperText={formErrors.password}
               sx={{ marginBottom: 3 }}

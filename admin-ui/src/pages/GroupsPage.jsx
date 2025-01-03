@@ -41,6 +41,7 @@ const GroupsPage = () => {
     description: "",
     createdBy: "",
     groupAdmin: "",
+    members: [],
   });
   const [apiLoading, setApiLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({
@@ -241,6 +242,7 @@ const GroupsPage = () => {
     setRegisterData({
       name: "",
       description: "",
+      members: [],
     });
     setOpenRegister(true);
   };
@@ -255,6 +257,7 @@ const GroupsPage = () => {
     try {
       registerData.createdBy = localStorage.getItem("user_id");
       registerData.groupAdmin = localStorage.getItem("user_id");
+      registerData.members.push(localStorage.getItem("user_id"));
 
       const response = await fetch("http://localhost:8001/api/v1/groups", {
         method: "POST",

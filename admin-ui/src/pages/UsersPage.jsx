@@ -410,7 +410,7 @@ const UserPage = () => {
   };
 
   const handleApproveInputChange = (field, value) => {
-    setApproveData({ ...editedData, [field]: value });
+    setApproveData({ ...approveData, [field]: value });
   };
 
   const validateRegisterForm = () => {
@@ -989,10 +989,10 @@ const UserPage = () => {
                 }
                 renderValue={(selected) =>
                   selected.map((id) => {
-                    const group = groups.find((group) => group._id === id);
+                    const group = groups.find((group) => group.id === id);
                     return group ? (
                       <Box
-                        key={group._id}
+                        key={group.id}
                         sx={{
                           display: "inline-flex",
                           alignItems: "center",
@@ -1024,7 +1024,7 @@ const UserPage = () => {
                   </MenuItem>
                 ) : visibleItems.length > 0 ? (
                   visibleItems.map((group) => (
-                    <MenuItem key={group._id} value={group._id}>
+                    <MenuItem key={group.id} value={group.id}>
                       {group.name}
                     </MenuItem>
                   ))
@@ -1337,10 +1337,10 @@ const UserPage = () => {
                   }
                   renderValue={(selected) =>
                     selected.map((id) => {
-                      const group = groups.find((group) => group._id === id);
+                      const group = groups.find((group) => group.id === id);
                       return group ? (
                         <Box
-                          key={group._id}
+                          key={group.id}
                           sx={{
                             display: "inline-flex",
                             alignItems: "center",
@@ -1372,7 +1372,7 @@ const UserPage = () => {
                     </MenuItem>
                   ) : visibleItems.length > 0 ? (
                     visibleItems.map((group) => (
-                      <MenuItem key={group._id} value={group._id}>
+                      <MenuItem key={group.id} value={group.id}>
                         {group.name}
                       </MenuItem>
                     ))

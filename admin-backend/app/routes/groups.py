@@ -13,6 +13,7 @@ router = APIRouter()
 async def create_group(group: CreateGroupRequest):
     """
     Create a new group with member associations and other details.
+    Update the groupIds field in the User collection for all members.
     """
     try:
         # Check if the group already exists
@@ -20,12 +21,18 @@ async def create_group(group: CreateGroupRequest):
         if existing_group:
             raise HTTPException(status_code=400, detail="Group already exists")
 
+        # Validate and fetch users
+        users = await User.find({"_id": {"$in": group.members}}).to_list()
+        if len(users) != len(group.members):
+            raise HTTPException(status_code=404, detail="Some users not found")
+        
         # Prepare the new group
         new_group = Group(
             name=group.name,
             description=group.description,
             createdBy=group.createdBy,
             groupAdmin=group.groupAdmin,
+            members=group.members,
             isActive=True,
             createdAt=datetime.utcnow(),
             updatedAt=datetime.utcnow(),
@@ -34,7 +41,14 @@ async def create_group(group: CreateGroupRequest):
         # Save the group to the database
         await new_group.create()
 
-        return {"message": "Group created successfully"}
+        # Update each user's groupIds field
+        for user_id in group.members:
+            user = await User.find_one({"_id": user_id})
+            if user:
+                user.groupIds.append(new_group.id)
+                await user.save() 
+
+        return {"message": "Group created successfully", "groupId": str(new_group.id)}
 
     except HTTPException as error:
         raise error
@@ -68,10 +82,12 @@ async def list_user_groups(
         else:
             # Fetch groups created by the user or where the user is a member
             groups_query = Group.find({
-                "isActive": True,
-                "$or": [
-                    {"createdBy": user_id},
-                    {"members": {"$in": [user_id]}}
+                "$and": [
+                    {"isActive": True},
+                    {"$or": [
+                        # {"createdBy": user_id},
+                        {"members": {"$in": [user_id]}}
+                    ]}
                 ]
             })
 
@@ -118,11 +134,12 @@ async def get_group(group_id: str):
 @router.put("/groups")
 async def partial_update_group(group: GroupUpdateRequest):
     """
-    Partially update group details.
+    Partially update group details and update the groupIds field in the User collection for members.
     """
     try:
         # Convert group_id to PydanticObjectId
         group_id = PydanticObjectId(group.id)
+
         # Check if group exists
         existing_group = await Group.find_one(Group.id == group_id)
         if not existing_group:
@@ -134,7 +151,38 @@ async def partial_update_group(group: GroupUpdateRequest):
         if group.description is not None:
             existing_group.description = group.description
 
-        # Save the changes
+        # If members are updated, synchronize the User collection
+        if group.members is not None:
+            # Validate and fetch users
+            users = await User.find({"_id": {"$in": group.members}}).to_list()
+            if len(users) != len(group.members):
+                raise HTTPException(status_code=404, detail="Some users not found")
+
+            # Update the group's members
+            existing_group.members = group.members
+
+            # Update the groupIds field in User collection
+            # Remove this group ID from users who are no longer members
+            old_members = set(existing_group.members)
+            new_members = set(group.members)
+            removed_members = old_members - new_members
+            added_members = new_members - old_members
+
+            # Remove group ID from users who are no longer members
+            for user_id in removed_members:
+                user = await User.find_one({"_id": user_id})
+                if user and group_id in user.groupIds:
+                    user.groupIds.remove(group_id)
+                    await user.save()
+
+            # Add group ID to new members
+            for user_id in added_members:
+                user = await User.find_one({"_id": user_id})
+                if user:
+                    user.groupIds.append(group_id)
+                    await user.save()
+
+        # Save the group changes
         await existing_group.save()
 
         return {
@@ -146,9 +194,10 @@ async def partial_update_group(group: GroupUpdateRequest):
 
 # Delete a group by ID
 @router.patch("/group/{group_id}/inactivate")
-async def inactivate_user(group_id: str, request: InactivateGroupRequest):
+async def inactivate_group(group_id: str, request: InactivateGroupRequest):
     """
-    Inactivate a group by setting isActive to False and storing the reason.
+    Inactivate a group by setting isActive to False, storing the reason,
+    and removing the group ID from associated users' groupIds.
     """
     try:
         # Validate and convert group_id to PydanticObjectId
@@ -166,8 +215,14 @@ async def inactivate_user(group_id: str, request: InactivateGroupRequest):
         group.reason = request.reason
         group.updatedAt = datetime.utcnow()
 
-        # Save the changes
+        # Save the changes to the group
         await group.save()
+
+        # Update users to remove this group ID from their groupIds field
+        users_with_group = await User.find({"groupIds": group_id}).to_list()
+        for user in users_with_group:
+            user.groupIds.remove(group_id)  # Remove the group ID
+            await user.save()  # Save the updated user document
 
         return {"message": "Group inactivated successfully"}
 

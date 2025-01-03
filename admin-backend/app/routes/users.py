@@ -64,6 +64,7 @@ async def create_superuser(user: SuperUserCreate):
 async def create_user(user: CreateUserRequest):
     """
     Create a new user with group associations and other details.
+    Update the members field in the Group collection for associated groups.
     """
     try:
         # Check if the email already exists
@@ -76,7 +77,9 @@ async def create_user(user: CreateUserRequest):
         if len(groups) != len(user.groups):
             raise HTTPException(status_code=404, detail="Some groups not found")
 
+        # Encrypt the password
         encpt_password = encrypt_password(user.password)
+
         # Prepare the new user
         new_user = User(
             firstName=user.firstName,
@@ -84,7 +87,7 @@ async def create_user(user: CreateUserRequest):
             email=user.email,
             phone=user.phone,
             username=user.username,
-            password=encpt_password, 
+            password=encpt_password,
             role=user.role,
             groupIds=user.groups,
             businessPurpose=user.businessPurpose,
@@ -98,7 +101,14 @@ async def create_user(user: CreateUserRequest):
         # Save the user to the database
         await new_user.create()
 
-        return {"message": "User created successfully"}
+        # Update the members field in the associated groups
+        for group_id in user.groups:
+            group = await Group.find_one({"_id": group_id})
+            if group and new_user.id not in group.members:
+                group.members.append(new_user.id)  # Add the new user's ID to the group
+                await group.save()
+
+        return {"message": "User created successfully", "userId": str(new_user.id)}
 
     except HTTPException as error:
         raise error
@@ -308,7 +318,8 @@ async def get_user_details(user_id: str):
 @router.patch("/user/{user_id}/inactivate")
 async def inactivate_user(user_id: str, request: InactivateUserRequest):
     """
-    Inactivate a user by setting isActive to False and storing the reason.
+    Inactivate a user by setting isActive to False, storing the reason,
+    and removing the user ID from the members field of associated groups.
     """
     try:
         # Validate and convert user_id to PydanticObjectId
@@ -326,8 +337,14 @@ async def inactivate_user(user_id: str, request: InactivateUserRequest):
         user.reason = request.reason
         user.updatedAt = datetime.utcnow()
 
-        # Save the changes
+        # Save the changes to the user
         await user.save()
+
+        # Update groups to remove this user ID from their members field
+        groups_with_user = await Group.find({"members": user_id}).to_list()
+        for group in groups_with_user:
+            group.members.remove(user_id)  # Remove the user ID
+            await group.save()  # Save the updated group document
 
         return {"message": "User inactivated successfully"}
 
@@ -339,11 +356,12 @@ async def inactivate_user(user_id: str, request: InactivateUserRequest):
 @router.put("/users")
 async def partial_update_user(user: UserUpdateRequest):
     """
-    Partially update user details.
+    Partially update user details and update the members field in associated groups.
     """
     try:
         # Convert user_id to PydanticObjectId
         user_id = PydanticObjectId(user.id)
+
         # Check if user exists
         existing_user = await User.find_one(User.id == user_id)
         if not existing_user:
@@ -363,10 +381,33 @@ async def partial_update_user(user: UserUpdateRequest):
 
         # Update user groups if provided
         if user.groups is not None:
+            # Validate and fetch groups
             groups = await Group.find({"_id": {"$in": user.groups}}).to_list()
             if len(groups) != len(user.groups):
                 raise HTTPException(status_code=404, detail="Some groups not found")
-            existing_user.groupIds = [group.id for group in groups]
+
+            # Synchronize the user's groupIds
+            old_groups = set(existing_user.groupIds)
+            new_groups = set(user.groups)
+            removed_groups = old_groups - new_groups
+            added_groups = new_groups - old_groups
+
+            # Remove user from groups they are no longer part of
+            for group_id in removed_groups:
+                group = await Group.find_one({"_id": group_id})
+                if group and user_id in group.members:
+                    group.members.remove(user_id)
+                    await group.save()
+
+            # Add user to new groups
+            for group_id in added_groups:
+                group = await Group.find_one({"_id": group_id})
+                if group and user_id not in group.members:
+                    group.members.append(user_id)
+                    await group.save()
+
+            # Update the user's groupIds field
+            existing_user.groupIds = list(new_groups)
 
         # Update user projects if provided
         if user.projects is not None:
@@ -375,13 +416,15 @@ async def partial_update_user(user: UserUpdateRequest):
                 raise HTTPException(status_code=404, detail="Some projects not found")
             existing_user.projectIds = [project.id for project in projects]
 
-        # Save the changes
+        # Save the updated user
         await existing_user.save()
 
         return {
             "message": "User updated successfully"
         }
 
+    except HTTPException as error:
+        raise error
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 

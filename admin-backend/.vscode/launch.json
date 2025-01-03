@@ -9,7 +9,7 @@
       "type": "debugpy",
       "request": "launch",
       "module": "uvicorn",
-      "args": ["app.main:app", "--reload"],
+      "args": ["app.main:app", "--reload", "--port", "8001"],
       "cwd": "/Users/pravin07/Documents/PERSONAL/FREELANCER/infra_dashboard/admin-backend",
       "python": "/Library/Frameworks/Python.framework/Versions/3.10/bin/python3"
     }
