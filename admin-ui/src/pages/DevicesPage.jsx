@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -8,17 +8,16 @@ import {
   Divider,
   Backdrop,
 } from "@mui/material";
-
 import CircularProgress from "@mui/material/CircularProgress";
 
 const DevicesPage = () => {
   const [deviceList, setDeviceList] = useState([]);
   const [selectedDevice, setSelectedDevice] = useState("");
-  const [selectedDeviceBody, setSelectedDeviceBody] = useState({});
   const [apiLoading, setApiLoading] = useState(false);
-
+  const [selectedDeviceBody, setSelectedDeviceBody] = useState({});
+  const encodeUrl = "";
   useEffect(() => {
-    const ws = new WebSocket("ws://localhost:8001/ws"); // Replace with your WebSocket server URL
+    const ws = new WebSocket("ws://127.0.0.1:8001/ws"); // Replace with your WebSocket server URL
 
     ws.onopen = () => {
       console.log("WebSocket connection established");
@@ -39,25 +38,28 @@ const DevicesPage = () => {
             );
 
             // Reset selection if the deleted device was selected
+            let dev = prevList.find(
+              (device) => device.fullDocument?._id === data.documentKey._id
+            )?.fullDocument;
+
             if (
               selectedDevice &&
-              selectedDevice ===
-                prevList.find(
-                  (device) => device.fullDocument?._id === data.documentKey._id
-                )?.fullDocument?.url
+              selectedDevice === streamUrl(dev?.udid, dev?.security_id)
             ) {
               setSelectedDevice("");
               setSelectedDeviceBody({});
             }
           } else if (data.operationType === "update") {
+            if (updatedList.length == 0) {
+              updatedList.push(data);
+            }
             // Handle update operation
-            const existingIndex = updatedList.findIndex(
-              (device) => device.fullDocument?._id === data.fullDocument?._id
-            );
+            const existingIndex = updatedList.findIndex((device) => {
+              return device.fullDocument?.udid === data.fullDocument?.udid;
+            });
+
             if (existingIndex !== -1) {
               updatedList[existingIndex] = data; // Update the existing record
-            } else {
-              updatedList.push(data); // Add the new record if it doesn't exist
             }
           } else if (data.operationType === "insert") {
             // Handle insert operation
@@ -70,10 +72,11 @@ const DevicesPage = () => {
             }
           }
 
+          let dev = updatedList[0].fullDocument;
           // Automatically select the first device if none is selected
           if (updatedList.length > 0 && !selectedDevice) {
-            setSelectedDevice(updatedList[0].fullDocument?.url);
-            setSelectedDeviceBody(updatedList[0].fullDocument?.body);
+            setSelectedDevice(streamUrl(dev?.udid, dev?.security_id));
+            setSelectedDeviceBody(dev?.body);
           }
 
           return updatedList;
@@ -97,14 +100,15 @@ const DevicesPage = () => {
   const fetchDevices = async () => {
     setApiLoading(true);
     try {
-      const response = await fetch(`http://localhost:8001/api/v1/devices`);
+      const response = await fetch(`http://127.0.0.1:8001/api/v1/devices`);
       const data = await response.json();
       const respData = data.map((device) => {
         return { fullDocument: device };
       });
+
       setDeviceList(respData);
     } catch (error) {
-      console.error("Error fetching device:", error);
+      console.error("Error fetching devices:", error);
     } finally {
       setApiLoading(false);
     }
@@ -114,9 +118,31 @@ const DevicesPage = () => {
     fetchDevices();
   }, []);
 
-  const handleDeviceClick = (device) => {
-    setSelectedDevice(device.url);
-    setSelectedDeviceBody(device.body);
+  const registerDevice = async (device) => {
+    setApiLoading(true);
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await fetch(
+        `http://127.0.0.1:8001/api/v1/registerdevice/${device.udid}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({}),
+        }
+      );
+      const data = await response.json();
+      let url = streamUrl(device.udid, data);
+      setSelectedDevice(url);
+      setSelectedDeviceBody(device.body);
+      console.log("Device registration response:", url);
+    } catch (error) {
+      console.error("Error registering device:", error);
+    } finally {
+      setApiLoading(false);
+    }
   };
 
   return (
@@ -138,12 +164,14 @@ const DevicesPage = () => {
             <ListItem
               key={device.fullDocument?._id || `device-${index}`}
               button
-              onClick={() => handleDeviceClick(device.fullDocument)}
+              onClick={async () => {
+                await registerDevice(device.fullDocument);
+              }}
               sx={{
                 mb: 1,
                 border: "1px solid #ddd",
                 borderRadius: "8px",
-                "&:hover": { backgroundColor: "#f5f5f5" },
+                "&:hover": { backgroundColor: "#f0f8ff" },
               }}
             >
               <Box
@@ -180,20 +208,22 @@ const DevicesPage = () => {
         {selectedDevice ? (
           <Box
             position="relative"
-            width="370px"
-            height="810px"
-            sx={{
-              backgroundImage: `url(../src/assets/${
-                selectedDeviceBody?.image || ""
-              })`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-            }}
+            width="35%"
+            height="104%"
+            // sx={{
+            //   backgroundImage: "",
+            //   backgroundSize: "cover",
+            //   backgroundPosition: "center",
+            // }}
           >
             <Box
               position="absolute"
               sx={{
-                ...selectedDeviceBody?.frameStyles, // Apply dynamic styles
+                top: "7%",
+                left: "6%",
+                width: "117%",
+                height: "100%",
+                borderRadius: "1px",
                 overflow: "auto",
               }}
             >
@@ -223,3 +253,8 @@ const DevicesPage = () => {
 };
 
 export default DevicesPage;
+
+export function streamUrl(udid, randomNumber) {
+  const url = `http://127.0.0.1:8000/#!action=stream&randomNumber=${randomNumber}&udid=${udid}&player=mse&ws=ws%3A%2F%2Flocalhost%3A8000%2F%3Faction%3Dproxy-adb%26remote%3Dtcp%253A8886%26udid%3D${udid}`;
+  return url;
+}

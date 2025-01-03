@@ -208,6 +208,8 @@ class Devices(Document):
     model: str
     os_version: str
     sdk_version: str
+    security_id: Optional[int] = None
+    registered_to: Optional[str] = None
 
     class Settings:
         name = "device"
