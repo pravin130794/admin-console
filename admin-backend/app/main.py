@@ -24,8 +24,8 @@ app.add_middleware(
 
 def serialize_object_id(document):
     """
-    Recursively convert ObjectId to string in a dictionary or list.
-    Handles nested structures containing ObjectId.
+    Recursively convert ObjectId to string and datetime to ISO format
+    in a dictionary or list. Handles nested structures.
     """
     if isinstance(document, list):
         return [serialize_object_id(item) for item in document]
@@ -36,6 +36,8 @@ def serialize_object_id(document):
         }
     elif isinstance(document, ObjectId):
         return str(document)
+    elif isinstance(document, datetime):
+        return document.isoformat()  # Convert datetime to ISO string
     else:
         return document
 
@@ -79,7 +81,7 @@ async def startup():
 
 @app.get("/api/v1/health")
 def health_check():
-    return {"message": "Admin Dashboard API is running"}
+    return {"message": "Sapphire Dashboard API is running"}
 
 
 # Include routers

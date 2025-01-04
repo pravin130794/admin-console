@@ -68,7 +68,7 @@ const GroupsPage = () => {
   };
 
   const fetchGroups = async () => {
-    setLoadingGroups(true);
+    setApiLoading(true);
     try {
       const user_id = localStorage.getItem("user_id");
       const response = await fetch(
@@ -80,7 +80,7 @@ const GroupsPage = () => {
     } catch (error) {
       console.error("Error fetching groups:", error);
     } finally {
-      setLoadingGroups(false);
+      setApiLoading(false);
     }
   };
 

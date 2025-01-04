@@ -1,21 +1,47 @@
 import { useState, useEffect } from "react";
 import {
-  Box,
+  AppBar,
+  Toolbar,
   Typography,
+  Box,
+  IconButton,
+  InputBase,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
   List,
   ListItem,
   ListItemText,
-  Divider,
+  Collapse,
   Backdrop,
+  CircularProgress,
 } from "@mui/material";
-import CircularProgress from "@mui/material/CircularProgress";
+import MenuIcon from "@mui/icons-material/Menu";
+import CloseIcon from "@mui/icons-material/Close";
+import SearchIcon from "@mui/icons-material/Search";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import SmartphoneIcon from "@mui/icons-material/Smartphone";
 
 const DevicesPage = () => {
   const [deviceList, setDeviceList] = useState([]);
   const [selectedDevice, setSelectedDevice] = useState("");
   const [apiLoading, setApiLoading] = useState(false);
   const [selectedDeviceBody, setSelectedDeviceBody] = useState({});
-  const encodeUrl = "";
+  const [selectedDeviceName, setSelectedDeviceName] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [expandedDevice, setExpandedDevice] = useState(null);
+  const toggleDrawer = () => {
+    setDrawerOpen(!drawerOpen);
+  };
+
+  const handleAccordionToggle = (deviceUdid) => {
+    setExpandedDevice(expandedDevice === deviceUdid ? null : deviceUdid);
+  };
+
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value.toLowerCase());
+  };
   useEffect(() => {
     const ws = new WebSocket("ws://127.0.0.1:8001/ws"); // Replace with your WebSocket server URL
 
@@ -118,6 +144,12 @@ const DevicesPage = () => {
     fetchDevices();
   }, []);
 
+  const filteredDevices = deviceList.filter(
+    (device) =>
+      device.fullDocument.model?.toLowerCase().includes(searchQuery) ||
+      device.fullDocument.manufacturer?.toLowerCase().includes(searchQuery)
+  );
+
   const registerDevice = async (device) => {
     setApiLoading(true);
     try {
@@ -136,7 +168,7 @@ const DevicesPage = () => {
       const data = await response.json();
       let url = streamUrl(device.udid, data);
       setSelectedDevice(url);
-      setSelectedDeviceBody(device.body);
+      setSelectedDeviceBody(device);
       console.log("Device registration response:", url);
     } catch (error) {
       console.error("Error registering device:", error);
@@ -146,104 +178,240 @@ const DevicesPage = () => {
   };
 
   return (
-    <Box display="flex" height="100vh" overflow="hidden">
-      {/* Device List Box */}
-      <Box
-        width="300px"
-        bgcolor="white"
-        borderRight="1px solid #ddd"
-        p={2}
-        sx={{ overflowY: "auto" }}
+    <Box display="flex" flexDirection="column" height="100vh">
+      {/* AppBar */}
+      <AppBar
+        position="static"
+        sx={{
+          backgroundImage:
+            "linear-gradient(to left, #5A8DFF, #001a99, #000080)",
+        }}
       >
-        <Typography variant="h6" gutterBottom>
-          Device List
-        </Typography>
-        <Divider sx={{ mb: 2 }} />
-        <List>
-          {deviceList.map((device, index) => (
-            <ListItem
-              key={device.fullDocument?._id || `device-${index}`}
-              button
-              onClick={async () => {
-                await registerDevice(device.fullDocument);
-              }}
-              sx={{
-                mb: 1,
-                border: "1px solid #ddd",
-                borderRadius: "8px",
-                "&:hover": { backgroundColor: "#f0f8ff" },
-              }}
+        <Toolbar>
+          <IconButton
+            edge="start"
+            color="inherit"
+            aria-label="menu"
+            onClick={toggleDrawer}
+            sx={{ mr: 2 }}
+          >
+            <MenuIcon />
+          </IconButton>
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+            {selectedDeviceName ?? ""}
+          </Typography>
+        </Toolbar>
+      </AppBar>
+
+      {/* Main Content */}
+      <Box display="flex" flexGrow={1} overflow="hidden">
+        {/* Sidebar */}
+        <Collapse in={drawerOpen} orientation="horizontal">
+          <Box
+            sx={{
+              width: 240,
+              height: "100%",
+              backgroundImage:
+                "linear-gradient(to top, #5A8DFF, #001a99, #000080)",
+              color: "white",
+              overflowY: "auto",
+            }}
+          >
+            {/* Header */}
+            <Box
+              display="flex"
+              justifyContent="space-between"
+              alignItems="center"
+              px={2}
+              py={1}
+            >
+              <Typography
+                variant="h6"
+                fontWeight="bold"
+                sx={{
+                  flexGrow: 1, // This makes the text occupy available space
+                  textAlign: "center", // Aligns the text in the center of its space
+                }}
+              >
+                Devices
+              </Typography>
+              <IconButton onClick={toggleDrawer} sx={{ color: "white" }}>
+                <CloseIcon />
+              </IconButton>
+            </Box>
+
+            {/* Search */}
+            <Box
+              display="flex"
+              alignItems="center"
+              bgcolor="white"
+              px={1}
+              py={1}
+              mx={1}
+              mb={1}
+              borderRadius="5px"
+            >
+              <InputBase
+                placeholder="Search"
+                value={searchQuery}
+                onChange={handleSearchChange}
+                fullWidth
+              />
+              <IconButton>
+                <SearchIcon />
+              </IconButton>
+            </Box>
+
+            {/* Accordion Devices */}
+            {filteredDevices.map((device) => (
+              <Accordion
+                key={device.fullDocument.udid}
+                expanded={expandedDevice === device.fullDocument.udid}
+                onChange={() => handleAccordionToggle(device.fullDocument.udid)}
+                sx={{
+                  backgroundImage:
+                    "linear-gradient(to left, #5A8DFF, #001a99, #000080)",
+                  color: "white",
+                  "&.Mui-expanded": {
+                    backgroundColor: "#0052cc",
+                  },
+                }}
+              >
+                <AccordionSummary
+                  expandIcon={<ExpandMoreIcon sx={{ color: "white" }} />}
+                  sx={{
+                    "& .MuiAccordionSummary-content": {
+                      display: "flex",
+                      alignItems: "center",
+                    },
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: "50%",
+                      backgroundColor:
+                        device.fullDocument?.state === "Connected"
+                          ? "green"
+                          : "red",
+                      marginRight: "10px",
+                    }}
+                  />
+                  <Typography ml={2}>{device.fullDocument.model}</Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <List>
+                    <ListItem
+                      button
+                      onClick={async () => {
+                        setSelectedDeviceName(device.fullDocument.model);
+                        await registerDevice(device.fullDocument);
+                      }}
+                      sx={{
+                        backgroundColor:
+                          selectedDeviceBody?.udid === device.fullDocument.udid
+                            ? "#5a8dff"
+                            : "transparent",
+                        color:
+                          selectedDeviceBody?.udid === device.fullDocument.udid
+                            ? "white"
+                            : "inherit",
+                        "&:hover": {
+                          backgroundColor: "#5a8dff",
+                        },
+                        borderRadius: "5px",
+                      }}
+                    >
+                      <ListItemText
+                        primary={
+                          <>
+                            <Typography
+                              variant="body1"
+                              // fontWeight="bold"
+                              sx={{ color: "white" }}
+                            >
+                              Manufacturer: {device.fullDocument.manufacturer}
+                            </Typography>
+                          </>
+                        }
+                        secondary={
+                          <>
+                            <Typography variant="body2" sx={{ color: "white" }}>
+                              State: {device.fullDocument.state}
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: "white" }}>
+                              OS Version: {device.fullDocument.os_version}
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: "white" }}>
+                              CPU: {device.fullDocument.cpu}
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: "white" }}>
+                              SDK Version: {device.fullDocument.sdk_version}
+                            </Typography>
+                          </>
+                        }
+                      />
+                    </ListItem>
+                  </List>
+                </AccordionDetails>
+              </Accordion>
+            ))}
+          </Box>
+        </Collapse>
+
+        {/* Main Device Frame */}
+        <Box
+          flexGrow={1}
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+          p={2}
+          overflow="hidden"
+        >
+          {selectedDevice ? (
+            <Box
+              position="relative"
+              width="35%"
+              height="104%"
+              // sx={{
+              //   backgroundImage: "",
+              //   backgroundSize: "cover",
+              //   backgroundPosition: "center",
+              // }}
             >
               <Box
+                position="absolute"
                 sx={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: "50%",
-                  backgroundColor:
-                    device.fullDocument?.state === "Connected"
-                      ? "green"
-                      : "red",
-                  marginRight: "10px",
+                  top: "7%",
+                  left: "6%",
+                  width: "117%",
+                  height: "100%",
+                  borderRadius: "1px",
+                  overflow: "auto",
                 }}
-              />
-              <ListItemText
-                primary={device.fullDocument?.model}
-                secondary={device.fullDocument?.manufacturer}
-                primaryTypographyProps={{ fontWeight: "bold" }}
-              />
-            </ListItem>
-          ))}
-        </List>
+              >
+                <iframe
+                  src={streamUrl(
+                    selectedDevice.udid,
+                    selectedDevice.security_id
+                  )}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    border: "none",
+                  }}
+                />
+              </Box>
+            </Box>
+          ) : (
+            <Typography variant="h6" color="textSecondary">
+              No device selected.
+            </Typography>
+          )}
+        </Box>
       </Box>
 
-      {/* Main Device Frame */}
-      <Box
-        flexGrow={1}
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        p={2}
-        overflow="hidden"
-      >
-        {selectedDevice ? (
-          <Box
-            position="relative"
-            width="35%"
-            height="104%"
-            // sx={{
-            //   backgroundImage: "",
-            //   backgroundSize: "cover",
-            //   backgroundPosition: "center",
-            // }}
-          >
-            <Box
-              position="absolute"
-              sx={{
-                top: "7%",
-                left: "6%",
-                width: "117%",
-                height: "100%",
-                borderRadius: "1px",
-                overflow: "auto",
-              }}
-            >
-              <iframe
-                src={selectedDevice}
-                title="Device Frame"
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  border: "none",
-                }}
-              />
-            </Box>
-          </Box>
-        ) : (
-          <Typography variant="h6" color="textSecondary">
-            No device selected.
-          </Typography>
-        )}
-      </Box>
       {/* Backdrop Loader */}
       <Backdrop open={apiLoading} sx={{ color: "#fff", zIndex: 1301 }}>
         <CircularProgress color="inherit" />

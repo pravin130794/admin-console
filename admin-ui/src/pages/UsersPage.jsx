@@ -130,7 +130,7 @@ const UserPage = () => {
     }
   };
   const fetchUsers = async () => {
-    setLoadingUsers(true);
+    setApiLoading(true);
     try {
       const user_id = localStorage.getItem("user_id");
       const response = await fetch(
@@ -142,7 +142,7 @@ const UserPage = () => {
     } catch (error) {
       console.error("Error fetching users:", error);
     } finally {
-      setLoadingUsers(false);
+      setApiLoading(false);
     }
   };
 

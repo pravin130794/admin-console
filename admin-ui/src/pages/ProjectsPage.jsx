@@ -53,7 +53,7 @@ const ProjectsPage = () => {
   };
 
   const fetchProjects = async () => {
-    setLoadingProjects(true);
+    setApiLoading(true);
     try {
       const response = await fetch("http://localhost:8001/api/v1/projects"); // Replace with your API
       const data = await response.json();
@@ -61,7 +61,7 @@ const ProjectsPage = () => {
     } catch (error) {
       console.error("Error fetching projects:", error);
     } finally {
-      setLoadingProjects(false);
+      setApiLoading(false);
     }
   };
 
