@@ -60,7 +60,7 @@ async def create_superuser(user: SuperUserCreate):
         raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
 
 # Create a new user
-@router.post("/users")
+@router.post("/users",dependencies=[Depends(JWTBearer())])
 async def create_user(user: CreateUserRequest):
     """
     Create a new user with group associations and other details.
@@ -94,8 +94,8 @@ async def create_user(user: CreateUserRequest):
             isApproved=True if user.role == "SuperAdmin" else False,
             isActive=True,
             status="Approved",
-            createdAt=datetime.utcnow(),
-            updatedAt=datetime.utcnow(),
+            createdAt=datetime.now(),
+            updatedAt=datetime.now(),
         )
 
         # Save the user to the database
@@ -115,7 +115,7 @@ async def create_user(user: CreateUserRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
-@router.get("/users")
+@router.get("/users", dependencies=[Depends(JWTBearer())])
 async def get_user_list(
     user_id: str,  # Pass user_id as a query parameter
     skip: int = Query(0, ge=0),  # Pagination: Number of items to skip
@@ -201,7 +201,7 @@ async def get_user_list(
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
 # Get a single user by ID
-@router.get("/users/{user_id}")
+@router.get("/users/{user_id}", dependencies=[Depends(JWTBearer())])
 async def get_user_details(user_id: str):
     # Fetch the user document
     user = await User.get(user_id)
@@ -303,19 +303,8 @@ async def get_user_details(user_id: str):
         "projects": enriched_projects
     }
 
-# Update a user by ID
-# @router.put("/{user_id}", response_model=User)
-# async def update_user(user_id: str, updated_data: User):
-#     if not ObjectId.is_valid(user_id):
-#         raise HTTPException(status_code=400, detail="Invalid user ID")
-#     user = await User.get(user_id)
-#     if not user:
-#         raise HTTPException(status_code=404, detail="User not found")
-#     updated_user = await user.set(updated_data.dict(exclude_unset=True))
-#     return updated_user
-
 # Delete a user by ID
-@router.patch("/user/{user_id}/inactivate")
+@router.patch("/user/{user_id}/inactivate", dependencies=[Depends(JWTBearer())])
 async def inactivate_user(user_id: str, request: InactivateUserRequest):
     """
     Inactivate a user by setting isActive to False, storing the reason,
@@ -335,7 +324,7 @@ async def inactivate_user(user_id: str, request: InactivateUserRequest):
         # Update the user's status and add a reason for inactivation
         user.isActive = False
         user.reason = request.reason
-        user.updatedAt = datetime.utcnow()
+        user.updatedAt = datetime.now()
 
         # Save the changes to the user
         await user.save()
@@ -353,7 +342,7 @@ async def inactivate_user(user_id: str, request: InactivateUserRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
-@router.put("/users")
+@router.put("/users", dependencies=[Depends(JWTBearer())])
 async def partial_update_user(user: UserUpdateRequest):
     """
     Partially update user details and update the members field in associated groups.
@@ -477,17 +466,17 @@ async def login(user: UserLoginRequest):
     # Check for an existing valid token
     valid_token = await UserToken.find_one(UserToken.user_id == str(db_user.id))
     # valid_token = await UserToken.find(
-    #     And(UserToken.user_id == str(db_user.id), UserToken.expires_at > datetime.utcnow())
+    #     And(UserToken.user_id == str(db_user.id), UserToken.expires_at > datetime.now())
     # ).to_list(limit=1)
 
-    if valid_token and valid_token.expires_at > datetime.utcnow(): # Extract the first document from the list
+    if valid_token and valid_token.expires_at > datetime.now(): # Extract the first document from the list
         return {"message": "Login successful.", "access_token": valid_token.token, "user_id":str(db_user.id),"role":db_user.role,"username":db_user.username}
 
     # Generate a new JWT token
     token = create_access_token({"sub": str(db_user.id), "username": db_user.username})
 
     # Calculate expiration time
-    expires_at = datetime.utcnow() + timedelta(minutes=int(os.getenv("JWT_EXPIRATION_MINUTES","60")))
+    expires_at = datetime.now() + timedelta(minutes=int(os.getenv("JWT_EXPIRATION_MINUTES","60")))
 
     # Delete expired tokens for the user
     await UserToken.find(UserToken.user_id == str(db_user.id)).delete()
@@ -531,7 +520,7 @@ async def verify_otp(otp_data: OTPVerify):
             raise HTTPException(status_code=400, detail="Invalid OTP")
 
         # Check if the OTP is expired
-        if datetime.utcnow() > otp_record.expiration_time:
+        if datetime.now() > otp_record.expiration_time:
             raise HTTPException(status_code=400, detail="OTP has expired")
 
         # Update the user's password
@@ -548,7 +537,7 @@ async def verify_otp(otp_data: OTPVerify):
         raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
 
 
-@router.post("/approve_user")
+@router.post("/approve_user", dependencies=[Depends(JWTBearer())])
 async def approve_user(request: UserApprove):
     try:
         # Find the approver user
@@ -601,7 +590,7 @@ async def approve_user(request: UserApprove):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
-@router.post("/reject_user")
+@router.post("/reject_user", dependencies=[Depends(JWTBearer())])
 async def reject_user(request: RejectUserRequest):
     """
     Reject a user by setting their status to 'Rejected' and updating the rejection reason.
@@ -618,7 +607,7 @@ async def reject_user(request: RejectUserRequest):
         # Update the user's status and rejection reason
         user.status = "Rejected"
         user.reason = request.reason
-        user.updatedAt = datetime.utcnow()
+        user.updatedAt = datetime.now()
 
         # Save the changes
         await user.save()
@@ -635,7 +624,7 @@ async def store_or_refresh_otp(user_id: PydanticObjectId) -> str:
     If an existing OTP is still valid, it will be reused.
     Otherwise, a new OTP will be generated and stored.
     """
-    current_time = datetime.utcnow()
+    current_time = datetime.now()
 
     # Find the existing OTP record for the user
     otp_record = await UserOTP.find_one(UserOTP.user_id == user_id)
@@ -662,3 +651,28 @@ async def store_or_refresh_otp(user_id: PydanticObjectId) -> str:
         )
         await new_otp_record.insert()
         return new_otp_record.otp
+    
+@router.get("/verify-token")
+async def verify_token(token: str):
+    """
+    Verify a token by checking its expiry date from the database.
+    Returns success if the token is valid; otherwise, returns an error.
+    """
+    try:
+        # Find the token in the database
+        token_record = await UserToken.find_one({"token": token})
+        if not token_record:
+            raise HTTPException(status_code=404, detail="Token not found")
+
+        # Check if the token is expired
+        current_time = datetime.now()
+        if token_record.expires_at < current_time:
+            raise HTTPException(status_code=401, detail="Token has expired")
+
+        # If valid, return success
+        return {"message": "Token is valid", "expires_at": token_record.expires_at.isoformat()}
+
+    except HTTPException as error:
+        raise error
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")

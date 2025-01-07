@@ -1,0 +1,30 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python Debugger: FastAPI",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "uvicorn",
+            "args": [
+                "app.main:app",
+                "--reload"
+            ],
+            "env": {
+                "SQLALCHEMY_DATABASE_URL":"postgresql://admin:root@localhost:5432/test_db",
+                "FROM_EMAIL":"anku130794@gmail.com",
+                "FROM_PASSWORD":"xhlexropodjtdwbf",
+                "SMTP_SERVER":"smtp.gmail.com",
+                "SMTP_PORT":"587",
+                "JWT_SECRET_KEY":"20da24faf6b542d34131de1a27fc72806df274dfec9ae87ea70502274fb203c1",
+                "JWT_ALGORITHM":"HS256",
+                "JWT_EXPIRATION_MINUTES":"60"
+            },
+            "cwd": "/Users/pravin07/Documents/PERSONAL/FREELANCER/infra_dashboard/backend",
+            "python": "/Library/Frameworks/Python.framework/Versions/3.10/bin/python3"
+        }
+    ]
+}

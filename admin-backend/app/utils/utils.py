@@ -64,7 +64,7 @@ async def send_otp_email(to_email: str, otp: str):
     
 def create_access_token(data: dict) -> str:
     to_encode = data.copy()
-    # expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    # expire = datetime.now() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     # to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt

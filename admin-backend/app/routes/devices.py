@@ -8,7 +8,7 @@ from typing import List
 router = APIRouter()
 
 # Get a list of all devices
-@router.get("/devices")
+@router.get("/devices",dependencies=[Depends(JWTBearer())])
 async def list_devices():
     devices = await Devices.find_all().to_list()
     return devices

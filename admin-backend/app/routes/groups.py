@@ -1,5 +1,6 @@
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from app.middleware.auth import JWTBearer
 from app.models import Group, User, InactivateGroupRequest, GroupUpdateRequest, CreateGroupRequest
 from bson import ObjectId
 from typing import List
@@ -9,7 +10,7 @@ from beanie import PydanticObjectId
 router = APIRouter()
 
 # Create a new group
-@router.post("/groups")
+@router.post("/groups",dependencies=[Depends(JWTBearer())])
 async def create_group(group: CreateGroupRequest):
     """
     Create a new group with member associations and other details.
@@ -34,8 +35,8 @@ async def create_group(group: CreateGroupRequest):
             groupAdmin=group.groupAdmin,
             members=group.members,
             isActive=True,
-            createdAt=datetime.utcnow(),
-            updatedAt=datetime.utcnow(),
+            createdAt=datetime.now(),
+            updatedAt=datetime.now(),
         )
 
         # Save the group to the database
@@ -56,7 +57,7 @@ async def create_group(group: CreateGroupRequest):
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
 # Get a list of all groups
-@router.get("/groups")
+@router.get("/groups",dependencies=[Depends(JWTBearer())])
 async def list_user_groups(
     user_id: str,  # User ID passed as a query parameter
     skip: int = Query(0, ge=0),  # Number of items to skip
@@ -121,7 +122,7 @@ async def list_user_groups(
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
 # Get a specific group by ID
-@router.get("/groups/{group_id}")
+@router.get("/groups/{group_id}",dependencies=[Depends(JWTBearer())])
 async def get_group(group_id: str):
     if not ObjectId.is_valid(group_id):
         raise HTTPException(status_code=400, detail="Invalid group ID")
@@ -131,7 +132,7 @@ async def get_group(group_id: str):
     return group
 
 # Update a group by ID
-@router.put("/groups")
+@router.put("/groups",dependencies=[Depends(JWTBearer())])
 async def partial_update_group(group: GroupUpdateRequest):
     """
     Partially update group details and update the groupIds field in the User collection for members.
@@ -193,7 +194,7 @@ async def partial_update_group(group: GroupUpdateRequest):
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
 # Delete a group by ID
-@router.patch("/group/{group_id}/inactivate")
+@router.patch("/group/{group_id}/inactivate",dependencies=[Depends(JWTBearer())])
 async def inactivate_group(group_id: str, request: InactivateGroupRequest):
     """
     Inactivate a group by setting isActive to False, storing the reason,
@@ -213,7 +214,7 @@ async def inactivate_group(group_id: str, request: InactivateGroupRequest):
         # Update the group's status and add a reason for inactivation
         group.isActive = False
         group.reason = request.reason
-        group.updatedAt = datetime.utcnow()
+        group.updatedAt = datetime.now()
 
         # Save the changes to the group
         await group.save()

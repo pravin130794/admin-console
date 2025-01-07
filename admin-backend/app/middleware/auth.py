@@ -22,8 +22,12 @@ class JWTBearer(HTTPBearer):
             else:
                 raise HTTPException(status_code=403, detail="Invalid authorization code.")
         except Exception as e:
-            print(e)
-            raise HTTPException(status_code=403, detail=f"Error during token verification: {str(e)}")
+            if hasattr(e, 'detail'):
+                print(e.detail)
+                raise HTTPException(status_code=403, detail=f"Error during token verification: {e.detail}")
+            else:
+                print(e)
+                raise HTTPException(status_code=403, detail=f"Error during token verification: {e}")
 
     async def verify_and_decode_jwt(self, token: str) -> Dict:
         try:
@@ -41,7 +45,7 @@ class JWTBearer(HTTPBearer):
                 raise HTTPException(status_code=403, detail="Token is invalid or not found in the database.")
 
             # Check for expiration
-            if datetime.utcnow() > token_entry.expires_at:
+            if datetime.now() > token_entry.expires_at:
                 raise HTTPException(status_code=403, detail="Token has expired.")
 
             return decoded_token
@@ -50,8 +54,12 @@ class JWTBearer(HTTPBearer):
         # except jwt.InvalidTokenError:
         #     raise HTTPException(status_code=403, detail="Invalid token.")
         except Exception as e:
-            print(e)
-            raise HTTPException(status_code=403, detail=f"Unexpected error: {str(e)}")
+            if hasattr(e, 'detail'):
+                print(e.detail)
+                raise HTTPException(status_code=403, detail=str(e.detail)) 
+            else:
+                print(e)
+                raise HTTPException(status_code=403, detail=str(e)) 
 
 
 class DBSessionMiddleware(BaseHTTPMiddleware):

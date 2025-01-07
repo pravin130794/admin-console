@@ -66,7 +66,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 "documentKey": serialized_change.get("documentKey"),
                 "fullDocument": serialized_change.get("fullDocument"),
                 "updateDescription": serialized_change.get("updateDescription"),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now().isoformat(),
             })
     except WebSocketDisconnect:
         print("WebSocket disconnected")

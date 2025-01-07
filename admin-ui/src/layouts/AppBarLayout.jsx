@@ -24,16 +24,48 @@ const AppBarLayout = () => {
     message: "",
     severity: "info",
   });
-  const handleLogout = () => {
-    setSnackbar({
-      open: true,
-      message: "Logout successful!",
-      severity: "success",
-    });
-    setTimeout(() => {
-      logout();
-      navigate("/login");
-    }, 1000);
+  const handleLogout = async () => {
+    try {
+      // Call the logout API
+
+      const token = localStorage.getItem("authToken");
+      const response = await fetch("http://localhost:8001/api/v1/logout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({}),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        setSnackbar({
+          open: true,
+          message: errorData.detail,
+          severity: "error",
+        });
+        // throw new Error(errorData.detail || "Logout failed");
+      }
+      // Clear authentication tokens
+      localStorage.removeItem("authToken");
+      setSnackbar({
+        open: true,
+        message: "Logout successful!",
+        severity: "success",
+      });
+      // Navigate to the login page
+      setTimeout(() => {
+        logout();
+        navigate("/login");
+      }, 1000);
+    } catch (error) {
+      setSnackbar({
+        open: true,
+        message: error.message || "Logout failed",
+        severity: "error",
+      });
+    }
   };
 
   // Function to check if a link is active

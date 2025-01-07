@@ -1,23 +1,23 @@
-import { createContext, useContext, useState } from "react";
+import { useEffect, useState, createContext, useContext } from "react";
 import { useLocation, Navigate, Outlet } from "react-router-dom";
-
 
 const AuthContext = createContext(null);
 
-
 export const useAuth = () => useContext(AuthContext);
-
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
-    // Initialize user from localStorage
     const storedUserRole = localStorage.getItem("role");
-    return storedUserRole ? storedUserRole : null;
+    const storedToken = localStorage.getItem("authToken");
+    return storedUserRole && storedToken
+      ? { role: storedUserRole, token: storedToken }
+      : null;
   });
 
-  const login = (userData) => {
-    setUser(userData);
-    localStorage.setItem("role", userData); // Persist user
+  const login = (role, token) => {
+    setUser({ role, token });
+    localStorage.setItem("role", role);
+    localStorage.setItem("authToken", token);
   };
 
   const logout = () => {
@@ -25,26 +25,73 @@ export const AuthProvider = ({ children }) => {
     localStorage.clear();
   };
 
+  const verifyToken = async () => {
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      logout();
+      return false;
+    }
+
+    try {
+      const response = await fetch(
+        `http://localhost:8001/api/v1/verify-token?token=${token}`
+      );
+
+      if (!response.ok) {
+        throw new Error("Invalid token");
+      }
+
+      const data = await response.json();
+      console.log("Token verified:", data);
+      return true;
+    } catch (error) {
+      console.error("Token verification failed:", error);
+      logout();
+      return false;
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, logout, verifyToken }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-// RequireAuth to Protect Routes
 export const RequireAuth = () => {
-  const { user } = useAuth();
+  const { user, verifyToken } = useAuth();
   const location = useLocation();
+  const [isVerified, setIsVerified] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
 
-  if (!user) {
+  useEffect(() => {
+    const checkToken = async () => {
+      const valid = await verifyToken();
+      setIsVerified(valid);
+      setIsChecking(false);
+    };
+
+    checkToken();
+  }, [verifyToken]);
+
+  if (isChecking) {
+    // Show a loading screen while verifying the token
     return (
-      <Navigate
-        to="/login" // Redirect to login page
-        state={{ from: location }}
-        replace
-      />
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+        }}
+      >
+        <h2>Validating your session...</h2>
+      </div>
     );
+  }
+
+  if (!user || !isVerified) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   return <Outlet />;
