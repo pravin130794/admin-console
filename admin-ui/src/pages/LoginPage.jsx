@@ -109,7 +109,7 @@ const LoginPage = () => {
       });
 
       setTimeout(() => {
-        login(role);
+        login(role, access_token);
         navigate("/devices");
       }, 1000);
     } catch (error) {

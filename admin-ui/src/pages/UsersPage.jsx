@@ -105,8 +105,14 @@ const UserPage = () => {
     setLoadingGroups(true);
     try {
       const user_id = localStorage.getItem("user_id");
+      const token = localStorage.getItem("authToken");
       const response = await fetch(
-        `http://localhost:8001/api/v1/groups?user_id=${user_id}`
+        `http://localhost:8001/api/v1/groups?user_id=${user_id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       const data = await response.json();
       setGroups(data.groups);
@@ -130,11 +136,17 @@ const UserPage = () => {
     }
   };
   const fetchUsers = async () => {
-    setApiLoading(true);
+    setLoadingUsers(true);
     try {
       const user_id = localStorage.getItem("user_id");
+      const token = localStorage.getItem("authToken");
       const response = await fetch(
-        `http://localhost:8001/api/v1/users?user_id=${user_id}&skip=${page}&limit=${rowsPerPage}`
+        `http://localhost:8001/api/v1/users?user_id=${user_id}&skip=${page}&limit=${rowsPerPage}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       const data = await response.json();
       setUsers(data.users);
@@ -142,7 +154,7 @@ const UserPage = () => {
     } catch (error) {
       console.error("Error fetching users:", error);
     } finally {
-      setApiLoading(false);
+      setLoadingUsers(false);
     }
   };
 
@@ -168,12 +180,14 @@ const UserPage = () => {
     setApiLoading(true);
     try {
       const user_id = selectedUser.id;
+      const token = localStorage.getItem("authToken");
       const response = await fetch(
         `http://localhost:8001/api/v1/user/${user_id}/inactivate`,
         {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
             reason: reason,
@@ -237,10 +251,12 @@ const UserPage = () => {
     }
     setApiLoading(true);
     try {
+      const token = localStorage.getItem("authToken");
       const response = await fetch("http://localhost:8001/api/v1/reject_user", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           reason: reason,
@@ -317,6 +333,7 @@ const UserPage = () => {
       email: selectedUser.email,
       role: approveData.role,
     };
+    const token = localStorage.getItem("authToken");
     setApiLoading(true);
     try {
       const response = await fetch(
@@ -325,6 +342,7 @@ const UserPage = () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(requestBody),
         }
@@ -360,7 +378,7 @@ const UserPage = () => {
     setSelectedUser(user);
     setEditedData({
       ...user,
-      groups: user.groups.map((group) => group._id), // Map existing groups to their IDs
+      groups: user.groups.map((group) => group.id), // Map existing groups to their IDs
     });
     setOpenEdit(true);
   };
@@ -372,10 +390,12 @@ const UserPage = () => {
   const handleEditSave = async () => {
     setApiLoading(true);
     try {
+      const token = localStorage.getItem("authToken");
       const response = await fetch(`http://localhost:8001/api/v1/users`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(editedData),
       });
@@ -511,10 +531,12 @@ const UserPage = () => {
     if (!validateRegisterForm()) return;
     setApiLoading(true);
     try {
+      const token = localStorage.getItem("authToken");
       const response = await fetch("http://localhost:8001/api/v1/users", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(registerData),
       });
@@ -1149,6 +1171,7 @@ const UserPage = () => {
                     renderValue={(selected) =>
                       selected.map((id) => {
                         const group = groups.find((group) => group.id === id);
+
                         return group ? (
                           <Box
                             key={group.id}

@@ -70,9 +70,15 @@ const GroupsPage = () => {
   const fetchGroups = async () => {
     setApiLoading(true);
     try {
+      const token = localStorage.getItem("authToken");
       const user_id = localStorage.getItem("user_id");
       const response = await fetch(
-        `http://localhost:8001/api/v1/groups?user_id=${user_id}&skip=${page}&limit=${rowsPerPage}`
+        `http://localhost:8001/api/v1/groups?user_id=${user_id}&skip=${page}&limit=${rowsPerPage}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       const data = await response.json();
       setGroups(data.groups);
@@ -116,12 +122,14 @@ const GroupsPage = () => {
     setApiLoading(true);
     try {
       const group_id = selectedGroup.id;
+      const token = localStorage.getItem("authToken");
       const response = await fetch(
         `http://localhost:8001/api/v1/group/${group_id}/inactivate`,
         {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
             reason: reason,
@@ -167,10 +175,12 @@ const GroupsPage = () => {
   const handleEditSave = async () => {
     setApiLoading(true);
     try {
+      const token = localStorage.getItem("authToken");
       const response = await fetch(`http://localhost:8001/api/v1/groups`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(editedData),
       });
@@ -258,11 +268,13 @@ const GroupsPage = () => {
       registerData.createdBy = localStorage.getItem("user_id");
       registerData.groupAdmin = localStorage.getItem("user_id");
       registerData.members.push(localStorage.getItem("user_id"));
+      const token = localStorage.getItem("authToken");
 
       const response = await fetch("http://localhost:8001/api/v1/groups", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(registerData),
       });

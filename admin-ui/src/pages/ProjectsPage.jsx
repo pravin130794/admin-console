@@ -55,7 +55,12 @@ const ProjectsPage = () => {
   const fetchProjects = async () => {
     setApiLoading(true);
     try {
-      const response = await fetch("http://localhost:8001/api/v1/projects"); // Replace with your API
+      const token = localStorage.getItem("authToken");
+      const response = await fetch("http://localhost:8001/api/v1/projects", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }); // Replace with your API
       const data = await response.json();
       setProjets(data); // Assuming API returns an array of groups
     } catch (error) {

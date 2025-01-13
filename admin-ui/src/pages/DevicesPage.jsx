@@ -20,7 +20,7 @@ import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
 import SearchIcon from "@mui/icons-material/Search";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import SmartphoneIcon from "@mui/icons-material/Smartphone";
+import SnackbarComponent from "../components/Snackbar";
 
 const DevicesPage = () => {
   const [deviceList, setDeviceList] = useState([]);
@@ -29,8 +29,13 @@ const DevicesPage = () => {
   const [selectedDeviceBody, setSelectedDeviceBody] = useState({});
   const [selectedDeviceName, setSelectedDeviceName] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(true);
   const [expandedDevice, setExpandedDevice] = useState(null);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "info", // Can be 'success', 'error', 'warning', 'info'
+  });
   const toggleDrawer = () => {
     setDrawerOpen(!drawerOpen);
   };
@@ -38,7 +43,9 @@ const DevicesPage = () => {
   const handleAccordionToggle = (deviceUdid) => {
     setExpandedDevice(expandedDevice === deviceUdid ? null : deviceUdid);
   };
-
+  const handleCloseSnackbar = () => {
+    setSnackbar((prev) => ({ ...prev, open: false }));
+  };
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value.toLowerCase());
   };
@@ -126,7 +133,12 @@ const DevicesPage = () => {
   const fetchDevices = async () => {
     setApiLoading(true);
     try {
-      const response = await fetch(`http://127.0.0.1:8001/api/v1/devices`);
+      const token = localStorage.getItem("authToken");
+      const response = await fetch(`http://127.0.0.1:8001/api/v1/devices`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       const data = await response.json();
       const respData = data.map((device) => {
         return { fullDocument: device };
@@ -135,6 +147,11 @@ const DevicesPage = () => {
       setDeviceList(respData);
     } catch (error) {
       console.error("Error fetching devices:", error);
+      setSnackbar({
+        open: true,
+        message: error.message || "An error occurred.",
+        severity: "error",
+      });
     } finally {
       setApiLoading(false);
     }
@@ -172,6 +189,11 @@ const DevicesPage = () => {
       console.log("Device registration response:", url);
     } catch (error) {
       console.error("Error registering device:", error);
+      setSnackbar({
+        open: true,
+        message: error.message || "An error occurred.",
+        severity: "error",
+      });
     } finally {
       setApiLoading(false);
     }
@@ -396,10 +418,7 @@ const DevicesPage = () => {
                 }}
               >
                 <iframe
-                  src={streamUrl(
-                    selectedDevice.udid,
-                    selectedDevice.security_id
-                  )}
+                  src={selectedDevice}
                   style={{
                     width: "100%",
                     height: "100%",
@@ -415,7 +434,13 @@ const DevicesPage = () => {
           )}
         </Box>
       </Box>
-
+      {/* Snackbar for alerts */}
+      <SnackbarComponent
+        open={snackbar.open}
+        message={snackbar.message}
+        severity={snackbar.severity}
+        onClose={handleCloseSnackbar}
+      />
       {/* Backdrop Loader */}
       <Backdrop open={apiLoading} sx={{ color: "#fff", zIndex: 1301 }}>
         <CircularProgress color="inherit" />
