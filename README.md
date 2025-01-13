@@ -1,4 +1,4 @@
-# Sappgire Dashboard
+# Sapphire Dashboard
 
 This project is used for device management for sapphire.
 
@@ -47,7 +47,7 @@ Install Sapphire Frontend with pip
 ```bash
   python -m venv venv/
 
-  source env/bin/activate
+  source venv/bin/activate
 
   uvicorn app.main:app --reload --port 8001
 ```
