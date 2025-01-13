@@ -181,6 +181,26 @@ const AppBarLayout = () => {
               >
                 Projects
               </Button>
+              <Button
+                component={Link}
+                to="/hosts"
+                sx={{
+                  backgroundColor: isActive("/hosts")
+                    ? "#0026d1"
+                    : "transparent",
+                  color: "white",
+                  marginRight: "16px",
+                  textTransform: "none",
+                  fontSize: "16px",
+                  borderRadius: "5px",
+                  fontWeight: "bold",
+                  "&:hover": {
+                    backgroundColor: isActive("/hosts") ? "#000080" : "#0026d1",
+                  },
+                }}
+              >
+                Hosts
+              </Button>
             </Box>
           </Box>
 

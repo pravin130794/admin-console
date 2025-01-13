@@ -11,6 +11,7 @@ import OtpPage from "./pages/OtpPage";
 import NotFoundPage from "./pages/NotFound";
 import UnauthorizedPage from "./pages/Unauthorized";
 import { AuthProvider, RequireAuth } from "./context/Auth";
+import HostsPage from "./pages/HostsPage";
 
 const RequireOtpParams = ({ children }) => {
   const location = useLocation();
@@ -47,6 +48,7 @@ const App = () => {
             <Route path="/groups" element={<GroupsPage />} />
             <Route path="/projects" element={<ProjectsPage />} />
             <Route path="/devices" element={<DevicesPage />} />
+            <Route path="/hosts" element={<HostsPage />} />
           </Route>
         </Route>
 

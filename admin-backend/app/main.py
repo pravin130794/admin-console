@@ -1,7 +1,7 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import init_db, motor_client
-from app.routes import users, groups, projects, devices
+from app.routes import users, groups, projects, devices, hosts
 from dotenv import load_dotenv
 from datetime import datetime
 from bson import ObjectId
@@ -89,3 +89,4 @@ app.include_router(users.router, prefix="/api/v1", tags=["Users"])
 app.include_router(groups.router, prefix="/api/v1", tags=["Groups"])
 app.include_router(projects.router, prefix="/api/v1", tags=["Projects"])
 app.include_router(devices.router, prefix="/api/v1", tags=["Devices"])
+app.include_router(hosts.router, prefix="/api/v1", tags=["Hosts"])
