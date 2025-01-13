@@ -28,7 +28,6 @@ const GroupsPage = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalGroups, setTotalGroups] = useState(0);
-  const [loadingGroups, setLoadingGroups] = useState(false);
   const [openView, setOpenView] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [openDelete, setOpenDelete] = useState(false);

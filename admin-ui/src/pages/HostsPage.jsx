@@ -18,8 +18,8 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import CircularProgress from "@mui/material/CircularProgress";
 import SnackbarComponent from "../components/Snackbar";
 
-const ProjectsPage = () => {
-  const [projects, setProjets] = useState([]);
+const HostsPage = () => {
+  const [hosts, setHosts] = useState([]);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [apiLoading, setApiLoading] = useState(false);
@@ -29,13 +29,13 @@ const ProjectsPage = () => {
     severity: "info",
   });
 
-  const paginatedProjects = projects.slice(
+  const paginatedhosts = hosts.slice(
     page * rowsPerPage,
     page * rowsPerPage + rowsPerPage
   );
 
   useEffect(() => {
-    fetchProjects();
+    fetchhosts();
   }, []);
 
   const handleChangePage = (event, newPage) => {
@@ -51,19 +51,19 @@ const ProjectsPage = () => {
     setSnackbar((prev) => ({ ...prev, open: false }));
   };
 
-  const fetchProjects = async () => {
+  const fetchhosts = async () => {
     setApiLoading(true);
     try {
       const token = localStorage.getItem("authToken");
-      const response = await fetch("http://localhost:8001/api/v1/projects", {
+      const response = await fetch("http://localhost:8001/api/v1/hosts", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       }); // Replace with your API
       const data = await response.json();
-      setProjets(data); // Assuming API returns an array of groups
+      setHosts(data); // Assuming API returns an array of groups
     } catch (error) {
-      console.error("Error fetching projects:", error);
+      console.error("Error fetching hosts:", error);
     } finally {
       setApiLoading(false);
     }
@@ -86,7 +86,7 @@ const ProjectsPage = () => {
       >
         <Box sx={{ flex: 1, textAlign: "center" }}>
           <Typography variant="h5" fontWeight="bold">
-            Project Management
+            Host Management
           </Typography>
         </Box>
         <Box>
@@ -95,7 +95,7 @@ const ProjectsPage = () => {
             sx={{ backgroundColor: "#ffffff", marginRight: "10px" }}
           >
             <Typography variant="h8" fontWeight="bold" color="#001a99">
-              + Add Project
+              + Add Host
             </Typography>
           </Button>
         </Box>
@@ -122,16 +122,16 @@ const ProjectsPage = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {paginatedProjects.length > 0 ? (
-                paginatedProjects.map((project, index) => (
-                  <TableRow key={project.id || `project-${index}`}>
+              {paginatedhosts.length > 0 ? (
+                paginatedhosts.map((Host, index) => (
+                  <TableRow key={Host.id || `Host-${index}`}>
                     <TableCell>{index + 1}</TableCell>
-                    <TableCell>{project.name}</TableCell>
-                    <TableCell>{project.description}</TableCell>
+                    <TableCell>{Host.name}</TableCell>
+                    <TableCell>{Host.description}</TableCell>
                     <TableCell>
                       <IconButton
                         color="primary"
-                        onClick={() => handleViewOpen(project)}
+                        onClick={() => handleViewOpen(Host)}
                       >
                         <VisibilityIcon />
                       </IconButton>
@@ -142,7 +142,7 @@ const ProjectsPage = () => {
                 <TableRow>
                   <TableCell colSpan={5} align="center">
                     <Typography variant="body1" color="textSecondary">
-                      No projects found.
+                      No hosts found.
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -154,7 +154,7 @@ const ProjectsPage = () => {
       {/* Pagination */}
       <TablePagination
         component="div"
-        count={projects.length}
+        count={hosts.length}
         page={page}
         onPageChange={handleChangePage}
         rowsPerPage={rowsPerPage}
@@ -177,4 +177,4 @@ const ProjectsPage = () => {
   );
 };
 
-export default ProjectsPage;
+export default HostsPage;

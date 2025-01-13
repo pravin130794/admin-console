@@ -55,8 +55,8 @@ class User(Document):
     isApproved: bool = False
     reason: Optional[str] = None  # Optional field
     status: str = Field(default="Pending", enum=["Approved", "Rejected", "Pending"])
-    createdAt: datetime = Field(default_factory=datetime.utcnow)
-    updatedAt: datetime = Field(default_factory=datetime.utcnow)
+    createdAt: datetime = Field(default_factory=datetime.now)
+    updatedAt: datetime = Field(default_factory=datetime.now)
 
     class Settings:
         name = "users"  # Collection name in MongoDB
@@ -77,8 +77,8 @@ class Group(Document):
     reason: Optional[str] = None  # Optional field
     members: List[PydanticObjectId] = []
     projects: List[PydanticObjectId] = []  # List of project IDs
-    createdAt: datetime = Field(default_factory=datetime.utcnow)
-    updatedAt: datetime = Field(default_factory=datetime.utcnow)
+    createdAt: datetime = Field(default_factory=datetime.now)
+    updatedAt: datetime = Field(default_factory=datetime.now)
 
     class Settings:
         name = "groups"
@@ -96,8 +96,8 @@ class Project(Document):
     status: str = Field(default="Not Started", enum=["Not Started", "In Progress", "Completed"])
     groupId: PydanticObjectId  # Reference to the parent Group
     assignedUsers: List[PydanticObjectId] = []
-    createdAt: datetime = Field(default_factory=datetime.utcnow)
-    updatedAt: datetime = Field(default_factory=datetime.utcnow)
+    createdAt: datetime = Field(default_factory=datetime.now)
+    updatedAt: datetime = Field(default_factory=datetime.now)
 
     class Settings:
         name = "projects"
@@ -213,3 +213,14 @@ class Devices(Document):
 
     class Settings:
         name = "device"
+
+# Project Model
+class Host(Document):
+    name: str
+    description: str
+    projects: List[PydanticObjectId]= []  # List of project IDs
+    createdAt: datetime = Field(default_factory=datetime.now)
+    updatedAt: datetime = Field(default_factory=datetime.now)
+
+    class Settings:
+        name = "host"

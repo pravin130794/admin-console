@@ -295,8 +295,10 @@ const DevicesPage = () => {
                 expanded={expandedDevice === device.fullDocument.udid}
                 onChange={() => handleAccordionToggle(device.fullDocument.udid)}
                 sx={{
-                  backgroundImage:
-                    "linear-gradient(to left, #5A8DFF, #001a99, #000080)",
+                  backgroundColor:
+                    selectedDeviceBody?.udid === device.fullDocument.udid
+                      ? "#5a8dff"
+                      : "transparent",
                   color: "white",
                   "&.Mui-expanded": {
                     backgroundColor: "#0052cc",
