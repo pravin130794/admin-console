@@ -205,8 +205,11 @@ const DevicesPage = () => {
       <AppBar
         position="static"
         sx={{
-          backgroundImage:
-            "linear-gradient(to left, #5A8DFF, #001a99, #000080)",
+          display: "flex",
+          backgroundImage: "linear-gradient(to left, #5A8DFF, #000080)",
+          color: "white",
+          borderRadius: "5px",
+          margin: "0px",
         }}
       >
         <Toolbar>
@@ -215,17 +218,17 @@ const DevicesPage = () => {
             color="inherit"
             aria-label="menu"
             onClick={toggleDrawer}
-            sx={{ mr: 2 }}
+            sx={{ mr: 1 }}
           >
             <MenuIcon />
           </IconButton>
-          <Typography
+          {/* <Typography
             variant="h6"
             component="div"
             sx={{ flexGrow: 1, textAlign: "center" }}
           >
             {selectedDeviceName ?? ""}
-          </Typography>
+          </Typography> */}
         </Toolbar>
       </AppBar>
 
@@ -237,9 +240,8 @@ const DevicesPage = () => {
             sx={{
               width: 240,
               height: "100%",
-              backgroundImage:
-                "linear-gradient(to top, #5A8DFF, #001a99, #000080)",
-              color: "white",
+              backgroundImage: "#fcfcfc",
+              color: "Black",
               overflowY: "auto",
             }}
           >
@@ -255,15 +257,15 @@ const DevicesPage = () => {
                 variant="h6"
                 fontWeight="bold"
                 sx={{
-                  flexGrow: 1, // This makes the text occupy available space
-                  textAlign: "center", // Aligns the text in the center of its space
+                  flexGrow: 1,
+                  textAlign: "center",
                 }}
               >
-                Devices
+                Devices List
               </Typography>
-              <IconButton onClick={toggleDrawer} sx={{ color: "white" }}>
+              {/* <IconButton onClick={toggleDrawer} sx={{ color: "white" }}>
                 <CloseIcon />
-              </IconButton>
+              </IconButton> */}
             </Box>
 
             {/* Search */}
@@ -275,7 +277,8 @@ const DevicesPage = () => {
               py={1}
               mx={1}
               mb={1}
-              borderRadius="5px"
+              borderRadius="3px"
+              border="2px solid #ccc"
             >
               <InputBase
                 placeholder="Search"
@@ -295,13 +298,18 @@ const DevicesPage = () => {
                 expanded={expandedDevice === device.fullDocument.udid}
                 onChange={() => handleAccordionToggle(device.fullDocument.udid)}
                 sx={{
+                  // backgroundImage: "#fcfcfc",
                   backgroundColor:
                     selectedDeviceBody?.udid === device.fullDocument.udid
                       ? "#5a8dff"
                       : "transparent",
-                  color: "white",
+                  "&:hover": {
+                    backgroundColor: "#5a8dff",
+                  },
+                  color: "Black",
                   "&.Mui-expanded": {
-                    backgroundColor: "#0052cc",
+                    // backgroundColor: "#0052cc",
+                    border: "2px solid #5A8DFF",
                   },
                 }}
               >
@@ -312,6 +320,11 @@ const DevicesPage = () => {
                       display: "flex",
                       alignItems: "center",
                     },
+                    backgroundColor:
+                      selectedDeviceBody?.udid === device.fullDocument.udid
+                        ? "#5a8dff"
+                        : "transparent",
+                    borderRadius: "5px",
                   }}
                 >
                   <Box
@@ -357,7 +370,7 @@ const DevicesPage = () => {
                             <Typography
                               variant="body1"
                               // fontWeight="bold"
-                              sx={{ color: "white" }}
+                              sx={{ color: "Black" }}
                             >
                               Manufacturer: {device.fullDocument.manufacturer}
                             </Typography>
@@ -365,16 +378,16 @@ const DevicesPage = () => {
                         }
                         secondary={
                           <>
-                            <Typography variant="body2" sx={{ color: "white" }}>
+                            <Typography variant="body2" sx={{ color: "Black" }}>
                               State: {device.fullDocument.state}
                             </Typography>
-                            <Typography variant="body2" sx={{ color: "white" }}>
+                            <Typography variant="body2" sx={{ color: "Black" }}>
                               OS Version: {device.fullDocument.os_version}
                             </Typography>
-                            <Typography variant="body2" sx={{ color: "white" }}>
+                            <Typography variant="body2" sx={{ color: "Black" }}>
                               CPU: {device.fullDocument.cpu}
                             </Typography>
-                            <Typography variant="body2" sx={{ color: "white" }}>
+                            <Typography variant="body2" sx={{ color: "Black" }}>
                               SDK Version: {device.fullDocument.sdk_version}
                             </Typography>
                           </>
@@ -420,6 +433,7 @@ const DevicesPage = () => {
                 }}
               >
                 <iframe
+                  key={selectedDevice}
                   src={selectedDevice}
                   style={{
                     width: "100%",

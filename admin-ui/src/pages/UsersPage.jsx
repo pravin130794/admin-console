@@ -577,8 +577,7 @@ const UserPage = () => {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          backgroundImage:
-            "linear-gradient(to left, #5A8DFF, #001a99, #000080)",
+          backgroundImage: "linear-gradient(to left, #5A8DFF, #000080)",
           color: "white",
           padding: "10px 20px",
           borderRadius: "5px",

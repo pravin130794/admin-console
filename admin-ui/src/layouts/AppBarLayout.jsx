@@ -76,7 +76,7 @@ const AppBarLayout = () => {
   };
   return (
     <Box sx={{ flexGrow: 1 }}>
-      <AppBar position="static" sx={{ backgroundColor: "#5a8dff" }}>
+      <AppBar position="static" sx={{ backgroundColor: "#fcfcfc" }}>
         <Toolbar>
           {/* Logo and Navigation Links */}
           <Box display="flex" alignItems="center" sx={{ flexGrow: 1 }}>
@@ -89,7 +89,7 @@ const AppBarLayout = () => {
               <img
                 src={SapphireLogo}
                 alt="Sapphire Logo"
-                style={{ height: "60px", marginRight: "8px" }}
+                style={{ height: "20px", marginRight: "8px" }}
               />
             </Box>
 
@@ -100,9 +100,9 @@ const AppBarLayout = () => {
                 to="/devices"
                 sx={{
                   backgroundColor: isActive("/devices")
-                    ? "#0026d1"
+                    ? "#5A8DFF"
                     : "transparent", // Highlight active button
-                  color: "white",
+                  color: isActive("/devices") ? "white" : "black",
                   marginRight: "16px",
                   textTransform: "none",
                   fontSize: "16px",
@@ -110,8 +110,9 @@ const AppBarLayout = () => {
                   fontWeight: "bold",
                   "&:hover": {
                     backgroundColor: isActive("/devices")
-                      ? "#000080"
-                      : "#0026d1",
+                      ? "#5A8DFF"
+                      : "#5A8DFF",
+                    color: "white",
                   },
                 }}
               >
@@ -122,16 +123,17 @@ const AppBarLayout = () => {
                 to="/users"
                 sx={{
                   backgroundColor: isActive("/users")
-                    ? "#0026d1"
-                    : "transparent",
-                  color: "white",
+                    ? "#5A8DFF"
+                    : "transparent", // Highlight active button
+                  color: isActive("/users") ? "white" : "black",
                   marginRight: "16px",
                   textTransform: "none",
                   fontSize: "16px",
                   borderRadius: "5px",
                   fontWeight: "bold",
                   "&:hover": {
-                    backgroundColor: isActive("/users") ? "#000080" : "#0026d1",
+                    backgroundColor: isActive("/users") ? "#5A8DFF" : "#5A8DFF",
+                    color: "white",
                   },
                 }}
               >
@@ -142,9 +144,9 @@ const AppBarLayout = () => {
                 to="/groups"
                 sx={{
                   backgroundColor: isActive("/groups")
-                    ? "#0026d1"
-                    : "transparent",
-                  color: "white",
+                    ? "#5A8DFF"
+                    : "transparent", // Highlight active button
+                  color: isActive("/groups") ? "white" : "black",
                   marginRight: "16px",
                   textTransform: "none",
                   fontSize: "16px",
@@ -152,8 +154,9 @@ const AppBarLayout = () => {
                   fontWeight: "bold",
                   "&:hover": {
                     backgroundColor: isActive("/groups")
-                      ? "#000080"
-                      : "#0026d1",
+                      ? "#5A8DFF"
+                      : "#5A8DFF",
+                    color: "white",
                   },
                 }}
               >
@@ -164,9 +167,9 @@ const AppBarLayout = () => {
                 to="/projects"
                 sx={{
                   backgroundColor: isActive("/projects")
-                    ? "#0026d1"
-                    : "transparent",
-                  color: "white",
+                    ? "#5A8DFF"
+                    : "transparent", // Highlight active button
+                  color: isActive("/projects") ? "white" : "black",
                   marginRight: "16px",
                   textTransform: "none",
                   fontSize: "16px",
@@ -174,8 +177,9 @@ const AppBarLayout = () => {
                   fontWeight: "bold",
                   "&:hover": {
                     backgroundColor: isActive("/projects")
-                      ? "#000080"
-                      : "#0026d1",
+                      ? "#5A8DFF"
+                      : "#5A8DFF",
+                    color: "white",
                   },
                 }}
               >
@@ -186,16 +190,17 @@ const AppBarLayout = () => {
                 to="/hosts"
                 sx={{
                   backgroundColor: isActive("/hosts")
-                    ? "#0026d1"
-                    : "transparent",
-                  color: "white",
+                    ? "#5A8DFF"
+                    : "transparent", // Highlight active button
+                  color: isActive("/hosts") ? "white" : "black",
                   marginRight: "16px",
                   textTransform: "none",
                   fontSize: "16px",
                   borderRadius: "5px",
                   fontWeight: "bold",
                   "&:hover": {
-                    backgroundColor: isActive("/hosts") ? "#000080" : "#0026d1",
+                    backgroundColor: isActive("/hosts") ? "#5A8DFF" : "#5A8DFF",
+                    color: "white",
                   },
                 }}
               >
@@ -209,10 +214,17 @@ const AppBarLayout = () => {
             <IconButton
               onClick={handleLogout}
               sx={{
-                color: "white",
+                color: "black",
+                "&:hover": {
+                  backgroundColor: isActive("/logout") ? "#5A8DFF" : "#5A8DFF",
+                  color: "white",
+                },
+                borderRadius: "5px",
               }}
             >
-              <Typography sx={{ marginRight: "8px" }}>{username}</Typography>
+              <Typography sx={{ marginRight: "8px", fontWeight: "bold" }}>
+                {username}
+              </Typography>
               <LogoutIcon />
             </IconButton>
           </Box>

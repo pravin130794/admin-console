@@ -14,7 +14,7 @@ import LockIcon from "@mui/icons-material/Lock";
 import EmailIcon from "@mui/icons-material/Email";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/Auth";
-import SapphireLogo from "../assets/SapphireLogo.png";
+import SapphireLogo from "../assets/SapphireLogoLogin.png";
 import logo from "../assets/logo.png";
 import SnackbarComponent from "../components/Snackbar";
 
@@ -184,7 +184,7 @@ const LoginPage = () => {
         <img
           src={SapphireLogo}
           alt="Sapphire Logo"
-          style={{ height: "100px", marginLeft: "20px" }}
+          style={{ height: "40px", marginLeft: "20px" }}
         />
 
         {/* Verizon Logo */}
