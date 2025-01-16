@@ -6,7 +6,7 @@ This project is used for device management for sapphire.
 
 - Users Management
 - Groups Management
-- Live Device Management
+- Device Management
 - Project Management
 - Host Management
 
@@ -42,7 +42,7 @@ Install Sapphire Frontend with pnpm
   pnpm install
 ```
 
-Install Sapphire Frontend with pip
+Install Sapphire Backend with pip
 
 ```bash
   python -m venv venv/
