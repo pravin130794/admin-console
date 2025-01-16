@@ -181,7 +181,7 @@ const SignUp = () => {
         <img
           src={SapphireLogo}
           alt="Sapphire Logo"
-          style={{ height: "100px", marginLeft: "20px" }}
+          style={{ height: "40px", marginLeft: "20px" }}
         />
 
         {/* Verizon Logo */}
