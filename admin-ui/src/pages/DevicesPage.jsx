@@ -441,23 +441,55 @@ const DevicesPage = () => {
                 display="flex"
                 flexDirection="column"
                 justifyContent="center"
-                gap={3}
+                gap={10}
               >
-                <Box display="flex" alignItems="center" gap={2}>
+                <Box
+                  display="flex"
+                  alignItems="center"
+                  gap={2}
+                  justifyContent="space-evenly"
+                >
                   <MemoryIcon />
-                  <Typography variant="h6">CPU : {"NA"}</Typography>
+                  <Typography variant="h6">CPU</Typography>
+                  <Typography variant="h6" color="green" fontWeight="bold">
+                    {"50%"}
+                  </Typography>
                 </Box>
-                <Box display="flex" alignItems="center" gap={2}>
+                <Box
+                  display="flex"
+                  alignItems="center"
+                  gap={2}
+                  justifyContent="space-evenly"
+                >
                   <BatteryCharging90Icon />
-                  <Typography variant="h6">Battery : {"NA"}</Typography>
+                  <Typography variant="h6">Battery</Typography>
+                  <Typography variant="h6" color="green" fontWeight="bold">
+                    {"90%"}
+                  </Typography>
                 </Box>
-                <Box display="flex" alignItems="center" gap={2}>
+                <Box
+                  display="flex"
+                  alignItems="center"
+                  gap={2}
+                  justifyContent="space-evenly"
+                >
                   <SignalCellularAltIcon />
-                  <Typography variant="h6">Network : {"NA"}</Typography>
+                  <Typography variant="h6">Network</Typography>
+                  <Typography variant="h6" color="green" fontWeight="bold">
+                    {"Good"}
+                  </Typography>
                 </Box>
-                <Box display="flex" alignItems="center" gap={2}>
+                <Box
+                  display="flex"
+                  alignItems="center"
+                  gap={2}
+                  justifyContent="space-evenly"
+                >
                   <SdCardIcon />
-                  <Typography variant="h6">Memory : {"NA"}</Typography>
+                  <Typography variant="h6">Memory</Typography>
+                  <Typography variant="h6" color="green" fontWeight="bold">
+                    {"2GB"}
+                  </Typography>
                 </Box>
               </Box>
 
@@ -487,7 +519,10 @@ const DevicesPage = () => {
                   mb={1}
                   p={1}
                   sx={{
-                    backgroundColor: "#0052cc",
+                    backgroundColor:
+                      selectedDeviceBody?.manufacturer === "samsung"
+                        ? "Black"
+                        : "#0052cc",
                     color: "white",
                     borderRadius: "5px",
                     alignContent: "center",
@@ -552,7 +587,10 @@ const DevicesPage = () => {
                         alignItems: "center",
                         width: "80px",
                         height: "80px",
-                        border: "2px solid #0052cc",
+                        border:
+                          selectedDeviceBody?.manufacturer === "samsung"
+                            ? "3px solid green"
+                            : "3px solid #0052cc",
                         borderRadius: "10px",
                         textTransform: "none",
                         gap: 1,
