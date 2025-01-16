@@ -223,6 +223,13 @@ const DevicesPage = () => {
     }
   };
 
+  const handleAction = (label, selectedData) => {
+    console.log(
+      `Button clicked: ${label} and data: ${JSON.stringify(selectedData)}`
+    );
+    // Perform specific logic based on the label or icon
+  };
+
   return (
     <Box display="flex" flexDirection="column" height="100vh">
       {/* AppBar */}
@@ -595,6 +602,9 @@ const DevicesPage = () => {
                         textTransform: "none",
                         gap: 1,
                       }}
+                      onClick={() =>
+                        handleAction(item.label, selectedDeviceBody)
+                      }
                     >
                       {item.icon}
                     </Button>
