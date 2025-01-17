@@ -17,6 +17,7 @@ import {
   MenuItem,
   Backdrop,
   TablePagination,
+  OutlinedInput,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import InputLabel from "@mui/material/InputLabel";
@@ -378,7 +379,7 @@ const UserPage = () => {
     setSelectedUser(user);
     setEditedData({
       ...user,
-      groups: user.groups.map((group) => group.id), // Map existing groups to their IDs
+      groups: user.groups.map((group) => group._id), // Map existing groups to their IDs
     });
     setOpenEdit(true);
   };
@@ -690,6 +691,7 @@ const UserPage = () => {
                       <IconButton
                         color="success"
                         onClick={() => handleApproveOpen(user)}
+                        disabled={user.status === "Approved"}
                       >
                         <CheckCircleIcon />
                       </IconButton>
@@ -1009,6 +1011,9 @@ const UserPage = () => {
                 onChange={
                   (e) => handleApproveInputChange("groups", e.target.value) // Update multiple groups
                 }
+                input={
+                  <OutlinedInput id="select-multiple-chip" label="Groups *" />
+                }
                 renderValue={(selected) =>
                   selected.map((id) => {
                     const group = groups.find((group) => group.id === id);
@@ -1167,6 +1172,12 @@ const UserPage = () => {
                     value={editedData.groups || []} // Bind multiple group IDs
                     onChange={
                       (e) => handleUpdateInputChange("groups", e.target.value) // Update multiple groups
+                    }
+                    input={
+                      <OutlinedInput
+                        id="select-multiple-chip"
+                        label="Groups *"
+                      />
                     }
                     renderValue={(selected) =>
                       selected.map((id) => {
@@ -1357,6 +1368,9 @@ const UserPage = () => {
                   value={registerData.groups || []} // Bind multiple group IDs
                   onChange={
                     (e) => handleRegisterInputChange("groups", e.target.value) // Update multiple groups
+                  }
+                  input={
+                    <OutlinedInput id="select-multiple-chip" label="Groups *" />
                   }
                   renderValue={(selected) =>
                     selected.map((id) => {
