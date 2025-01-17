@@ -1,5 +1,6 @@
 import { useEffect, useState, createContext, useContext } from "react";
 import { useLocation, Navigate, Outlet } from "react-router-dom";
+import ApiBaseUrl from "../ApiBaseUrl";
 
 const AuthContext = createContext(null);
 
@@ -33,8 +34,9 @@ export const AuthProvider = ({ children }) => {
     }
 
     try {
+      const baseUrl = ApiBaseUrl.getBaseUrl();
       const response = await fetch(
-        `http://localhost:8001/api/v1/verify-token?token=${token}`
+        `http://${baseUrl}/api/v1/verify-token?token=${token}`
       );
 
       if (!response.ok) {

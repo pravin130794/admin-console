@@ -16,6 +16,7 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import { Link, Outlet, useNavigate } from "react-router-dom";
 import SnackbarComponent from "../components/Snackbar";
 import { useAuth } from "../context/Auth";
+import ApiBaseUrl from "../ApiBaseUrl";
 
 const drawerWidth = 240;
 
@@ -37,7 +38,8 @@ const SidebarLayout = () => {
       // Call the logout API
 
       const token = localStorage.getItem("authToken");
-      const response = await fetch("http://localhost:8001/api/v1/logout", {
+      const baseUrl = ApiBaseUrl.getBaseUrl();
+      const response = await fetch("http://${baseUrl}/api/v1/logout", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
