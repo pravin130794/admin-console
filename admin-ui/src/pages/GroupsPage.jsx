@@ -22,6 +22,7 @@ import SnackbarComponent from "../components/Snackbar";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
+import ApiBaseUrl from "../ApiBaseUrl";
 
 const GroupsPage = () => {
   const [groups, setGroups] = useState([]);
@@ -71,8 +72,9 @@ const GroupsPage = () => {
     try {
       const token = localStorage.getItem("authToken");
       const user_id = localStorage.getItem("user_id");
+      const baseUrl = ApiBaseUrl.getBaseUrl();
       const response = await fetch(
-        `http://localhost:8001/api/v1/groups?user_id=${user_id}&skip=${page}&limit=${rowsPerPage}`,
+        `http://${baseUrl}/api/v1/groups?user_id=${user_id}&skip=${page}&limit=${rowsPerPage}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -122,8 +124,9 @@ const GroupsPage = () => {
     try {
       const group_id = selectedGroup.id;
       const token = localStorage.getItem("authToken");
+      const baseUrl = ApiBaseUrl.getBaseUrl();
       const response = await fetch(
-        `http://localhost:8001/api/v1/group/${group_id}/inactivate`,
+        `http://${baseUrl}/api/v1/group/${group_id}/inactivate`,
         {
           method: "PATCH",
           headers: {
@@ -175,7 +178,8 @@ const GroupsPage = () => {
     setApiLoading(true);
     try {
       const token = localStorage.getItem("authToken");
-      const response = await fetch(`http://localhost:8001/api/v1/groups`, {
+      const baseUrl = ApiBaseUrl.getBaseUrl();
+      const response = await fetch(`http://${baseUrl}/api/v1/groups`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -268,8 +272,8 @@ const GroupsPage = () => {
       registerData.groupAdmin = localStorage.getItem("user_id");
       registerData.members.push(localStorage.getItem("user_id"));
       const token = localStorage.getItem("authToken");
-
-      const response = await fetch("http://localhost:8001/api/v1/groups", {
+      const baseUrl = ApiBaseUrl.getBaseUrl();
+      const response = await fetch("http://${baseUrl}/api/v1/groups", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
