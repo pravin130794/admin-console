@@ -214,6 +214,7 @@ class CreateProjectRequest(BaseModel):
     reason: Optional[str] = None
     name: Optional[str] = None
     description: Optional[str] = None
+    groupId: Optional[PydanticObjectId] = None
     createdBy: Optional[PydanticObjectId] = None
     assignedUsers: List[PydanticObjectId]= []
 
@@ -223,7 +224,7 @@ class ProjectUpdateRequest(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     status: Optional[str] = None
-    createdBy: Optional[PydanticObjectId] = None
+    groupId: PydanticObjectId
     assignedUsers: Optional[List[PydanticObjectId]]= []
 
 class Devices(Document):

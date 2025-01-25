@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from app.middleware.auth import JWTBearer
-from app.models import Project, User,  CreateProjectRequest, ProjectUpdateRequest, InactivateProjectRequest
+from app.models import Project, Group, User,  CreateProjectRequest, ProjectUpdateRequest, InactivateProjectRequest
 from beanie import PydanticObjectId
 from bson import ObjectId
 from typing import List
@@ -30,7 +30,7 @@ async def create_project(project: CreateProjectRequest):
         new_project = Project(
             name=project.name,
             description=project.description,
-            groupId=project.createdBy,
+            groupId=project.groupId,
             assignedUsers=project.assignedUsers,
             isActive=True,
             createdAt=datetime.now(),
@@ -72,14 +72,11 @@ async def list_user_projects(
             # SuperAdmin fetches all active projects
             projects_query = Project.find({"isActive": True})
         else:
-            # Fetch projects created by the user or where the user is a member
+            # Fetch projects where the user is assigned
             projects_query = Project.find({
                 "$and": [
                     {"isActive": True},
-                    {"$or": [
-                        # {"createdBy": user_id},
-                        {"assignedUsers": {"$in": [user_id]}}
-                    ]}
+                    {"assignedUsers": {"$in": [user_id]}}
                 ]
             })
 
@@ -90,17 +87,31 @@ async def list_user_projects(
         total_count = await projects_query.count()
 
         # Prepare the response data
-        project_list = [
-            {
+        project_list = []
+
+        for project in projects:
+            # Fetch the group data for the project
+            group = await Group.find_one(Group.id == project.groupId)
+
+            # Fetch the user data for the assigned users
+            assigned_users = await User.find({"_id": {"$in": project.assignedUsers}}).to_list()
+
+            # Prepare the group name and assigned user names
+            group_name = group.name if group else "Unknown"
+            assigned_user_names = [{"username":user.username,"id":str(user.id)} for user in assigned_users]
+
+            project_data = {
                 "id": str(project.id),
                 "name": project.name,
                 "description": project.description,
                 "status": project.status,
-                "assignedUsers": [str(assignedUser) for assignedUser in project.assignedUsers],
+                "groupId": str(project.groupId),
+                "groupName": group_name,
+                "assignedUsers": assigned_user_names,
                 "isActive": project.isActive
             }
-            for project in projects
-        ]
+
+            project_list.append(project_data)
 
         return {
             "total": total_count,
@@ -111,6 +122,7 @@ async def list_user_projects(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+
 
 # Get a specific project by ID
 @router.get("/projects/{project_id}", dependencies=[Depends(JWTBearer())])
@@ -144,6 +156,8 @@ async def partial_update_project(project: ProjectUpdateRequest):
             existing_project.description = project.description
         if project.status is not None:
             existing_project.status = project.status
+        if project.groupId is not None:
+            existing_project.groupId = project.groupId
 
         # Save the group changes
         await existing_project.save()

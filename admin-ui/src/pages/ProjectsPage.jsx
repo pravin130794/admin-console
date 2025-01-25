@@ -19,6 +19,7 @@ import {
   FormControl,
   InputLabel,
   Select,
+  OutlinedInput,
 } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -37,6 +38,9 @@ const ProjectsPage = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [openDelete, setOpenDelete] = useState(false);
   const [reason, setReason] = useState("");
+  const [groups, setGroups] = useState([]);
+  const [loadingGroups, setLoadingGroups] = useState(false);
+  const [visibleItems, setVisibleItems] = useState([]);
   const [openEdit, setOpenEdit] = useState(false);
   const [editedData, setEditedData] = useState({});
   const [openRegister, setOpenRegister] = useState(false);
@@ -60,9 +64,51 @@ const ProjectsPage = () => {
   );
 
   useEffect(() => {
+    if (openRegister || openEdit) {
+      fetchGroups();
+    }
+  }, [openRegister, openEdit]);
+
+  useEffect(() => {
     fetchProjects();
-  }, []);
-  
+  }, [page, rowsPerPage]);
+
+  const fetchGroups = async () => {
+    setLoadingGroups(true);
+    try {
+      const user_id = localStorage.getItem("user_id");
+      const token = localStorage.getItem("authToken");
+      const baseUrl = ApiBaseUrl.getBaseUrl();
+      const response = await fetch(
+        `http://${baseUrl}/api/v1/groups?user_id=${user_id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const data = await response.json();
+      setGroups(data.groups);
+      setVisibleItems(data.groups.slice(0, 10));
+    } catch (error) {
+      console.error("Error fetching groups:", error);
+    } finally {
+      setLoadingGroups(false);
+    }
+  };
+
+  const handleScroll = (event) => {
+    const bottom =
+      event.target.scrollHeight - event.target.scrollTop <=
+      event.target.clientHeight + 10; // Adjust tolerance
+    if (bottom && visibleItems.length < groups.length) {
+      setVisibleItems((prevVisibleItems) => [
+        ...prevVisibleItems,
+        ...groups.slice(prevVisibleItems.length, prevVisibleItems.length + 10),
+      ]);
+    }
+  };
+
   const fetchProjects = async () => {
     setApiLoading(true);
     try {
@@ -86,7 +132,7 @@ const ProjectsPage = () => {
       setApiLoading(false);
     }
   };
-  
+
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
@@ -99,7 +145,6 @@ const ProjectsPage = () => {
   const handleCloseSnackbar = () => {
     setSnackbar((prev) => ({ ...prev, open: false }));
   };
-
 
   const handleViewOpen = (project) => {
     setSelectedProject(project);
@@ -176,7 +221,10 @@ const ProjectsPage = () => {
 
   const handleEditOpen = (project) => {
     setSelectedProject(project);
-    setEditedData(project);
+    setEditedData({
+      ...project,
+      assignedUsers: project.assignedUsers.map((user) => user.id),
+    });
     setOpenEdit(true);
   };
 
@@ -370,6 +418,9 @@ const ProjectsPage = () => {
                   Description
                 </TableCell>
                 <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                  Group
+                </TableCell>
+                <TableCell sx={{ color: "white", fontWeight: "bold" }}>
                   Status
                 </TableCell>
                 <TableCell sx={{ color: "white", fontWeight: "bold" }}>
@@ -384,6 +435,7 @@ const ProjectsPage = () => {
                     <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                     <TableCell>{project.name}</TableCell>
                     <TableCell>{project.description}</TableCell>
+                    <TableCell>{project.groupName}</TableCell>
                     <TableCell>{project.status}</TableCell>
                     <TableCell>
                       <IconButton
@@ -493,6 +545,12 @@ const ProjectsPage = () => {
                   Description:{" "}
                   <span style={{ color: "orange" }}>
                     {selectedProject.status}
+                  </span>
+                </Typography>
+                <Typography fontWeight="bold">
+                  Group:{" "}
+                  <span style={{ color: "orange" }}>
+                    {selectedProject.groupName}
                   </span>
                 </Typography>
               </Box>
@@ -627,6 +685,45 @@ const ProjectsPage = () => {
                     <MenuItem value="Completed">Completed</MenuItem>
                   </Select>
                 </FormControl>
+                <FormControl fullWidth>
+                  <InputLabel>Groups *</InputLabel>
+                  <Select
+                    value={
+                      visibleItems.some(
+                        (group) => group.id === editedData.groupId
+                      )
+                        ? editedData.groupId
+                        : "" // Use an empty string if the value is not in the list
+                    }
+                    onChange={(e) =>
+                      handleUpdateInputChange("groupId", e.target.value)
+                    }
+                    input={
+                      <OutlinedInput id="select-single" label="Groups *" />
+                    }
+                    MenuProps={{
+                      PaperProps: {
+                        onScroll: handleScroll,
+                        style: { maxHeight: 150, overflowY: "auto" },
+                      },
+                    }}
+                    disabled={loadingGroups} // Disable dropdown while loading
+                  >
+                    {loadingGroups ? (
+                      <MenuItem disabled>
+                        <CircularProgress size={20} /> Loading...
+                      </MenuItem>
+                    ) : visibleItems.length > 0 ? (
+                      visibleItems.map((group) => (
+                        <MenuItem key={group.id} value={group.id}>
+                          {group.name}
+                        </MenuItem>
+                      ))
+                    ) : (
+                      <MenuItem>No groups found</MenuItem>
+                    )}
+                  </Select>
+                </FormControl>
               </Box>
               <Box textAlign="right" mt={2}>
                 <Button
@@ -697,6 +794,37 @@ const ProjectsPage = () => {
                   handleRegisterInputChange("description", e.target.value)
                 }
               />
+              <FormControl fullWidth>
+                <InputLabel>Groups *</InputLabel>
+                <Select
+                  value={registerData.groupId || ""} // Bind single group ID
+                  onChange={(e) =>
+                    handleRegisterInputChange("groupId", e.target.value)
+                  } // Update single group
+                  input={<OutlinedInput id="select-single" label="Groups *" />}
+                  MenuProps={{
+                    PaperProps: {
+                      onScroll: handleScroll,
+                      style: { maxHeight: 150, overflowY: "auto" },
+                    },
+                  }}
+                  disabled={loadingGroups} // Disable dropdown while loading
+                >
+                  {loadingGroups ? (
+                    <MenuItem disabled>
+                      <CircularProgress size={20} /> Loading...
+                    </MenuItem>
+                  ) : visibleItems.length > 0 ? (
+                    visibleItems.map((group) => (
+                      <MenuItem key={group.id} value={group.id}>
+                        {group.name}
+                      </MenuItem>
+                    ))
+                  ) : (
+                    <MenuItem>No groups found</MenuItem>
+                  )}
+                </Select>
+              </FormControl>
             </Box>
             <Box textAlign="right" mt={2}>
               <Button
