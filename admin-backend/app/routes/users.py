@@ -579,6 +579,13 @@ async def approve_user(request: UserApprove):
         # Save the changes to the user
         await user.save()
 
+        # Update the members field in the associated groups
+        for group_id in request.groups:
+            group = await Group.find_one({"_id": group_id})
+            if group and user.id not in group.members:
+                group.members.append(user.id)  # Add the new user's ID to the group
+                await group.save()
+
         # Generate and send an OTP to the user's email
         otp = await store_or_refresh_otp(user.id)
         await send_otp_email(request.email, otp)

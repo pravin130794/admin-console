@@ -323,6 +323,7 @@ const GroupsPage = () => {
           color: "white",
           padding: "10px 20px",
           borderRadius: "5px",
+          height: "45px",
         }}
       >
         <Box sx={{ flex: 1, textAlign: "center" }}>

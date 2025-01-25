@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useRecoilState } from "recoil";
 import {
   AppBar,
   Toolbar,
@@ -15,22 +16,53 @@ import {
   Collapse,
   Backdrop,
   CircularProgress,
+  Grid,
+  Button,
 } from "@mui/material";
+import {
+  initializeWebSocket,
+  closeWebSocket,
+} from "../services/WebSocketService";
+import {
+  selectedDeviceAccordion,
+  selectedDeviceUrl,
+  selectedDeviceModelName,
+  selectedDeviceModelBody,
+} from "../services/recoilState";
 import MenuIcon from "@mui/icons-material/Menu";
-import CloseIcon from "@mui/icons-material/Close";
 import SearchIcon from "@mui/icons-material/Search";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import SnackbarComponent from "../components/Snackbar";
+import PowerSettingsNewIcon from "@mui/icons-material/PowerSettingsNew";
+import VolumeUpIcon from "@mui/icons-material/VolumeUp";
+import CameraAltIcon from "@mui/icons-material/CameraAlt";
+import SettingsIcon from "@mui/icons-material/Settings";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import StopIcon from "@mui/icons-material/Stop";
+import PauseIcon from "@mui/icons-material/Pause";
+import VolumeDownIcon from "@mui/icons-material/VolumeDown";
+import MemoryIcon from "@mui/icons-material/Memory";
+import BatteryCharging90Icon from "@mui/icons-material/BatteryCharging90";
+import SignalCellularAltIcon from "@mui/icons-material/SignalCellularAlt";
+import SdCardIcon from "@mui/icons-material/SdCard";
 
 const DevicesPage = () => {
   const [deviceList, setDeviceList] = useState([]);
-  const [selectedDevice, setSelectedDevice] = useState("");
+  const [selectedDevice, setSelectedDevice] = useRecoilState(selectedDeviceUrl);
   const [apiLoading, setApiLoading] = useState(false);
-  const [selectedDeviceBody, setSelectedDeviceBody] = useState({});
-  const [selectedDeviceName, setSelectedDeviceName] = useState("");
+  const [selectedDeviceBody, setSelectedDeviceBody] = useRecoilState(
+    selectedDeviceModelBody
+  );
+  const [selectedDeviceName, setSelectedDeviceName] = useRecoilState(
+    selectedDeviceModelName
+  );
   const [searchQuery, setSearchQuery] = useState("");
   const [drawerOpen, setDrawerOpen] = useState(true);
-  const [expandedDevice, setExpandedDevice] = useState(null);
+  // const [expandedDevice, setExpandedDevice] = useState(null);
+  const [expandedDevice, setExpandedDevice] = useRecoilState(
+    selectedDeviceAccordion
+  );
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
@@ -50,14 +82,7 @@ const DevicesPage = () => {
     setSearchQuery(e.target.value.toLowerCase());
   };
   useEffect(() => {
-    const ws = new WebSocket("ws://127.0.0.1:8001/ws"); // Replace with your WebSocket server URL
-
-    ws.onopen = () => {
-      console.log("WebSocket connection established");
-    };
-
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
+    const handleWebSocketMessage = (data) => {
       console.log("Received WebSocket update:", data);
 
       if (data) {
@@ -71,7 +96,7 @@ const DevicesPage = () => {
             );
 
             // Reset selection if the deleted device was selected
-            let dev = prevList.find(
+            const dev = prevList.find(
               (device) => device.fullDocument?._id === data.documentKey._id
             )?.fullDocument;
 
@@ -79,17 +104,14 @@ const DevicesPage = () => {
               selectedDevice &&
               selectedDevice === streamUrl(dev?.udid, dev?.security_id)
             ) {
-              setSelectedDevice("");
-              setSelectedDeviceBody({});
+              setSelectedDevice(null);
+              setSelectedDeviceBody(null);
             }
           } else if (data.operationType === "update") {
-            if (updatedList.length == 0) {
-              updatedList.push(data);
-            }
             // Handle update operation
-            const existingIndex = updatedList.findIndex((device) => {
-              return device.fullDocument?.udid === data.fullDocument?.udid;
-            });
+            const existingIndex = updatedList.findIndex(
+              (device) => device.fullDocument?.udid === data.fullDocument?.udid
+            );
 
             if (existingIndex !== -1) {
               updatedList[existingIndex] = data; // Update the existing record
@@ -105,10 +127,11 @@ const DevicesPage = () => {
             }
           }
 
-          let dev = updatedList[0].fullDocument;
+          const dev = updatedList[0]?.fullDocument;
           // Automatically select the first device if none is selected
+
           if (updatedList.length > 0 && !selectedDevice) {
-            setSelectedDevice(streamUrl(dev?.udid, dev?.security_id));
+            // setSelectedDevice(streamUrl(dev?.udid, dev?.security_id));
             setSelectedDeviceBody(dev?.body);
           }
 
@@ -117,16 +140,18 @@ const DevicesPage = () => {
       }
     };
 
-    ws.onerror = (error) => {
-      console.error("WebSocket error:", error);
-    };
-
-    ws.onclose = () => {
-      console.log("WebSocket connection closed");
-    };
-
+    initializeWebSocket(
+      "ws://127.0.0.1:8001/ws",
+      handleWebSocketMessage,
+      (error) => {
+        console.error("WebSocket error:", error);
+      },
+      () => {
+        console.log("WebSocket connection closed");
+      }
+    );
     return () => {
-      ws.close();
+      // ws.close();
     };
   }, [selectedDevice]);
 
@@ -186,7 +211,6 @@ const DevicesPage = () => {
       let url = streamUrl(device.udid, data);
       setSelectedDevice(url);
       setSelectedDeviceBody(device);
-      console.log("Device registration response:", url);
     } catch (error) {
       console.error("Error registering device:", error);
       setSnackbar({
@@ -197,6 +221,13 @@ const DevicesPage = () => {
     } finally {
       setApiLoading(false);
     }
+  };
+
+  const handleAction = (label, selectedData) => {
+    console.log(
+      `Button clicked: ${label} and data: ${JSON.stringify(selectedData)}`
+    );
+    // Perform specific logic based on the label or icon
   };
 
   return (
@@ -400,38 +431,77 @@ const DevicesPage = () => {
             ))}
           </Box>
         </Collapse>
-
         {/* Main Device Frame */}
         <Box
           flexGrow={1}
           display="flex"
-          justifyContent="center"
-          alignItems="center"
+          justifyContent={!selectedDevice ? "center" : "None"}
+          alignItems={!selectedDevice ? "center" : "None"}
           p={2}
           overflow="hidden"
         >
           {selectedDevice ? (
-            <Box
-              position="relative"
-              width="35%"
-              height="104%"
-              // sx={{
-              //   backgroundImage: "",
-              //   backgroundSize: "cover",
-              //   backgroundPosition: "center",
-              // }}
-            >
+            <Box display="flex" flexGrow={1} p={2} gap={4}>
+              {/* Left Section - Specifications */}
               <Box
-                position="absolute"
-                sx={{
-                  top: "7%",
-                  left: "6%",
-                  width: "117%",
-                  height: "100%",
-                  borderRadius: "1px",
-                  overflow: "auto",
-                }}
+                flex={1}
+                display="flex"
+                flexDirection="column"
+                justifyContent="center"
+                gap={10}
               >
+                <Box
+                  display="flex"
+                  alignItems="center"
+                  gap={2}
+                  justifyContent="space-evenly"
+                >
+                  <MemoryIcon />
+                  <Typography variant="h6">CPU</Typography>
+                  <Typography variant="h6" color="green" fontWeight="bold">
+                    {"50%"}
+                  </Typography>
+                </Box>
+                <Box
+                  display="flex"
+                  alignItems="center"
+                  gap={2}
+                  justifyContent="space-evenly"
+                >
+                  <BatteryCharging90Icon />
+                  <Typography variant="h6">Battery</Typography>
+                  <Typography variant="h6" color="green" fontWeight="bold">
+                    {"90%"}
+                  </Typography>
+                </Box>
+                <Box
+                  display="flex"
+                  alignItems="center"
+                  gap={2}
+                  justifyContent="space-evenly"
+                >
+                  <SignalCellularAltIcon />
+                  <Typography variant="h6">Network</Typography>
+                  <Typography variant="h6" color="green" fontWeight="bold">
+                    {"Good"}
+                  </Typography>
+                </Box>
+                <Box
+                  display="flex"
+                  alignItems="center"
+                  gap={2}
+                  justifyContent="space-evenly"
+                >
+                  <SdCardIcon />
+                  <Typography variant="h6">Memory</Typography>
+                  <Typography variant="h6" color="green" fontWeight="bold">
+                    {"2GB"}
+                  </Typography>
+                </Box>
+              </Box>
+
+              {/* Center Section - Device Mockup */}
+              <Box flex={1} display="flex" justifyContent="center">
                 <iframe
                   key={selectedDevice}
                   src={selectedDevice}
@@ -441,6 +511,105 @@ const DevicesPage = () => {
                     border: "none",
                   }}
                 />
+              </Box>
+
+              {/* Right Section - Feature Buttons */}
+              <Box
+                flex={1}
+                display="flex"
+                flexDirection="column"
+                justifyContent="center"
+                gap={2}
+              >
+                <Typography
+                  variant="h6"
+                  mb={1}
+                  p={1}
+                  sx={{
+                    backgroundColor:
+                      selectedDeviceBody?.manufacturer === "samsung"
+                        ? "Black"
+                        : "#0052cc",
+                    color: "white",
+                    borderRadius: "5px",
+                    alignContent: "center",
+                    textAlign: "center",
+                  }}
+                >
+                  Features of {selectedDeviceName || "Device"}
+                </Typography>
+                <Box
+                  display="grid"
+                  gridTemplateColumns="repeat(3, 1fr)"
+                  gap={3}
+                  m={2}
+                  p={2}
+                >
+                  {[
+                    {
+                      icon: <PowerSettingsNewIcon sx={{ fontSize: "36px" }} />,
+                      label: "Power",
+                    },
+                    {
+                      icon: <VolumeUpIcon sx={{ fontSize: "36px" }} />,
+                      label: "Volume Up",
+                    },
+                    {
+                      icon: <VolumeDownIcon sx={{ fontSize: "36px" }} />,
+                      label: "Volume Down",
+                    },
+                    {
+                      icon: <PlayArrowIcon sx={{ fontSize: "36px" }} />,
+                      label: "Play",
+                    },
+                    {
+                      icon: <PauseIcon sx={{ fontSize: "36px" }} />,
+                      label: "Pause",
+                    },
+                    {
+                      icon: <StopIcon sx={{ fontSize: "36px" }} />,
+                      label: "Stop",
+                    },
+                    {
+                      icon: <CameraAltIcon sx={{ fontSize: "36px" }} />,
+                      label: "Camera",
+                    },
+                    {
+                      icon: <SettingsIcon sx={{ fontSize: "36px" }} />,
+                      label: "Settings",
+                    },
+                    {
+                      icon: <LocationOnIcon sx={{ fontSize: "36px" }} />,
+                      label: "Location",
+                    },
+                  ].map((item, index) => (
+                    <Button
+                      key={index}
+                      variant="outlined"
+                      color="Black"
+                      sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        width: "80px",
+                        height: "80px",
+                        border:
+                          selectedDeviceBody?.manufacturer === "samsung"
+                            ? "3px solid green"
+                            : "3px solid #0052cc",
+                        borderRadius: "10px",
+                        textTransform: "none",
+                        gap: 1,
+                      }}
+                      onClick={() =>
+                        handleAction(item.label, selectedDeviceBody)
+                      }
+                    >
+                      {item.icon}
+                    </Button>
+                  ))}
+                </Box>
               </Box>
             </Box>
           ) : (
