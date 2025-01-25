@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from app.middleware.auth import JWTBearer
-from app.models import Host, User,  CreateHostRequest, HostUpdateRequest, InactivateHostRequest
+from app.models import Host, User, Project, CreateHostRequest, HostUpdateRequest, InactivateHostRequest
 from beanie import PydanticObjectId
 from bson import ObjectId
 from typing import List
@@ -24,6 +24,7 @@ async def create_host(host: CreateHostRequest):
         new_host = Host(
             name=host.name,
             description=host.description,
+            projectId=host.projectId,
             isActive=True,
             createdAt=datetime.now(),
             updatedAt=datetime.now(),
@@ -78,15 +79,26 @@ async def list_user_hosts(
         total_count = await hosts_query.count()
 
         # Prepare the response data
-        host_list = [
-            {
+        host_list = []
+
+        for host in hosts:
+            # Fetch the project data for the host
+            project = await Project.find_one(Project.id == host.projectId)
+
+
+            # Prepare the project name and assigned user names
+            project_name = project.name if project else "Unknown"
+
+            host_data = {
                 "id": str(host.id),
                 "name": host.name,
                 "description": host.description,
+                "projectId": str(host.projectId),
+                "projectName": project_name,
                 "isActive": host.isActive
             }
-            for host in hosts
-        ]
+
+            host_list.append(host_data)
 
         return {
             "total": total_count,
@@ -128,6 +140,8 @@ async def partial_update_host(host: HostUpdateRequest):
             existing_host.name = host.name
         if host.description is not None:
             existing_host.description = host.description
+        if host.projectId is not None:
+            existing_host.projectId = host.projectId
 
         # Save the group changes
         await existing_host.save()

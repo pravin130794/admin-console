@@ -19,6 +19,7 @@ import {
   FormControl,
   InputLabel,
   Select,
+  OutlinedInput,
 } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -37,6 +38,10 @@ const HostsPage = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [openDelete, setOpenDelete] = useState(false);
   const [reason, setReason] = useState("");
+  const [projects, setProjects] = useState([]);
+  const [loadingProjects, setLoadingProjects] = useState(false);
+  const [selectedProject, setSelectedProject] = useState(false);
+  const [visibleItems, setVisibleItems] = useState([]);
   const [openEdit, setOpenEdit] = useState(false);
   const [editedData, setEditedData] = useState({});
   const [openRegister, setOpenRegister] = useState(false);
@@ -55,6 +60,36 @@ const HostsPage = () => {
     page * rowsPerPage,
     page * rowsPerPage + rowsPerPage
   );
+
+  useEffect(() => {
+    if (openRegister || openEdit) {
+      fetchProjects();
+    }
+  }, [openRegister, openEdit]);
+
+  const fetchProjects = async () => {
+    setLoadingProjects(true);
+    try {
+      const user_id = localStorage.getItem("user_id");
+      const token = localStorage.getItem("authToken");
+      const baseUrl = ApiBaseUrl.getBaseUrl();
+      const response = await fetch(
+        `http://${baseUrl}/api/v1/projects?user_id=${user_id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const data = await response.json();
+      setProjects(data.projects);
+      setVisibleItems(data.projects.slice(0, 10));
+    } catch (error) {
+      console.error("Error fetching groups:", error);
+    } finally {
+      setLoadingProjects(false);
+    }
+  };
 
   useEffect(() => {
     fetchHosts();
@@ -81,6 +116,18 @@ const HostsPage = () => {
       console.error("Error fetching hosts:", error);
     } finally {
       setApiLoading(false);
+    }
+  };
+
+  const handleScroll = (event) => {
+    const bottom =
+      event.target.scrollHeight - event.target.scrollTop <=
+      event.target.clientHeight + 10; // Adjust tolerance
+    if (bottom && visibleItems.length < groups.length) {
+      setVisibleItems((prevVisibleItems) => [
+        ...prevVisibleItems,
+        ...groups.slice(prevVisibleItems.length, prevVisibleItems.length + 10),
+      ]);
     }
   };
 
@@ -362,6 +409,9 @@ const HostsPage = () => {
                   Description
                 </TableCell>
                 <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                  Project
+                </TableCell>
+                <TableCell sx={{ color: "white", fontWeight: "bold" }}>
                   Actions
                 </TableCell>
               </TableRow>
@@ -373,6 +423,7 @@ const HostsPage = () => {
                     <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                     <TableCell>{host.name}</TableCell>
                     <TableCell>{host.description}</TableCell>
+                    <TableCell>{host.projectName}</TableCell>
                     <TableCell>
                       <IconButton
                         color="primary"
@@ -473,6 +524,12 @@ const HostsPage = () => {
                   Description:{" "}
                   <span style={{ color: "orange" }}>
                     {selectedHost.description}
+                  </span>
+                </Typography>
+                <Typography fontWeight="bold">
+                  Project Name:{" "}
+                  <span style={{ color: "orange" }}>
+                    {selectedHost.projectName}
                   </span>
                 </Typography>
               </Box>
@@ -589,6 +646,45 @@ const HostsPage = () => {
                     handleUpdateInputChange("description", e.target.value)
                   }
                 />
+                <FormControl fullWidth>
+                  <InputLabel>Project *</InputLabel>
+                  <Select
+                    value={
+                      visibleItems.some(
+                        (project) => project.id === editedData.projectId
+                      )
+                        ? editedData.projectId
+                        : "" // Use an empty string if the value is not in the list
+                    }
+                    onChange={(e) =>
+                      handleUpdateInputChange("projectId", e.target.value)
+                    } // Update single project
+                    input={
+                      <OutlinedInput id="select-single" label="Project *" />
+                    }
+                    MenuProps={{
+                      PaperProps: {
+                        onScroll: handleScroll,
+                        style: { maxHeight: 150, overflowY: "auto" },
+                      },
+                    }}
+                    disabled={loadingProjects} // Disable dropdown while loading
+                  >
+                    {loadingProjects ? (
+                      <MenuItem disabled>
+                        <CircularProgress size={20} /> Loading...
+                      </MenuItem>
+                    ) : visibleItems.length > 0 ? (
+                      visibleItems.map((project) => (
+                        <MenuItem key={project.id} value={project.id}>
+                          {project.name}
+                        </MenuItem>
+                      ))
+                    ) : (
+                      <MenuItem>No projects found</MenuItem>
+                    )}
+                  </Select>
+                </FormControl>
               </Box>
               <Box textAlign="right" mt={2}>
                 <Button
@@ -659,6 +755,37 @@ const HostsPage = () => {
                   handleRegisterInputChange("description", e.target.value)
                 }
               />
+              <FormControl fullWidth>
+                <InputLabel>Project *</InputLabel>
+                <Select
+                  value={registerData.projectId || ""} // Bind single project ID
+                  onChange={(e) =>
+                    handleRegisterInputChange("projectId", e.target.value)
+                  } // Update single project
+                  input={<OutlinedInput id="select-single" label="Project *" />}
+                  MenuProps={{
+                    PaperProps: {
+                      onScroll: handleScroll,
+                      style: { maxHeight: 150, overflowY: "auto" },
+                    },
+                  }}
+                  disabled={loadingProjects} // Disable dropdown while loading
+                >
+                  {loadingProjects ? (
+                    <MenuItem disabled>
+                      <CircularProgress size={20} /> Loading...
+                    </MenuItem>
+                  ) : visibleItems.length > 0 ? (
+                    visibleItems.map((project) => (
+                      <MenuItem key={project.id} value={project.id}>
+                        {project.name}
+                      </MenuItem>
+                    ))
+                  ) : (
+                    <MenuItem>No projects found</MenuItem>
+                  )}
+                </Select>
+              </FormControl>
             </Box>
             <Box textAlign="right" mt={2}>
               <Button

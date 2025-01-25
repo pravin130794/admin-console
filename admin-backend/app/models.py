@@ -248,6 +248,7 @@ class Host(Document):
     description: str
     isActive: bool = True
     reason: Optional[str] = None  # Optional field
+    projectId: PydanticObjectId
     createdAt: datetime = Field(default_factory=datetime.now)
     updatedAt: datetime = Field(default_factory=datetime.now)
 
@@ -258,8 +259,10 @@ class Host(Document):
 class CreateHostRequest(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
+    projectId: PydanticObjectId
 
 class HostUpdateRequest(BaseModel):
     id: PydanticObjectId
     name: Optional[str] = None
     description: Optional[str] = None
+    projectId: Optional[PydanticObjectId] = None
