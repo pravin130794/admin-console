@@ -62,20 +62,7 @@ const ProjectsPage = () => {
   useEffect(() => {
     fetchProjects();
   }, []);
-
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0); // Reset to the first page
-  };
-
-  const handleCloseSnackbar = () => {
-    setSnackbar((prev) => ({ ...prev, open: false }));
-  };
-
+  
   const fetchProjects = async () => {
     setApiLoading(true);
     try {
@@ -99,6 +86,20 @@ const ProjectsPage = () => {
       setApiLoading(false);
     }
   };
+  
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0); // Reset to the first page
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar((prev) => ({ ...prev, open: false }));
+  };
+
 
   const handleViewOpen = (project) => {
     setSelectedProject(project);

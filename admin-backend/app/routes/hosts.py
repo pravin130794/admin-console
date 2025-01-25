@@ -1,51 +1,174 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from app.middleware.auth import JWTBearer
-from app.models import Host
+from app.models import Host, User,  CreateHostRequest, HostUpdateRequest, InactivateHostRequest
+from beanie import PydanticObjectId
 from bson import ObjectId
 from typing import List
+from datetime import datetime
 
 router = APIRouter()
 
 # Create a new host
-@router.post("/hosts", dependencies=[Depends(JWTBearer())])
-async def create_host(host: Host):
-    await host.create()
-    return {"message": "Host created successfully", "host": host}
+@router.post("/hosts",dependencies=[Depends(JWTBearer())])
+async def create_host(host: CreateHostRequest):
+    """
+    Create a new host with member associations and other details.
+    """
+    try:
+        # Check if the host already exists
+        existing_host = await Host.find_one(Host.name == host.name)
+        if existing_host:
+            raise HTTPException(status_code=400, detail="Host already exists")
+        
+        # Prepare the new host
+        new_host = Host(
+            name=host.name,
+            description=host.description,
+            isActive=True,
+            createdAt=datetime.now(),
+            updatedAt=datetime.now(),
+        )
+
+        # Save the host to the database
+        await new_host.create()
+
+        return {"message": "Host created successfully", "hostId": str(new_host.id)}
+
+    except HTTPException as error:
+        raise error
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
 # Get a list of all hosts
-@router.get("/hosts", dependencies=[Depends(JWTBearer())])
-async def list_hosts():
-    hosts = await Host.find_all().to_list()
-    return hosts
+@router.get("/hosts",dependencies=[Depends(JWTBearer())])
+async def list_user_hosts(
+    user_id: str,  # User ID passed as a query parameter
+    skip: int = Query(0, ge=0),  # Number of items to skip
+    limit: int = Query(10, ge=1)  # Number of items to fetch
+):
+    """
+    Get a paginated list of hosts created by the user or where the user is a member.
+    SuperAdmin can see all active hosts.
+    """
+    try:
+        # Convert user_id to PydanticObjectId
+        user_id = PydanticObjectId(user_id)
+
+        # Fetch the user from the database
+        user = await User.find_one(User.id == user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Initialize query based on user role
+        if user.role == "SuperAdmin":
+            # SuperAdmin fetches all active hosts
+            hosts_query = Host.find({"isActive": True})
+        else:
+            # Fetch hosts created by the user or where the user is a member
+            hosts_query = Host.find({
+                "$and": [
+                    {"isActive": True},
+                ]
+            })
+
+        # Apply pagination
+        hosts = await hosts_query.skip(skip).limit(limit).to_list()
+
+        # Get the total count of matching hosts (without pagination)
+        total_count = await hosts_query.count()
+
+        # Prepare the response data
+        host_list = [
+            {
+                "id": str(host.id),
+                "name": host.name,
+                "description": host.description,
+                "isActive": host.isActive
+            }
+            for host in hosts
+        ]
+
+        return {
+            "total": total_count,
+            "skip": skip,
+            "limit": limit,
+            "hosts": host_list
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
 # Get a specific host by ID
 @router.get("/hosts/{host_id}", dependencies=[Depends(JWTBearer())])
 async def get_host(host_id: str):
     if not ObjectId.is_valid(host_id):
-        raise HTTPException(status_code=400, detail="Invalid hosts ID")
+        raise HTTPException(status_code=400, detail="Invalid host ID")
     host = await Host.get(host_id)
     if not host:
         raise HTTPException(status_code=404, detail="Host not found")
     return host
 
 # Update a host by ID
-@router.put("/hosts/{host_id}", dependencies=[Depends(JWTBearer())])
-async def update_host(host_id: str, updated_data: Host):
-    if not ObjectId.is_valid(host_id):
-        raise HTTPException(status_code=400, detail="Invalid host ID")
-    host = await Host.get(host_id)
-    if not host:
-        raise HTTPException(status_code=404, detail="Hosts not found")
-    updated_host = await host.set(updated_data.dict(exclude_unset=True))
-    return {"message": "Host updated successfully", "host": updated_host}
+@router.put("/hosts",dependencies=[Depends(JWTBearer())])
+async def partial_update_host(host: HostUpdateRequest):
+    """
+    Partially update host details.
+    """
+    try:
+        # Convert host_id to PydanticObjectId
+        host_id = PydanticObjectId(host.id)
+
+        # Check if host exists
+        existing_host = await Host.find_one(Host.id == host_id)
+        if not existing_host:
+            raise HTTPException(status_code=404, detail="Host not found")
+
+        # Update fields provided in the request
+        if host.name is not None:
+            existing_host.name = host.name
+        if host.description is not None:
+            existing_host.description = host.description
+
+        # Save the group changes
+        await existing_host.save()
+
+        return {
+            "message": "Host updated successfully"
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+
 
 # Delete a host by ID
-@router.delete("/hosts/{host_id}", dependencies=[Depends(JWTBearer())])
-async def delete_host(host_id: str):
-    if not ObjectId.is_valid(host_id):
-        raise HTTPException(status_code=400, detail="Invalid host ID")
-    host = await Host.get(host_id)
-    if not host:
-        raise HTTPException(status_code=404, detail="Host not found")
-    await host.delete()
-    return {"message": "Host deleted successfully"}
+@router.patch("/host/{host_id}/inactivate",dependencies=[Depends(JWTBearer())])
+async def inactivate_host(host_id: str, request: InactivateHostRequest):
+    """
+    Inactivate a host by setting isActive to False, storing the reason,
+    and removing the host ID from associated users' hostIds.
+    """
+    try:
+        # Validate and convert host_id to PydanticObjectId
+        if not PydanticObjectId.is_valid(host_id):
+            raise HTTPException(status_code=400, detail="Invalid host ID")
+        host_id = PydanticObjectId(host_id)
+
+        # Find the host in the database
+        host = await Host.find_one(Host.id == host_id)
+        if not host:
+            raise HTTPException(status_code=404, detail="Host not found")
+
+        # Update the host's status and add a reason for inactivation
+        host.isActive = False
+        host.reason = request.reason
+        host.updatedAt = datetime.now()
+
+        # Save the changes to the host
+        await host.save()
+
+        return {"message": "Host inactivated successfully"}
+
+    except HTTPException as error:
+        raise error
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")

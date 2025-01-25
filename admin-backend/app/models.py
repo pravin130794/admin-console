@@ -183,6 +183,10 @@ class InactivateGroupRequest(BaseModel):
 class InactivateProjectRequest(BaseModel):
     reason: Optional[str] = None  # Reason for inactivation
 
+# Request schema for deactivating a host
+class InactivateHostRequest(BaseModel):
+    reason: Optional[str] = None  # Reason for inactivation
+
 # Request schema for creating a user
 class CreateUserRequest(BaseModel):
     firstName: str
@@ -241,9 +245,20 @@ class Devices(Document):
 class Host(Document):
     name: str
     description: str
-    projects: List[PydanticObjectId]= []  # List of project IDs
+    isActive: bool = True
+    reason: Optional[str] = None  # Optional field
     createdAt: datetime = Field(default_factory=datetime.now)
     updatedAt: datetime = Field(default_factory=datetime.now)
 
     class Settings:
         name = "host"
+
+# Request schema for creating a host
+class CreateHostRequest(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+
+class HostUpdateRequest(BaseModel):
+    id: PydanticObjectId
+    name: Optional[str] = None
+    description: Optional[str] = None
