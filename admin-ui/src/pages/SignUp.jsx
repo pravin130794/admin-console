@@ -13,6 +13,7 @@ import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/logo.png";
 import SapphireLogo from "../assets/SapphireLogo.png";
+import ApiBaseUrl from "../ApiBaseUrl";
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -89,7 +90,8 @@ const SignUp = () => {
       return;
     }
     try {
-      const response = await fetch("http://localhost:8001/api/v1/sign-up", {
+      const baseUrl = ApiBaseUrl.getBaseUrl();
+      const response = await fetch(`http://${baseUrl}/api/v1/sign-up`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

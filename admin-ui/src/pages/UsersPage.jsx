@@ -30,6 +30,7 @@ import CancelIcon from "@mui/icons-material/Cancel";
 import FormControl from "@mui/material/FormControl";
 import CircularProgress from "@mui/material/CircularProgress";
 import SnackbarComponent from "../components/Snackbar";
+import ApiBaseUrl from "../ApiBaseUrl";
 
 const UserPage = () => {
   const [openDelete, setOpenDelete] = useState(false);
@@ -107,8 +108,9 @@ const UserPage = () => {
     try {
       const user_id = localStorage.getItem("user_id");
       const token = localStorage.getItem("authToken");
+      const baseUrl = ApiBaseUrl.getBaseUrl();
       const response = await fetch(
-        `http://localhost:8001/api/v1/groups?user_id=${user_id}`,
+        `http://${baseUrl}/api/v1/groups?user_id=${user_id}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -141,8 +143,9 @@ const UserPage = () => {
     try {
       const user_id = localStorage.getItem("user_id");
       const token = localStorage.getItem("authToken");
+      const baseUrl = ApiBaseUrl.getBaseUrl();
       const response = await fetch(
-        `http://localhost:8001/api/v1/users?user_id=${user_id}&skip=${page}&limit=${rowsPerPage}`,
+        `http://${baseUrl}/api/v1/users?user_id=${user_id}&skip=${page}&limit=${rowsPerPage}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -182,8 +185,9 @@ const UserPage = () => {
     try {
       const user_id = selectedUser.id;
       const token = localStorage.getItem("authToken");
+      const baseUrl = ApiBaseUrl.getBaseUrl();
       const response = await fetch(
-        `http://localhost:8001/api/v1/user/${user_id}/inactivate`,
+        `http://${baseUrl}/api/v1/user/${user_id}/inactivate`,
         {
           method: "PATCH",
           headers: {
@@ -253,7 +257,7 @@ const UserPage = () => {
     setApiLoading(true);
     try {
       const token = localStorage.getItem("authToken");
-      const response = await fetch("http://localhost:8001/api/v1/reject_user", {
+      const response = await fetch(`http://${baseUrl}/api/v1/reject_user`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -337,17 +341,15 @@ const UserPage = () => {
     const token = localStorage.getItem("authToken");
     setApiLoading(true);
     try {
-      const response = await fetch(
-        "http://localhost:8001/api/v1/approve_user",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(requestBody),
-        }
-      );
+      const baseUrl = ApiBaseUrl.getBaseUrl();
+      const response = await fetch(`http://${baseUrl}/api/v1/approve_user`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(requestBody),
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -392,7 +394,8 @@ const UserPage = () => {
     setApiLoading(true);
     try {
       const token = localStorage.getItem("authToken");
-      const response = await fetch(`http://localhost:8001/api/v1/users`, {
+      const baseUrl = ApiBaseUrl.getBaseUrl();
+      const response = await fetch(`http://${baseUrl}/api/v1/users`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -533,7 +536,8 @@ const UserPage = () => {
     setApiLoading(true);
     try {
       const token = localStorage.getItem("authToken");
-      const response = await fetch("http://localhost:8001/api/v1/users", {
+      const baseUrl = ApiBaseUrl.getBaseUrl();
+      const response = await fetch(`http://${baseUrl}/api/v1/users`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

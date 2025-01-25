@@ -17,6 +17,7 @@ import {
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import CircularProgress from "@mui/material/CircularProgress";
 import SnackbarComponent from "../components/Snackbar";
+import ApiBaseUrl from "../ApiBaseUrl";
 
 const HostsPage = () => {
   const [hosts, setHosts] = useState([]);
@@ -55,7 +56,8 @@ const HostsPage = () => {
     setApiLoading(true);
     try {
       const token = localStorage.getItem("authToken");
-      const response = await fetch("http://localhost:8001/api/v1/hosts", {
+      const baseUrl = ApiBaseUrl.getBaseUrl();
+      const response = await fetch(`http://${baseUrl}/api/v1/hosts`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

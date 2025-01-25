@@ -12,6 +12,7 @@ import {
   Backdrop,
 } from "@mui/material";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import ApiBaseUrl from "../ApiBaseUrl";
 
 const OTPPage = () => {
   const navigate = useNavigate();
@@ -92,7 +93,8 @@ const OTPPage = () => {
     setApiLoading(true);
     try {
       requestBody.email = email;
-      const response = await fetch("http://localhost:8001/api/v1/verify-otp", {
+      const baseUrl = ApiBaseUrl.getBaseUrl();
+      const response = await fetch(`http://${baseUrl}/api/v1/verify-otp`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -17,6 +17,7 @@ import { useAuth } from "../context/Auth";
 import SapphireLogo from "../assets/SapphireLogoLogin.png";
 import logo from "../assets/logo.png";
 import SnackbarComponent from "../components/Snackbar";
+import ApiBaseUrl from "../ApiBaseUrl";
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -75,7 +76,8 @@ const LoginPage = () => {
 
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:8001/api/v1/login", {
+      const baseUrl = ApiBaseUrl.getBaseUrl();
+      const response = await fetch(`http://${baseUrl}/api/v1/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

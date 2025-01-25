@@ -13,6 +13,7 @@ import SapphireLogo from "../assets/SapphireLogo.png";
 import { Link, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/Auth";
 import SnackbarComponent from "../components/Snackbar";
+import ApiBaseUrl from "../ApiBaseUrl";
 
 const AppBarLayout = () => {
   const navigate = useNavigate();
@@ -29,7 +30,8 @@ const AppBarLayout = () => {
       // Call the logout API
 
       const token = localStorage.getItem("authToken");
-      const response = await fetch("http://localhost:8001/api/v1/logout", {
+      const baseUrl = ApiBaseUrl.getBaseUrl();
+      const response = await fetch(`http://${baseUrl}/api/v1/logout`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
