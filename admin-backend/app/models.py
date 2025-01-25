@@ -95,6 +95,8 @@ class Project(Document):
     description: str
     status: str = Field(default="Not Started", enum=["Not Started", "In Progress", "Completed"])
     groupId: PydanticObjectId  # Reference to the parent Group
+    isActive: bool = True
+    reason: Optional[str] = None  # Optional field
     assignedUsers: List[PydanticObjectId] = []
     createdAt: datetime = Field(default_factory=datetime.now)
     updatedAt: datetime = Field(default_factory=datetime.now)
@@ -177,6 +179,10 @@ class InactivateUserRequest(BaseModel):
 class InactivateGroupRequest(BaseModel):
     reason: Optional[str] = None  # Reason for inactivation
 
+# Request schema for deactivating a project
+class InactivateProjectRequest(BaseModel):
+    reason: Optional[str] = None  # Reason for inactivation
+
 # Request schema for creating a user
 class CreateUserRequest(BaseModel):
     firstName: str
@@ -198,6 +204,23 @@ class CreateGroupRequest(BaseModel):
     groupAdmin: Optional[PydanticObjectId] = None
     members: List[PydanticObjectId]= []
     projects: List[PydanticObjectId]= [] 
+
+# Request schema for creating a projects
+class CreateProjectRequest(BaseModel):
+    reason: Optional[str] = None
+    name: Optional[str] = None
+    description: Optional[str] = None
+    createdBy: Optional[PydanticObjectId] = None
+    assignedUsers: List[PydanticObjectId]= []
+
+class ProjectUpdateRequest(BaseModel):
+    id: PydanticObjectId
+    reason: Optional[str] = None
+    name: Optional[str] = None
+    description: Optional[str] = None
+    status: Optional[str] = None
+    createdBy: Optional[PydanticObjectId] = None
+    assignedUsers: Optional[List[PydanticObjectId]]= []
 
 class Devices(Document):
     udid: str
