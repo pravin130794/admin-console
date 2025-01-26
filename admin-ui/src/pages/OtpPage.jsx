@@ -94,7 +94,7 @@ const OTPPage = () => {
     try {
       requestBody.email = email;
       const baseUrl = ApiBaseUrl.getBaseUrl();
-      const response = await fetch("http://${baseUrl}/api/v1/verify-otp", {
+      const response = await fetch(`http://${baseUrl}/api/v1/verify-otp`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -273,7 +273,7 @@ const GroupsPage = () => {
       registerData.members.push(localStorage.getItem("user_id"));
       const token = localStorage.getItem("authToken");
       const baseUrl = ApiBaseUrl.getBaseUrl();
-      const response = await fetch("http://${baseUrl}/api/v1/groups", {
+      const response = await fetch(`http://${baseUrl}/api/v1/groups`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

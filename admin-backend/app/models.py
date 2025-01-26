@@ -95,6 +95,8 @@ class Project(Document):
     description: str
     status: str = Field(default="Not Started", enum=["Not Started", "In Progress", "Completed"])
     groupId: PydanticObjectId  # Reference to the parent Group
+    isActive: bool = True
+    reason: Optional[str] = None  # Optional field
     assignedUsers: List[PydanticObjectId] = []
     createdAt: datetime = Field(default_factory=datetime.now)
     updatedAt: datetime = Field(default_factory=datetime.now)
@@ -177,6 +179,14 @@ class InactivateUserRequest(BaseModel):
 class InactivateGroupRequest(BaseModel):
     reason: Optional[str] = None  # Reason for inactivation
 
+# Request schema for deactivating a project
+class InactivateProjectRequest(BaseModel):
+    reason: Optional[str] = None  # Reason for inactivation
+
+# Request schema for deactivating a host
+class InactivateHostRequest(BaseModel):
+    reason: Optional[str] = None  # Reason for inactivation
+
 # Request schema for creating a user
 class CreateUserRequest(BaseModel):
     firstName: str
@@ -199,6 +209,24 @@ class CreateGroupRequest(BaseModel):
     members: List[PydanticObjectId]= []
     projects: List[PydanticObjectId]= [] 
 
+# Request schema for creating a projects
+class CreateProjectRequest(BaseModel):
+    reason: Optional[str] = None
+    name: Optional[str] = None
+    description: Optional[str] = None
+    groupId: Optional[PydanticObjectId] = None
+    createdBy: Optional[PydanticObjectId] = None
+    assignedUsers: List[PydanticObjectId]= []
+
+class ProjectUpdateRequest(BaseModel):
+    id: PydanticObjectId
+    reason: Optional[str] = None
+    name: Optional[str] = None
+    description: Optional[str] = None
+    status: Optional[str] = None
+    groupId: PydanticObjectId
+    assignedUsers: Optional[List[PydanticObjectId]]= []
+
 class Devices(Document):
     udid: str
     last_update: datetime
@@ -218,9 +246,23 @@ class Devices(Document):
 class Host(Document):
     name: str
     description: str
-    projects: List[PydanticObjectId]= []  # List of project IDs
+    isActive: bool = True
+    reason: Optional[str] = None  # Optional field
+    projectId: PydanticObjectId
     createdAt: datetime = Field(default_factory=datetime.now)
     updatedAt: datetime = Field(default_factory=datetime.now)
 
     class Settings:
         name = "host"
+
+# Request schema for creating a host
+class CreateHostRequest(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    projectId: PydanticObjectId
+
+class HostUpdateRequest(BaseModel):
+    id: PydanticObjectId
+    name: Optional[str] = None
+    description: Optional[str] = None
+    projectId: Optional[PydanticObjectId] = None

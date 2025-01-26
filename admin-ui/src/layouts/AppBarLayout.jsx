@@ -31,7 +31,7 @@ const AppBarLayout = () => {
 
       const token = localStorage.getItem("authToken");
       const baseUrl = ApiBaseUrl.getBaseUrl();
-      const response = await fetch("http://${baseUrl}/api/v1/logout", {
+      const response = await fetch(`http://${baseUrl}/api/v1/logout`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

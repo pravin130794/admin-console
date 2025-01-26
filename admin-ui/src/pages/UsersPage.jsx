@@ -257,7 +257,7 @@ const UserPage = () => {
     setApiLoading(true);
     try {
       const token = localStorage.getItem("authToken");
-      const response = await fetch("http://${baseUrl}/api/v1/reject_user", {
+      const response = await fetch(`http://${baseUrl}/api/v1/reject_user`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -342,17 +342,14 @@ const UserPage = () => {
     setApiLoading(true);
     try {
       const baseUrl = ApiBaseUrl.getBaseUrl();
-      const response = await fetch(
-        "http://${baseUrl}/api/v1/approve_user",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(requestBody),
-        }
-      );
+      const response = await fetch(`http://${baseUrl}/api/v1/approve_user`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(requestBody),
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -540,7 +537,7 @@ const UserPage = () => {
     try {
       const token = localStorage.getItem("authToken");
       const baseUrl = ApiBaseUrl.getBaseUrl();
-      const response = await fetch("http://${baseUrl}/api/v1/users", {
+      const response = await fetch(`http://${baseUrl}/api/v1/users`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

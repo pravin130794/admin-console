@@ -91,7 +91,7 @@ const SignUp = () => {
     }
     try {
       const baseUrl = ApiBaseUrl.getBaseUrl();
-      const response = await fetch("http://${baseUrl}/api/v1/sign-up", {
+      const response = await fetch(`http://${baseUrl}/api/v1/sign-up`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

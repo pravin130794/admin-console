@@ -77,7 +77,7 @@ const LoginPage = () => {
     setLoading(true);
     try {
       const baseUrl = ApiBaseUrl.getBaseUrl();
-      const response = await fetch("http://${baseUrl}/api/v1/login", {
+      const response = await fetch(`http://${baseUrl}/api/v1/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
