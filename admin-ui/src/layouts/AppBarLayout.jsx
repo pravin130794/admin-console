@@ -59,7 +59,7 @@ const AppBarLayout = () => {
       // Navigate to the login page
       setTimeout(() => {
         logout();
-        navigate("/login");
+        navigate("/");
       }, 1000);
     } catch (error) {
       setSnackbar({

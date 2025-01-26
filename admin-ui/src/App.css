@@ -1,42 +1,43 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
-}
+.box {
+  --border-angle: 0deg;
+  border-radius: 20px;
+  width: 100px;
+  height: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0px 2px 4px hsl(0 0% 0% / 25%);
+  animation: border-angle-rotate 2s infinite linear;
+  border: 0.3rem solid transparent;
+  position: relative;
+  color: black;
+  cursor: pointer;
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
+  &.a {
+    background: linear-gradient(white, white) padding-box,
+      conic-gradient(
+          from var(--border-angle),
+          oklch(100% 100% 0deg),
+          oklch(100% 100% 45deg),
+          oklch(100% 100% 90deg),
+          oklch(100% 100% 135deg),
+          oklch(100% 100% 180deg),
+          oklch(100% 100% 225deg),
+          oklch(100% 100% 270deg),
+          oklch(100% 100% 315deg),
+          oklch(100% 100% 360deg)
+        )
+        border-box;
   }
 }
 
-.card {
-  padding: 2em;
+@keyframes border-angle-rotate {
+  from { --border-angle: 0deg; }
+  to { --border-angle: 360deg; }
 }
 
-.read-the-docs {
-  color: #888;
+@property --border-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
 }
