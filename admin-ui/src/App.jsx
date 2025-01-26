@@ -1,6 +1,7 @@
 import React from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import AppBarLayout from "./layouts/AppBarLayout";
+import HomePage from "./pages/HomePage";
 import UsersPage from "./pages/UsersPage";
 import GroupsPage from "./pages/GroupsPage";
 import ProjectsPage from "./pages/ProjectsPage";
@@ -19,7 +20,7 @@ const RequireOtpParams = ({ children }) => {
   const email = searchParams.get("email");
 
   if (!email) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/" replace />;
   }
 
   return children;
@@ -30,6 +31,7 @@ const App = () => {
     <AuthProvider>
       <Routes>
         {/* Public Routes */}
+        <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignUp />} />
         <Route
@@ -53,7 +55,6 @@ const App = () => {
         </Route>
 
         {/* Catch-all and Unauthorized Routes */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="*" element={<NotFoundPage />} />
         <Route path="/unauthorized" element={<UnauthorizedPage />} />
       </Routes>
