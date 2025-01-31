@@ -1,3 +1,6 @@
+body {
+  font-family: "ArialBlack";
+}
 .box {
   --border-angle: 0deg;
   border-radius: 20px;
@@ -40,4 +43,10 @@
   syntax: "<angle>";
   initial-value: 0deg;
   inherits: false;
+}
+
+@font-face {
+  font-family: "ArialBlack";   /*Can be any text*/
+  src: local("ArialBlack"),
+    url("./assets/font/ariblk.ttf") format("truetype");
 }
