@@ -418,7 +418,10 @@ const ProjectsPage = () => {
                   Description
                 </TableCell>
                 <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                  Group
+                  Assign Groups
+                </TableCell>
+                <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                  Assign Users
                 </TableCell>
                 <TableCell sx={{ color: "white", fontWeight: "bold" }}>
                   Status
@@ -436,6 +439,17 @@ const ProjectsPage = () => {
                     <TableCell>{project.name}</TableCell>
                     <TableCell>{project.description}</TableCell>
                     <TableCell>{project.groupName}</TableCell>
+                    <TableCell>
+                      {project.assignedUsers.length > 0 ? (
+                        <Typography>
+                          {project.assignedUsers
+                            .map((user) => user.username)
+                            .join(", ")}
+                        </Typography>
+                      ) : (
+                        "-"
+                      )}
+                    </TableCell>
                     <TableCell>{project.status}</TableCell>
                     <TableCell>
                       <IconButton

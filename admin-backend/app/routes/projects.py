@@ -40,6 +40,18 @@ async def create_project(project: CreateProjectRequest):
         # Save the project to the database
         await new_project.create()
 
+        # Update each user's projectIds field
+        for user_id in project.assignedUsers:
+            user = await User.find_one({"_id": user_id})
+            if user:
+                user.projectIds.append(new_project.id)
+                await user.save() 
+        
+        group = await Group.find_one({"_id": project.groupId})
+        if group:
+            group.projects.append(new_project.id)
+            await group.save() 
+
         return {"message": "Project created successfully", "projectId": str(new_project.id)}
 
     except HTTPException as error:
@@ -47,8 +59,8 @@ async def create_project(project: CreateProjectRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
-# Get a list of all projects
-@router.get("/projects",dependencies=[Depends(JWTBearer())])
+# Get a list of all projects with assigned groups and users
+@router.get("/projects", dependencies=[Depends(JWTBearer())])
 async def list_user_projects(
     user_id: str,  # User ID passed as a query parameter
     skip: int = Query(0, ge=0),  # Number of items to skip
@@ -56,7 +68,7 @@ async def list_user_projects(
 ):
     """
     Get a paginated list of projects created by the user or where the user is a member.
-    SuperAdmin can see all active projects.
+    SuperAdmin can see all active projects with their assigned groups and users.
     """
     try:
         # Convert user_id to PydanticObjectId
@@ -98,7 +110,7 @@ async def list_user_projects(
 
             # Prepare the group name and assigned user names
             group_name = group.name if group else "Unknown"
-            assigned_user_names = [{"username":user.username,"id":str(user.id)} for user in assigned_users]
+            assigned_user_names = [{"username": user.username, "id": str(user.id)} for user in assigned_users]
 
             project_data = {
                 "id": str(project.id),
@@ -122,6 +134,7 @@ async def list_user_projects(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+
 
 
 # Get a specific project by ID

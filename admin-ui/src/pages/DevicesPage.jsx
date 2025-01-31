@@ -448,54 +448,66 @@ const DevicesPage = () => {
                 display="flex"
                 flexDirection="column"
                 justifyContent="center"
-                gap={10}
+                gap={8}
               >
-                <Box
-                  display="flex"
-                  alignItems="center"
-                  gap={2}
-                  justifyContent="space-evenly"
-                >
-                  <MemoryIcon />
-                  <Typography variant="h6">CPU</Typography>
-                  <Typography variant="h6" color="green" fontWeight="bold">
-                    {"50%"}
+                {/* CPU Row */}
+                <Box display="flex" alignItems="center">
+                  <MemoryIcon fontSize="small" />
+                  <Typography variant="h6" sx={{ marginLeft: "4px" }}>
+                    CPU
+                  </Typography>
+                  <Box flex={0.5} />
+                  {/* Spacer to push percentage to the right */}
+                  <Typography
+                    variant="h6"
+                    sx={{ color: "green", fontWeight: "bold" }}
+                  >
+                    50%
                   </Typography>
                 </Box>
-                <Box
-                  display="flex"
-                  alignItems="center"
-                  gap={2}
-                  justifyContent="space-evenly"
-                >
-                  <BatteryCharging90Icon />
-                  <Typography variant="h6">Battery</Typography>
-                  <Typography variant="h6" color="green" fontWeight="bold">
-                    {"90%"}
+
+                {/* Battery Row */}
+                <Box display="flex" alignItems="center">
+                  <BatteryCharging90Icon fontSize="small" />
+                  <Typography variant="h6" sx={{ marginLeft: "4px" }}>
+                    Battery
+                  </Typography>
+                  <Box flex={0.5} />
+                  <Typography
+                    variant="h6"
+                    sx={{ color: "green", fontWeight: "bold" }}
+                  >
+                    90%
                   </Typography>
                 </Box>
-                <Box
-                  display="flex"
-                  alignItems="center"
-                  gap={2}
-                  justifyContent="space-evenly"
-                >
-                  <SignalCellularAltIcon />
-                  <Typography variant="h6">Network</Typography>
-                  <Typography variant="h6" color="green" fontWeight="bold">
-                    {"Good"}
+
+                {/* Network Row */}
+                <Box display="flex" alignItems="center">
+                  <SignalCellularAltIcon fontSize="small" />
+                  <Typography variant="h6" sx={{ marginLeft: "4px" }}>
+                    Network
+                  </Typography>
+                  <Box flex={0.5} />
+                  <Typography
+                    variant="h6"
+                    sx={{ color: "green", fontWeight: "bold" }}
+                  >
+                    Good
                   </Typography>
                 </Box>
-                <Box
-                  display="flex"
-                  alignItems="center"
-                  gap={2}
-                  justifyContent="space-evenly"
-                >
-                  <SdCardIcon />
-                  <Typography variant="h6">Memory</Typography>
-                  <Typography variant="h6" color="green" fontWeight="bold">
-                    {"2GB"}
+
+                {/* Memory Row */}
+                <Box display="flex" alignItems="center">
+                  <SdCardIcon fontSize="small" />
+                  <Typography variant="h6" sx={{ marginLeft: "4px" }}>
+                    Memory
+                  </Typography>
+                  <Box flex={0.5} />
+                  <Typography
+                    variant="h6"
+                    sx={{ color: "green", fontWeight: "bold" }}
+                  >
+                    2GB
                   </Typography>
                 </Box>
               </Box>
