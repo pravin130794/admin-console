@@ -360,6 +360,12 @@ const GroupsPage = () => {
                   Description
                 </TableCell>
                 <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                  Assigned Users
+                </TableCell>
+                <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                  Assigned Projects
+                </TableCell>
+                <TableCell sx={{ color: "white", fontWeight: "bold" }}>
                   Actions
                 </TableCell>
               </TableRow>
@@ -371,6 +377,28 @@ const GroupsPage = () => {
                     <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                     <TableCell>{group.name}</TableCell>
                     <TableCell>{group.description}</TableCell>
+                    <TableCell>
+                      {group.members.length > 0 ? (
+                        <Typography>
+                          {group.members
+                            .map((member) => member.name)
+                            .join(", ")}
+                        </Typography>
+                      ) : (
+                        "-"
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {group.projects.length > 0 ? (
+                        <Typography>
+                          {group.projects
+                            .map((project) => project.name)
+                            .join(", ")}
+                        </Typography>
+                      ) : (
+                        "-"
+                      )}
+                    </TableCell>
                     <TableCell>
                       <IconButton
                         color="primary"

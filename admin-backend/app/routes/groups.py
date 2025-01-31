@@ -1,7 +1,7 @@
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query
 from app.middleware.auth import JWTBearer
-from app.models import Group, User, InactivateGroupRequest, GroupUpdateRequest, CreateGroupRequest
+from app.models import Group, User, Project, InactivateGroupRequest, GroupUpdateRequest, CreateGroupRequest
 from bson import ObjectId
 from typing import List
 from beanie import PydanticObjectId
@@ -56,8 +56,8 @@ async def create_group(group: CreateGroupRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
-# Get a list of all groups
-@router.get("/groups",dependencies=[Depends(JWTBearer())])
+# Get a list of all groups with associated project details
+@router.get("/groups", dependencies=[Depends(JWTBearer())])
 async def list_user_groups(
     user_id: str,  # User ID passed as a query parameter
     skip: int = Query(0, ge=0),  # Number of items to skip
@@ -65,7 +65,7 @@ async def list_user_groups(
 ):
     """
     Get a paginated list of groups created by the user or where the user is a member.
-    SuperAdmin can see all active groups.
+    SuperAdmin can see all active groups, and groups will have associated project details.
     """
     try:
         # Convert user_id to PydanticObjectId
@@ -86,8 +86,8 @@ async def list_user_groups(
                 "$and": [
                     {"isActive": True},
                     {"$or": [
-                        # {"createdBy": user_id},
-                        {"members": {"$in": [user_id]}}
+                        {"members": {"$in": [user_id]}},
+                        {"createdBy": user_id}
                     ]}
                 ]
             })
@@ -99,17 +99,42 @@ async def list_user_groups(
         total_count = await groups_query.count()
 
         # Prepare the response data
-        group_list = [
-            {
+        group_list = []
+
+        for group in groups:
+            # Fetch members' details for the group
+            members = await User.find({"_id": {"$in": group.members}}).to_list()
+            member_data = [
+                {
+                    "id": str(member.id),
+                    "name": f"{member.username}"  # Combining first and last name
+                }
+                for member in members
+            ]
+
+            # Fetch projects associated with the group
+            projects = await Project.find({"groupId": group.id}).to_list()
+            project_data = [
+                {
+                    "id": str(project.id),
+                    "name": project.name,
+                    "description": project.description,
+                    "status": project.status
+                }
+                for project in projects
+            ]
+
+            # Prepare the group data with project details
+            group_data = {
                 "id": str(group.id),
                 "name": group.name,
                 "description": group.description,
                 "createdBy": str(group.createdBy),
-                "members": [str(member) for member in group.members],
+                "members": member_data,  # Now members contain name and id
+                "projects": project_data,  # Added project details
                 "isActive": group.isActive
             }
-            for group in groups
-        ]
+            group_list.append(group_data)
 
         return {
             "total": total_count,
