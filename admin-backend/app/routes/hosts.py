@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from app.middleware.auth import JWTBearer
-from app.models import Host, User, Project, CreateHostRequest, HostUpdateRequest, InactivateHostRequest
+from app.models import Host, User, Project,Devices, Group,  CreateHostRequest, HostUpdateRequest, InactivateHostRequest
 from beanie import PydanticObjectId
 from bson import ObjectId
 from typing import List
@@ -24,7 +24,14 @@ async def create_host(host: CreateHostRequest):
         new_host = Host(
             name=host.name,
             description=host.description,
-            projectId=host.projectId,
+            member=host.member,
+            project=host.projectId,
+            group=host.groupId,
+            devices=host.devices,
+            os=host.os,
+            ipAddress=host.ipAddress,
+            location=host.location,
+            reason=None,
             isActive=True,
             createdAt=datetime.now(),
             updatedAt=datetime.now(),
@@ -40,8 +47,8 @@ async def create_host(host: CreateHostRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
-# Get a list of all hosts
-@router.get("/hosts",dependencies=[Depends(JWTBearer())])
+# Get a list of all hosts with details about groups, projects, and devices
+@router.get("/hosts", dependencies=[Depends(JWTBearer())])
 async def list_user_hosts(
     user_id: str,  # User ID passed as a query parameter
     skip: int = Query(0, ge=0),  # Number of items to skip
@@ -49,7 +56,7 @@ async def list_user_hosts(
 ):
     """
     Get a paginated list of hosts created by the user or where the user is a member.
-    SuperAdmin can see all active hosts.
+    SuperAdmin can see all active hosts, along with their groups, projects, and devices.
     """
     try:
         # Convert user_id to PydanticObjectId
@@ -65,7 +72,7 @@ async def list_user_hosts(
             # SuperAdmin fetches all active hosts
             hosts_query = Host.find({"isActive": True})
         else:
-            # Fetch hosts created by the user or where the user is a member
+            # Fetch hosts based on user membership
             hosts_query = Host.find({
                 "$and": [
                     {"isActive": True},
@@ -82,20 +89,29 @@ async def list_user_hosts(
         host_list = []
 
         for host in hosts:
-            # Fetch the project data for the host
-            project = await Project.find_one(Project.id == host.projectId)
+            # Fetch group details using the groupId from the host document
+            group = await Group.find_one(Group.id == host.group)
+            group_data = {"id": str(group.id), "name": group.name} if group else {}
 
+            # Fetch project details using the projectId from the host document
+            project = await Project.find_one(Project.id == host.project)
+            project_data = {"id": str(project.id), "name": project.name} if project else {}
 
-            # Prepare the project name and assigned user names
-            project_name = project.name if project else "Unknown"
+            # Fetch device details using the devices field in the host document
+            devices = await Devices.find({"_id": {"$in": host.devices}}).to_list()
+            device_data = [{"id": str(device.id), "model": device.model} for device in devices] if devices else []
 
+            # Prepare host data
             host_data = {
                 "id": str(host.id),
                 "name": host.name,
-                "description": host.description,
-                "projectId": str(host.projectId),
-                "projectName": project_name,
-                "isActive": host.isActive
+                "ipAddress": host.ipAddress,
+                "location": host.location,
+                "os": host.os,
+                "isActive": host.isActive,
+                "group": group_data,
+                "project": project_data,
+                "devices": device_data
             }
 
             host_list.append(host_data)
@@ -109,6 +125,7 @@ async def list_user_hosts(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+
 
 # Get a specific host by ID
 @router.get("/hosts/{host_id}", dependencies=[Depends(JWTBearer())])
@@ -138,10 +155,20 @@ async def partial_update_host(host: HostUpdateRequest):
         # Update fields provided in the request
         if host.name is not None:
             existing_host.name = host.name
-        if host.description is not None:
-            existing_host.description = host.description
+        if host.groupId is not None:
+            existing_host.groupId = host.groupId
         if host.projectId is not None:
             existing_host.projectId = host.projectId
+        if host.os is not None:
+            existing_host.os = host.os
+        if host.ipAddress is not None:
+            existing_host.ipAddress = host.ipAddress
+        if host.location is not None:
+            existing_host.location = host.location
+        if host.devices is not None:
+            existing_host.devices = host.devices
+        if host.member is not None:
+            existing_host.member = host.member
 
         # Save the group changes
         await existing_host.save()
