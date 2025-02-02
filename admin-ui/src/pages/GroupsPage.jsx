@@ -432,6 +432,15 @@ const GroupsPage = () => {
               )}
             </TableBody>
           </Table>
+          <Box
+            sx={{
+              width: "100%",
+              height: "6px",
+              backgroundImage:
+                "linear-gradient(to left,rgb(1,223,170),rgb(3,201,114),rgb(2,176,54))",
+              marginTop: "-2px",
+            }}
+          />
         </TableContainer>
       </Box>
       {/* Pagination */}
