@@ -70,6 +70,7 @@ const HostsPage = () => {
   const [scroll, setScroll] = useState("paper");
   const [deviceList, setDeviceList] = useState([]);
   const [editData, setEditData] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     if (openRegister) {
@@ -378,6 +379,9 @@ const HostsPage = () => {
     setRegisterData({ ...registerData, [field]: value });
   };
 
+  const filteredDevices = deviceList.filter((device) =>
+    device.model.toLowerCase().includes(searchTerm.toLowerCase())
+  );
   return (
     <Box>
       {/* Header */}
@@ -638,14 +642,24 @@ const HostsPage = () => {
         >
           Select Devices
         </DialogTitle>
+        {/* Search Bar */}
+        <Box sx={{ padding: "10px 20px" }}>
+          <TextField
+            fullWidth
+            variant="outlined"
+            label="Search Devices..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </Box>
         <DialogContent dividers={scroll === "paper"}>
           <DialogContentText
             id="scroll-dialog-description"
             ref={descriptionElementRef}
             tabIndex={-1}
           >
-            {deviceList.length > 0 ? (
-              deviceList.map((device) => (
+            {filteredDevices.length > 0 ? (
+              filteredDevices.map((device) => (
                 <Box key={device.id} display="flex" alignItems="center">
                   <Checkbox
                     checked={selectedDevices.includes(device.id)}
