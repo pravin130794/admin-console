@@ -23,7 +23,6 @@ async def create_host(host: CreateHostRequest):
         # Prepare the new host
         new_host = Host(
             name=host.name,
-            description=host.description,
             member=host.member,
             project=host.projectId,
             group=host.groupId,
