@@ -27,12 +27,16 @@ import {
   DialogContent,
   DialogActions,
   DialogContentText,
+  Collapse,
 } from "@mui/material";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import CircularProgress from "@mui/material/CircularProgress";
 import SnackbarComponent from "../components/Snackbar";
 import CloseIcon from "@mui/icons-material/Close";
+import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
 import ApiBaseUrl from "../ApiBaseUrl";
+import { KeyboardArrowUp, KeyboardArrowDown } from "@mui/icons-material";
 
 const HostsPage = () => {
   const [hosts, setHosts] = useState([]);
@@ -45,6 +49,7 @@ const HostsPage = () => {
   const [openDeviceModel, setOpenDeviceModel] = useState(false);
   const [selectedDevices, setSelectedDevices] = useState([]);
   const [open, setOpen] = useState(false);
+  const [collapsibleOpen, setcollapsibleOpen] = useState(false);
   const [visibleItems, setVisibleItems] = useState([]);
   const [loadingDevices, setLoadingDevices] = useState(false);
   const [groups, setGroups] = useState([]);
@@ -71,6 +76,10 @@ const HostsPage = () => {
   const [deviceList, setDeviceList] = useState([]);
   const [editData, setEditData] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+
+  const toggleRow = (index) => {
+    setcollapsibleOpen((prev) => ({ ...prev, [index]: !prev[index] }));
+  };
 
   useEffect(() => {
     if (openRegister) {
@@ -382,6 +391,106 @@ const HostsPage = () => {
   const filteredDevices = deviceList.filter((device) =>
     device.model.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const CollapsibleRow = ({ host, index, isOpen, toggleOpen }) => {
+    return (
+      <>
+        {/* Main Row */}
+        <TableRow>
+          <TableCell>
+            <IconButton
+              aria-label="expand row"
+              size="small"
+              onClick={toggleOpen}
+            >
+              {isOpen ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
+            </IconButton>
+          </TableCell>
+          <TableCell>{index + 1}</TableCell>
+          <TableCell>{host.name}</TableCell>
+          <TableCell>{host.ipAddress}</TableCell>
+          <TableCell>{host.location}</TableCell>
+          <TableCell>{host.project.name}</TableCell>
+          <TableCell>{host.group.name}</TableCell>
+          <TableCell>{host.os}</TableCell>
+          <TableCell>{host.devices.length}</TableCell>
+          <TableCell>
+            <IconButton color="error">
+              <DeleteIcon />
+            </IconButton>
+
+            <IconButton color="secondary">
+              <EditIcon />
+            </IconButton>
+          </TableCell>
+        </TableRow>
+
+        {/* Collapsible Details Row */}
+        <TableRow>
+          <TableCell colSpan={9} sx={{ paddingBottom: 0, paddingTop: 0 }}>
+            <Collapse in={isOpen} timeout="auto" unmountOnExit>
+              <Box sx={{ margin: 2 }}>
+                <Typography variant="h6">Devices Details</Typography>
+                {host.devices && host.devices.length > 0 ? (
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: "bold" }}>Model</TableCell>
+                        <TableCell sx={{ fontWeight: "bold" }}>UDID</TableCell>
+                        <TableCell sx={{ fontWeight: "bold" }}>State</TableCell>
+                        <TableCell sx={{ fontWeight: "bold" }}>CPU</TableCell>
+                        <TableCell sx={{ fontWeight: "bold" }}>
+                          Manufacturer
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: "bold" }}>
+                          OS Version
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: "bold" }}>
+                          SDK Version
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: "bold" }}>
+                          Security ID
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: "bold" }}>
+                          Registered To
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: "bold" }}>
+                          Action
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {host.devices.map((detail, idx) => (
+                        <TableRow key={idx}>
+                          <TableCell>{detail.model}</TableCell>
+                          <TableCell>{detail.udid}</TableCell>
+                          <TableCell>{detail.state}</TableCell>
+                          <TableCell>{detail.cpu}</TableCell>
+                          <TableCell>{detail.manufacturer}</TableCell>
+                          <TableCell>{detail.os_version}</TableCell>
+                          <TableCell>{detail.sdk_version}</TableCell>
+                          <TableCell>{detail.security_id}</TableCell>
+                          <TableCell>{detail.registered_to}</TableCell>
+                          <TableCell>
+                            <AddCircleOutlineIcon />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <Typography variant="body2">
+                    No devices details available.
+                  </Typography>
+                )}
+              </Box>
+            </Collapse>
+          </TableCell>
+        </TableRow>
+      </>
+    );
+  };
+
   return (
     <Box>
       {/* Header */}
@@ -404,10 +513,11 @@ const HostsPage = () => {
             <TableHead
               sx={{
                 backgroundImage:
-                  "linear-gradient(to left,rgb(1,223,170),rgb(3,201,114),rgb(2,176,54))",
+                  "linear-gradient(to left, rgb(1,223,170), rgb(3,201,114), rgb(2,176,54))",
               }}
             >
               <TableRow>
+                <TableCell />
                 <TableCell sx={{ color: "white", fontWeight: "bold" }}>
                   SN. No
                 </TableCell>
@@ -430,34 +540,27 @@ const HostsPage = () => {
                   OS
                 </TableCell>
                 <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                  No. of Device
+                  No. of Devices
+                </TableCell>
+                <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                  Actions
                 </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {hosts.length > 0 ? (
                 hosts.map((host, index) => (
-                  <TableRow key={host.id || `host-${index}`}>
-                    <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                    <TableCell>{host.name}</TableCell>
-                    <TableCell>{host.ipAddress}</TableCell>
-                    <TableCell>{host.location}</TableCell>
-                    <TableCell>{host.project.name}</TableCell>
-                    <TableCell>{host.group.name}</TableCell>
-                    <TableCell>{host.os}</TableCell>
-                    <TableCell
-                      onClick={() => handleOpen(host)}
-                      style={{
-                        cursor: "pointer",
-                      }}
-                    >
-                      {host.devices.length}
-                    </TableCell>
-                  </TableRow>
+                  <CollapsibleRow
+                    key={host.id || `host-${index}`}
+                    host={host}
+                    index={index}
+                    isOpen={collapsibleOpen[index] || false}
+                    toggleOpen={() => toggleRow(index)}
+                  />
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} align="center">
+                  <TableCell colSpan={9} align="center">
                     <Typography variant="body1" color="textSecondary">
                       No hosts found.
                     </Typography>
@@ -471,7 +574,7 @@ const HostsPage = () => {
               width: "100%",
               height: "6px",
               backgroundImage:
-                "linear-gradient(to left,rgb(1,223,170),rgb(3,201,114),rgb(2,176,54))",
+                "linear-gradient(to left, rgb(1,223,170), rgb(3,201,114), rgb(2,176,54))",
               marginTop: "-2px",
             }}
           />

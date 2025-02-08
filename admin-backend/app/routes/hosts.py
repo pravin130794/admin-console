@@ -98,7 +98,7 @@ async def list_user_hosts(
 
             # Fetch device details using the devices field in the host document
             devices = await Devices.find({"_id": {"$in": host.devices}}).to_list()
-            device_data = [{"id": str(device.id), "model": device.model} for device in devices] if devices else []
+            device_data = [{"id": str(device.id), "model": device.model, "udid": device.udid, "state": device.state, "cpu": device.cpu, "manufacturer": device.manufacturer, "os_version": device.os_version, "sdk_version": device.sdk_version, "security_id": device.security_id, "registered_to": device.registered_to} for device in devices] if devices else []
 
             # Prepare host data
             host_data = {
