@@ -23,6 +23,7 @@ import {
   initializeWebSocket,
   closeWebSocket,
 } from "../services/WebSocketService";
+import ApiBaseUrl from "../ApiBaseUrl";
 import {
   selectedDeviceAccordion,
   selectedDeviceUrl,
@@ -139,9 +140,9 @@ const DevicesPage = () => {
         });
       }
     };
-
+    const baseUrl = ApiBaseUrl.getBaseUrl();
     initializeWebSocket(
-      "ws://127.0.0.1:8001/ws",
+      `ws://${baseUrl}/ws`,
       handleWebSocketMessage,
       (error) => {
         console.error("WebSocket error:", error);
@@ -158,8 +159,9 @@ const DevicesPage = () => {
   const fetchDevices = async () => {
     setApiLoading(true);
     try {
+      const baseUrl = ApiBaseUrl.getBaseUrl();
       const token = localStorage.getItem("authToken");
-      const response = await fetch(`http://127.0.0.1:8001/api/v1/devices`, {
+      const response = await fetch(`http://${baseUrl}/api/v1/devices`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -195,9 +197,10 @@ const DevicesPage = () => {
   const registerDevice = async (device) => {
     setApiLoading(true);
     try {
+      const baseUrl = ApiBaseUrl.getBaseUrl();
       const token = localStorage.getItem("authToken");
       const response = await fetch(
-        `http://127.0.0.1:8001/api/v1/registerdevice/${device.udid}`,
+        `http://${baseUrl}/api/v1/registerdevice/${device.udid}`,
         {
           method: "POST",
           headers: {

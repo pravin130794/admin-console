@@ -245,10 +245,15 @@ class Devices(Document):
 # Project Model
 class Host(Document):
     name: str
-    description: str
+    ipAddress: str
+    location: str
+    os: str
     isActive: bool = True
     reason: Optional[str] = None  # Optional field
-    projectId: PydanticObjectId
+    member: PydanticObjectId
+    project: PydanticObjectId
+    group: PydanticObjectId
+    devices: List[PydanticObjectId] = []
     createdAt: datetime = Field(default_factory=datetime.now)
     updatedAt: datetime = Field(default_factory=datetime.now)
 
@@ -258,11 +263,22 @@ class Host(Document):
 # Request schema for creating a host
 class CreateHostRequest(BaseModel):
     name: Optional[str] = None
-    description: Optional[str] = None
+    member: PydanticObjectId
     projectId: PydanticObjectId
+    groupId: PydanticObjectId
+    os: Optional[str] = None
+    ipAddress: Optional[str] = None
+    location: Optional[str] = None
+    devices: List[PydanticObjectId] = []
+
 
 class HostUpdateRequest(BaseModel):
     id: PydanticObjectId
     name: Optional[str] = None
-    description: Optional[str] = None
+    member: Optional[PydanticObjectId] = None
     projectId: Optional[PydanticObjectId] = None
+    groupId: Optional[PydanticObjectId] = None
+    os: Optional[str] = None
+    ipAddress: Optional[str] = None
+    location: Optional[str] = None
+    devices: Optional[List[PydanticObjectId]] = []

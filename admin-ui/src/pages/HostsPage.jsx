@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Box,
   Table,
@@ -20,34 +20,50 @@ import {
   InputLabel,
   Select,
   OutlinedInput,
+  FormControlLabel,
+  Checkbox,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  DialogContentText,
+  Collapse,
 } from "@mui/material";
-import VisibilityIcon from "@mui/icons-material/Visibility";
+import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import CircularProgress from "@mui/material/CircularProgress";
 import SnackbarComponent from "../components/Snackbar";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import ApiBaseUrl from "../ApiBaseUrl";
+import { KeyboardArrowUp, KeyboardArrowDown } from "@mui/icons-material";
 
 const HostsPage = () => {
   const [hosts, setHosts] = useState([]);
   const [page, setPage] = useState(0);
-  const [openView, setOpenView] = useState(false);
-  const [selectedHost, setSelectedHost] = useState(null);
   const [totalHosts, setTotalHosts] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [openDelete, setOpenDelete] = useState(false);
-  const [reason, setReason] = useState("");
-  const [projects, setProjects] = useState([]);
   const [loadingProjects, setLoadingProjects] = useState(false);
-  const [selectedProject, setSelectedProject] = useState(false);
+  const [loadingGrous, setLoadingGroups] = useState(false);
+  const [projects, setProjects] = useState([]);
+  const [openDeviceModel, setOpenDeviceModel] = useState(false);
+  const [selectedDevices, setSelectedDevices] = useState([]);
+  const [open, setOpen] = useState(false);
+  const [collapsibleOpen, setcollapsibleOpen] = useState(false);
   const [visibleItems, setVisibleItems] = useState([]);
-  const [openEdit, setOpenEdit] = useState(false);
-  const [editedData, setEditedData] = useState({});
+  const [loadingDevices, setLoadingDevices] = useState(false);
+  const [groups, setGroups] = useState([]);
+  const [visibleProjectItems, setProjectVisibleItems] = useState([]);
+  const [visibleGroupItems, setGroupVisibleItems] = useState([]);
   const [openRegister, setOpenRegister] = useState(false);
   const [registerData, setRegisterData] = useState({
     name: "",
-    description: "",
+    location: "",
+    os: "",
+    ipAddress: "",
+    projectId: "",
+    groupId: "",
+    member: localStorage.getItem("user_id"),
   });
   const [apiLoading, setApiLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({
@@ -55,17 +71,122 @@ const HostsPage = () => {
     message: "",
     severity: "info",
   });
+  const descriptionElementRef = useRef(null);
+  const [scroll, setScroll] = useState("paper");
+  const [deviceList, setDeviceList] = useState([]);
+  const [editData, setEditData] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const paginatedHosts = hosts.slice(
-    page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage
-  );
+  const toggleRow = (index) => {
+    setcollapsibleOpen((prev) => ({ ...prev, [index]: !prev[index] }));
+  };
 
   useEffect(() => {
-    if (openRegister || openEdit) {
+    if (openRegister) {
       fetchProjects();
+      fetchGroups();
     }
-  }, [openRegister, openEdit]);
+  }, [openRegister]);
+
+  const handleOpen = (host) => {
+    setOpen(true);
+    setScroll("paper");
+    fetchDevices(host.devices);
+    setEditData(host);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+    setSelectedDevices([]);
+  };
+
+  const handleApprove = async () => {
+    setApiLoading(true);
+    try {
+      editData.devices = selectedDevices;
+      editData.group = editData.group.id;
+      editData.project = editData.project.id;
+      const token = localStorage.getItem("authToken");
+      const baseUrl = ApiBaseUrl.getBaseUrl();
+      const response = await fetch(`http://${baseUrl}/api/v1/hosts`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(editData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Failed to update host.");
+      }
+
+      setSnackbar({
+        open: true,
+        message: "Host updated successfully!",
+        severity: "success",
+      });
+
+      setOpen(false);
+      fetchDevices(hosts.devices);
+      fetchHosts();
+    } catch (error) {
+      console.error("Error update host:", error);
+      setSnackbar({
+        open: true,
+        message: error.message || "An error occurred.",
+        severity: "error",
+      });
+    } finally {
+      setApiLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (open) {
+      const { current: descriptionElement } = descriptionElementRef;
+      if (descriptionElement !== null) {
+        descriptionElement.focus();
+      }
+    }
+  }, [open]);
+
+  // Handle Checkbox Selection
+  const handleCheckboxChange = (deviceId) => {
+    setSelectedDevices((prevSelected) => {
+      if (prevSelected.includes(deviceId)) {
+        return prevSelected.filter((id) => id !== deviceId);
+      } else {
+        return [...prevSelected, deviceId];
+      }
+    });
+  };
+
+  useEffect(() => {
+    fetchDevices();
+  }, []);
+
+  const fetchDevices = async (devices = []) => {
+    setLoadingDevices(true);
+    try {
+      const token = localStorage.getItem("authToken");
+      const baseUrl = ApiBaseUrl.getBaseUrl();
+      const response = await fetch(`http://${baseUrl}/api/v1/devices/list`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      setDeviceList(data.devices);
+      const assignedDeviceIds = devices.map((device) => device.id);
+      setSelectedDevices(assignedDeviceIds);
+    } catch (error) {
+      console.error("Error fetching device:", error);
+    } finally {
+      setLoadingDevices(false);
+    }
+  };
 
   const fetchProjects = async () => {
     setLoadingProjects(true);
@@ -83,11 +204,35 @@ const HostsPage = () => {
       );
       const data = await response.json();
       setProjects(data.projects);
-      setVisibleItems(data.projects.slice(0, 10));
+      setProjectVisibleItems(data.projects.slice(0, 10));
+    } catch (error) {
+      console.error("Error fetching project:", error);
+    } finally {
+      setLoadingProjects(false);
+    }
+  };
+
+  const fetchGroups = async () => {
+    setLoadingGroups(true);
+    try {
+      const user_id = localStorage.getItem("user_id");
+      const token = localStorage.getItem("authToken");
+      const baseUrl = ApiBaseUrl.getBaseUrl();
+      const response = await fetch(
+        `http://${baseUrl}/api/v1/groups?user_id=${user_id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const data = await response.json();
+      setGroups(data.groups);
+      setGroupVisibleItems(data.groups.slice(0, 10));
     } catch (error) {
       console.error("Error fetching groups:", error);
     } finally {
-      setLoadingProjects(false);
+      setLoadingGroups(false);
     }
   };
 
@@ -144,134 +289,8 @@ const HostsPage = () => {
     setSnackbar((prev) => ({ ...prev, open: false }));
   };
 
-  const handleViewOpen = (host) => {
-    setSelectedHost(host);
-    setOpenView(true);
-  };
-
-  const handleViewClose = () => {
-    setOpenView(false);
-    setSelectedHost(null);
-  };
-
-  const handleDeleteOpen = (host) => {
-    setSelectedHost(host);
-    setOpenDelete(true);
-  };
-
-  const handleDeleteClose = async () => {
-    setOpenDelete(false);
-    setReason("");
-  };
-
-  const handleDelete = async () => {
-    if (!reason) {
-      setSnackbar({
-        open: true,
-        message: "Please provide a reason for deletion.",
-        severity: "warning",
-      });
-      return;
-    }
-    setApiLoading(true);
-    try {
-      const host_id = selectedHost.id;
-      const token = localStorage.getItem("authToken");
-      const baseUrl = ApiBaseUrl.getBaseUrl();
-      const response = await fetch(
-        `http://${baseUrl}/api/v1/host/${host_id}/inactivate`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            reason: reason,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || "Failed to delete host.");
-      }
-
-      setSnackbar({
-        open: true,
-        message: "Host deleted successfully!",
-        severity: "success",
-      });
-      fetchHosts();
-    } catch (error) {
-      console.error("Error rejecting host:", error);
-      setSnackbar({
-        open: true,
-        message: error.message || "An error occurred.",
-        severity: "error",
-      });
-    } finally {
-      setApiLoading(false);
-      setOpenDelete(false);
-      setReason("");
-    }
-  };
-
-  const handleEditOpen = (host) => {
-    setSelectedHost(host);
-    setEditedData(host);
-    setOpenEdit(true);
-  };
-
-  const handleEditClose = () => {
-    setOpenEdit(false);
-  };
-
-  const handleEditSave = async () => {
-    setApiLoading(true);
-    try {
-      const token = localStorage.getItem("authToken");
-      const baseUrl = ApiBaseUrl.getBaseUrl();
-      const response = await fetch(`http://${baseUrl}/api/v1/hosts`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(editedData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || "Failed to update host.");
-      }
-
-      setSnackbar({
-        open: true,
-        message: "Host updated successfully!",
-        severity: "success",
-      });
-
-      handleEditClose();
-      fetchHosts();
-    } catch (error) {
-      console.error("Error update host:", error);
-      setSnackbar({
-        open: true,
-        message: error.message || "An error occurred.",
-        severity: "error",
-      });
-    } finally {
-      setApiLoading(false);
-    }
-  };
-
-  const handleUpdateInputChange = (field, value) => {
-    setEditedData({ ...editedData, [field]: value });
-  };
-
   const validateRegisterForm = () => {
-    const { name, description } = registerData;
+    const { name, location, os, ipAddress, projectId, groupId } = registerData;
 
     // Helper function to show error in Snackbar
     const showError = (message) => {
@@ -286,7 +305,11 @@ const HostsPage = () => {
     // Required Fields Validation
     const requiredFields = [
       { value: name, label: "Host Name" },
-      { value: description, label: "Host Description" },
+      { value: location, label: "Location" },
+      { value: os, label: "OS" },
+      { value: ipAddress, label: "IP Address" },
+      { value: projectId, label: "Project" },
+      { value: groupId, label: "Group" },
     ];
 
     for (const field of requiredFields) {
@@ -307,7 +330,12 @@ const HostsPage = () => {
   const handleRegisterOpen = () => {
     setRegisterData({
       name: "",
-      description: "",
+      projectId: "",
+      groupId: "",
+      os: "",
+      ipAddress: "",
+      location: "",
+      member: localStorage.getItem("user_id"),
     });
     setOpenRegister(true);
   };
@@ -360,56 +388,159 @@ const HostsPage = () => {
     setRegisterData({ ...registerData, [field]: value });
   };
 
+  const filteredDevices = deviceList.filter((device) =>
+    device.model.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const CollapsibleRow = ({ host, index, isOpen, toggleOpen }) => {
+    return (
+      <>
+        {/* Main Row */}
+        <TableRow>
+          <TableCell>
+            <IconButton
+              aria-label="expand row"
+              size="small"
+              onClick={toggleOpen}
+            >
+              {isOpen ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
+            </IconButton>
+          </TableCell>
+          <TableCell>{index + 1}</TableCell>
+          <TableCell>{host.name}</TableCell>
+          <TableCell>{host.ipAddress}</TableCell>
+          <TableCell>{host.location}</TableCell>
+          <TableCell>{host.project.name}</TableCell>
+          <TableCell>{host.group.name}</TableCell>
+          <TableCell>{host.os}</TableCell>
+          <TableCell>{host.devices.length}</TableCell>
+          <TableCell>
+            <IconButton color="error">
+              <DeleteIcon />
+            </IconButton>
+
+            <IconButton color="secondary">
+              <EditIcon />
+            </IconButton>
+          </TableCell>
+        </TableRow>
+
+        {/* Collapsible Details Row */}
+        <TableRow>
+          <TableCell colSpan={9} sx={{ paddingBottom: 0, paddingTop: 0 }}>
+            <Collapse in={isOpen} timeout="auto" unmountOnExit>
+              <Box sx={{ margin: 2 }}>
+                <Typography variant="h6">Devices Details</Typography>
+                {host.devices && host.devices.length > 0 ? (
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: "bold" }}>Model</TableCell>
+                        <TableCell sx={{ fontWeight: "bold" }}>UDID</TableCell>
+                        <TableCell sx={{ fontWeight: "bold" }}>State</TableCell>
+                        <TableCell sx={{ fontWeight: "bold" }}>CPU</TableCell>
+                        <TableCell sx={{ fontWeight: "bold" }}>
+                          Manufacturer
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: "bold" }}>
+                          OS Version
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: "bold" }}>
+                          SDK Version
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: "bold" }}>
+                          Security ID
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: "bold" }}>
+                          Registered To
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: "bold" }}>
+                          Action
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {host.devices.map((detail, idx) => (
+                        <TableRow key={idx}>
+                          <TableCell>{detail.model}</TableCell>
+                          <TableCell>{detail.udid}</TableCell>
+                          <TableCell>{detail.state}</TableCell>
+                          <TableCell>{detail.cpu}</TableCell>
+                          <TableCell>{detail.manufacturer}</TableCell>
+                          <TableCell>{detail.os_version}</TableCell>
+                          <TableCell>{detail.sdk_version}</TableCell>
+                          <TableCell>{detail.security_id}</TableCell>
+                          <TableCell>{detail.registered_to}</TableCell>
+                          <TableCell>
+                            <AddCircleOutlineIcon />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <Typography variant="body2">
+                    No devices details available.
+                  </Typography>
+                )}
+              </Box>
+            </Collapse>
+          </TableCell>
+        </TableRow>
+      </>
+    );
+  };
+
   return (
     <Box>
       {/* Header */}
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          backgroundImage: "linear-gradient(to left, #5A8DFF, #000080)",
-          color: "white",
-          padding: "10px 20px",
-          borderRadius: "5px",
-          height: "45px",
-        }}
+
+      <Typography
+        variant="h8"
+        fontWeight="bold"
+        onClick={handleRegisterOpen}
+        display="flex"
+        justifyContent="end"
       >
-        <Box sx={{ flex: 1, textAlign: "center" }}>
-          <Typography variant="h5" fontWeight="bold">
-            Host Management
-          </Typography>
-        </Box>
-        <Box>
-          <Button
-            variant="contained"
-            onClick={handleRegisterOpen}
-            sx={{ backgroundColor: "#ffffff", marginRight: "10px" }}
-          >
-            <Typography variant="h8" fontWeight="bold" color="#001a99">
-              + Add Host
-            </Typography>
-          </Button>
-        </Box>
-      </Box>
+        <AddCircleOutlineIcon />
+        Add Host
+      </Typography>
 
       {/* Table */}
       <Box mt={3}>
         <TableContainer component={Paper}>
           <Table>
-            <TableHead sx={{ backgroundColor: "#001a99" }}>
+            <TableHead
+              sx={{
+                backgroundImage:
+                  "linear-gradient(to left, rgb(1,223,170), rgb(3,201,114), rgb(2,176,54))",
+              }}
+            >
               <TableRow>
+                <TableCell />
                 <TableCell sx={{ color: "white", fontWeight: "bold" }}>
                   SN. No
                 </TableCell>
                 <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                  Name
+                  Host Name
                 </TableCell>
                 <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                  Description
+                  IP Address
                 </TableCell>
                 <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                  Project
+                  Location
+                </TableCell>
+                <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                  Assigned Projects
+                </TableCell>
+                <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                  Assigned Groups
+                </TableCell>
+                <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                  OS
+                </TableCell>
+                <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                  No. of Devices
                 </TableCell>
                 <TableCell sx={{ color: "white", fontWeight: "bold" }}>
                   Actions
@@ -419,36 +550,17 @@ const HostsPage = () => {
             <TableBody>
               {hosts.length > 0 ? (
                 hosts.map((host, index) => (
-                  <TableRow key={host.id || `host-${index}`}>
-                    <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                    <TableCell>{host.name}</TableCell>
-                    <TableCell>{host.description}</TableCell>
-                    <TableCell>{host.projectName}</TableCell>
-                    <TableCell>
-                      <IconButton
-                        color="primary"
-                        onClick={() => handleViewOpen(host)}
-                      >
-                        <VisibilityIcon />
-                      </IconButton>
-                      <IconButton
-                        color="error"
-                        onClick={() => handleDeleteOpen(host)}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                      <IconButton
-                        color="secondary"
-                        onClick={() => handleEditOpen(host)}
-                      >
-                        <EditIcon />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
+                  <CollapsibleRow
+                    key={host.id || `host-${index}`}
+                    host={host}
+                    index={index}
+                    isOpen={collapsibleOpen[index] || false}
+                    toggleOpen={() => toggleRow(index)}
+                  />
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} align="center">
+                  <TableCell colSpan={9} align="center">
                     <Typography variant="body1" color="textSecondary">
                       No hosts found.
                     </Typography>
@@ -457,6 +569,15 @@ const HostsPage = () => {
               )}
             </TableBody>
           </Table>
+          <Box
+            sx={{
+              width: "100%",
+              height: "6px",
+              backgroundImage:
+                "linear-gradient(to left, rgb(1,223,170), rgb(3,201,114), rgb(2,176,54))",
+              marginTop: "-2px",
+            }}
+          />
         </TableContainer>
       </Box>
       {/* Pagination */}
@@ -469,239 +590,6 @@ const HostsPage = () => {
         onRowsPerPageChange={handleChangeRowsPerPage}
         rowsPerPageOptions={[10, 25, 50]}
       />
-
-      {/* View host Details Modal */}
-      <Modal open={openView} onClose={handleViewClose}>
-        <Box
-          sx={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            width: 500,
-            backgroundColor: "white",
-            boxShadow: 24,
-            borderRadius: "10px",
-            overflow: "hidden",
-          }}
-        >
-          {/* Header */}
-          <Box
-            sx={{
-              backgroundImage:
-                "linear-gradient(to left, #5A8DFF, #001a99, #000080)",
-              color: "white",
-              padding: "10px",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <Typography fontWeight="bold" variant="h6">
-              👤 Host Details
-            </Typography>
-            <IconButton onClick={handleViewClose} sx={{ color: "white" }}>
-              <CloseIcon />
-            </IconButton>
-          </Box>
-
-          {/* Host Details Content */}
-          {selectedHost && (
-            <Box sx={{ padding: "20px" }}>
-              <Box
-                sx={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: "10px 20px",
-                  marginBottom: "10px",
-                }}
-              >
-                <Typography fontWeight="bold">
-                  Host Name:{" "}
-                  <span style={{ color: "orange" }}>{selectedHost.name}</span>
-                </Typography>
-                <Typography fontWeight="bold">
-                  Description:{" "}
-                  <span style={{ color: "orange" }}>
-                    {selectedHost.description}
-                  </span>
-                </Typography>
-                <Typography fontWeight="bold">
-                  Project Name:{" "}
-                  <span style={{ color: "orange" }}>
-                    {selectedHost.projectName}
-                  </span>
-                </Typography>
-              </Box>
-            </Box>
-          )}
-        </Box>
-      </Modal>
-
-      {/* Delete Host Modal */}
-      <Modal open={openDelete} onClose={handleDeleteClose}>
-        <Box
-          sx={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            width: 500,
-            backgroundColor: "white",
-            boxShadow: 24,
-            borderRadius: "10px",
-            overflow: "hidden",
-          }}
-        >
-          <Box
-            sx={{
-              backgroundImage:
-                "linear-gradient(to left, #5A8DFF, #001a99, #000080)",
-              color: "white",
-              padding: "10px",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <Typography fontWeight="bold" variant="h6">
-              👤 Delete Host
-            </Typography>
-            <IconButton onClick={handleDeleteClose} sx={{ color: "white" }}>
-              <CloseIcon />
-            </IconButton>
-          </Box>
-          <Box p={3}>
-            <TextField
-              fullWidth
-              label="Reason *"
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              placeholder="Enter reason"
-            />
-            <Box textAlign="right" mt={2}>
-              <Button
-                variant="contained"
-                sx={{
-                  background: "linear-gradient(to right, #f12711, #f5af19)",
-                  color: "white",
-                }}
-                onClick={handleDelete}
-              >
-                Delete
-              </Button>
-            </Box>
-          </Box>
-        </Box>
-      </Modal>
-
-      {/* Edit Host Details*/}
-      <Modal open={openEdit} onClose={handleEditClose}>
-        <Box
-          sx={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            width: 500,
-            backgroundColor: "white",
-            boxShadow: 24,
-            borderRadius: "10px",
-            overflow: "hidden",
-          }}
-        >
-          {/* Header */}
-          <Box
-            sx={{
-              backgroundImage:
-                "linear-gradient(to left, #5A8DFF, #001a99, #000080)",
-              color: "white",
-              padding: "10px",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <Typography fontWeight="bold" variant="h6">
-              📝 Edit Host
-            </Typography>
-            <IconButton onClick={handleEditClose} sx={{ color: "white" }}>
-              <CloseIcon />
-            </IconButton>
-          </Box>
-
-          {/* Form */}
-          {selectedHost && (
-            <Box sx={{ p: 3 }}>
-              <Box display="grid" gridTemplateColumns="1fr 1fr" gap={2}>
-                <TextField
-                  label="Name *"
-                  value={editedData.name || ""}
-                  disabled
-                />
-                <TextField
-                  label="Description *"
-                  value={editedData.description || ""}
-                  onChange={(e) =>
-                    handleUpdateInputChange("description", e.target.value)
-                  }
-                />
-                <FormControl fullWidth>
-                  <InputLabel>Project *</InputLabel>
-                  <Select
-                    value={
-                      visibleItems.some(
-                        (project) => project.id === editedData.projectId
-                      )
-                        ? editedData.projectId
-                        : "" // Use an empty string if the value is not in the list
-                    }
-                    onChange={(e) =>
-                      handleUpdateInputChange("projectId", e.target.value)
-                    } // Update single project
-                    input={
-                      <OutlinedInput id="select-single" label="Project *" />
-                    }
-                    MenuProps={{
-                      PaperProps: {
-                        onScroll: handleScroll,
-                        style: { maxHeight: 150, overflowY: "auto" },
-                      },
-                    }}
-                    disabled={loadingProjects} // Disable dropdown while loading
-                  >
-                    {loadingProjects ? (
-                      <MenuItem disabled>
-                        <CircularProgress size={20} /> Loading...
-                      </MenuItem>
-                    ) : visibleItems.length > 0 ? (
-                      visibleItems.map((project) => (
-                        <MenuItem key={project.id} value={project.id}>
-                          {project.name}
-                        </MenuItem>
-                      ))
-                    ) : (
-                      <MenuItem>No projects found</MenuItem>
-                    )}
-                  </Select>
-                </FormControl>
-              </Box>
-              <Box textAlign="right" mt={2}>
-                <Button
-                  variant="contained"
-                  sx={{
-                    background: "linear-gradient(to right, #f12711, #f5af19)",
-                    color: "white",
-                  }}
-                  onClick={handleEditSave}
-                >
-                  Save
-                </Button>
-              </Box>
-            </Box>
-          )}
-        </Box>
-      </Modal>
 
       {/* Register Host Modal */}
       <Modal open={openRegister} onClose={handleRegisterClose}>
@@ -749,10 +637,24 @@ const HostsPage = () => {
                 }
               />
               <TextField
-                label="Description *"
-                value={registerData.description}
+                label="IP Address *"
+                value={registerData.ipAddress}
                 onChange={(e) =>
-                  handleRegisterInputChange("description", e.target.value)
+                  handleRegisterInputChange("ipAddress", e.target.value)
+                }
+              />
+              <TextField
+                label="Location *"
+                value={registerData.location}
+                onChange={(e) =>
+                  handleRegisterInputChange("location", e.target.value)
+                }
+              />
+              <TextField
+                label="OS *"
+                value={registerData.os}
+                onChange={(e) =>
+                  handleRegisterInputChange("os", e.target.value)
                 }
               />
               <FormControl fullWidth>
@@ -775,14 +677,46 @@ const HostsPage = () => {
                     <MenuItem disabled>
                       <CircularProgress size={20} /> Loading...
                     </MenuItem>
-                  ) : visibleItems.length > 0 ? (
-                    visibleItems.map((project) => (
+                  ) : visibleProjectItems.length > 0 ? (
+                    visibleProjectItems.map((project) => (
                       <MenuItem key={project.id} value={project.id}>
                         {project.name}
                       </MenuItem>
                     ))
                   ) : (
                     <MenuItem>No projects found</MenuItem>
+                  )}
+                </Select>
+              </FormControl>
+
+              <FormControl fullWidth>
+                <InputLabel>Group *</InputLabel>
+                <Select
+                  value={registerData.groupId || ""} // Bind single group ID
+                  onChange={(e) =>
+                    handleRegisterInputChange("groupId", e.target.value)
+                  } // Update single group
+                  input={<OutlinedInput id="select-single" label="Group *" />}
+                  MenuProps={{
+                    PaperProps: {
+                      onScroll: handleScroll,
+                      style: { maxHeight: 150, overflowY: "auto" },
+                    },
+                  }}
+                  disabled={loadingGrous} // Disable dropdown while loading
+                >
+                  {loadingGrous ? (
+                    <MenuItem disabled>
+                      <CircularProgress size={20} /> Loading...
+                    </MenuItem>
+                  ) : visibleGroupItems.length > 0 ? (
+                    visibleGroupItems.map((group) => (
+                      <MenuItem key={group.id} value={group.id}>
+                        {group.name}
+                      </MenuItem>
+                    ))
+                  ) : (
+                    <MenuItem>No groups found</MenuItem>
                   )}
                 </Select>
               </FormControl>
@@ -802,6 +736,70 @@ const HostsPage = () => {
           </Box>
         </Box>
       </Modal>
+
+      {/* Scrollable Device List Modal */}
+      <Dialog
+        open={open}
+        onClose={handleClose}
+        scroll={scroll}
+        aria-labelledby="scroll-dialog-title"
+        aria-describedby="scroll-dialog-description"
+      >
+        <DialogTitle
+          sx={{
+            backgroundImage:
+              "linear-gradient(to left,rgb(1,223,170),rgb(3,201,114),rgb(2,176,54))",
+          }}
+          id="scroll-dialog-title"
+        >
+          Select Devices
+        </DialogTitle>
+        {/* Search Bar */}
+        <Box sx={{ padding: "10px 20px" }}>
+          <TextField
+            fullWidth
+            variant="outlined"
+            label="Search Devices..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </Box>
+        <DialogContent dividers={scroll === "paper"}>
+          <DialogContentText
+            id="scroll-dialog-description"
+            ref={descriptionElementRef}
+            tabIndex={-1}
+          >
+            {filteredDevices.length > 0 ? (
+              filteredDevices.map((device) => (
+                <Box key={device.id} display="flex" alignItems="center">
+                  <Checkbox
+                    checked={selectedDevices.includes(device.id)}
+                    onChange={() => handleCheckboxChange(device.id)}
+                  />
+                  <Typography>{device.model}</Typography>
+                </Box>
+              ))
+            ) : (
+              <Typography>No devices available</Typography>
+            )}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={handleClose}
+            sx={{ color: "blue", fontWeight: "bold" }}
+          >
+            CLOSE
+          </Button>
+          <Button
+            onClick={handleApprove}
+            sx={{ color: "blue", fontWeight: "bold" }}
+          >
+            Approve
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Snackbar for alerts */}
       <SnackbarComponent
