@@ -251,8 +251,8 @@ class Host(Document):
     isActive: bool = True
     reason: Optional[str] = None  # Optional field
     member: PydanticObjectId
-    project: PydanticObjectId
-    group: PydanticObjectId
+    project: List[PydanticObjectId]  = []
+    group: List[PydanticObjectId]  = []
     devices: List[PydanticObjectId] = []
     createdAt: datetime = Field(default_factory=datetime.now)
     updatedAt: datetime = Field(default_factory=datetime.now)
@@ -264,8 +264,8 @@ class Host(Document):
 class CreateHostRequest(BaseModel):
     name: Optional[str] = None
     member: PydanticObjectId
-    projectId: PydanticObjectId
-    groupId: PydanticObjectId
+    project: List[PydanticObjectId]  = []
+    group: List[PydanticObjectId] = []
     os: Optional[str] = None
     ipAddress: Optional[str] = None
     location: Optional[str] = None
@@ -276,8 +276,8 @@ class HostUpdateRequest(BaseModel):
     id: PydanticObjectId
     name: Optional[str] = None
     member: Optional[PydanticObjectId] = None
-    projectId: Optional[PydanticObjectId] = None
-    groupId: Optional[PydanticObjectId] = None
+    project: List[PydanticObjectId] = []
+    group: List[PydanticObjectId] = []
     os: Optional[str] = None
     ipAddress: Optional[str] = None
     location: Optional[str] = None

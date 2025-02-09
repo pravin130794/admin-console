@@ -613,19 +613,59 @@ const UserPage = () => {
           <Table>
             <TableHead sx={{ backgroundColor: "#001a99" }}>
               <TableRow>
-                <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                <TableCell
+                  sx={{
+                    color: "white",
+                    fontWeight: "bold",
+                    borderRight: "2px solid white",
+                    textAlign: "center",
+                    verticalAlign: "middle",
+                  }}
+                >
                   SN. No
                 </TableCell>
-                <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                <TableCell
+                  sx={{
+                    color: "white",
+                    fontWeight: "bold",
+                    borderRight: "2px solid white",
+                    textAlign: "center",
+                    verticalAlign: "middle",
+                  }}
+                >
                   Username
                 </TableCell>
-                <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                <TableCell
+                  sx={{
+                    color: "white",
+                    fontWeight: "bold",
+                    borderRight: "2px solid white",
+                    textAlign: "center",
+                    verticalAlign: "middle",
+                  }}
+                >
                   Email
                 </TableCell>
-                <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                <TableCell
+                  sx={{
+                    color: "white",
+                    fontWeight: "bold",
+                    borderRight: "2px solid white",
+                    textAlign: "center",
+                    verticalAlign: "middle",
+                  }}
+                >
                   Registration Status
                 </TableCell>
-                <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                <TableCell
+                  sx={{
+                    color: "white",
+                    fontWeight: "bold",
+                    borderRight: "2px solid white",
+                    textAlign: "center",
+                    verticalAlign: "middle",
+                  }}
+                >
                   Actions
                 </TableCell>
               </TableRow>
@@ -634,16 +674,32 @@ const UserPage = () => {
               {paginatedUsers.length > 0 ? (
                 paginatedUsers.map((user, index) => (
                   <TableRow key={user.id}>
-                    <TableCell>{index + 1}</TableCell>
-                    <TableCell>{user.username}</TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>
+                    <TableCell
+                      sx={{ textAlign: "center", verticalAlign: "middle" }}
+                    >
+                      {index + 1}
+                    </TableCell>
+                    <TableCell
+                      sx={{ textAlign: "center", verticalAlign: "middle" }}
+                    >
+                      {user.username}
+                    </TableCell>
+                    <TableCell
+                      sx={{ textAlign: "center", verticalAlign: "middle" }}
+                    >
+                      {user.email}
+                    </TableCell>
+                    <TableCell
+                      sx={{ textAlign: "center", verticalAlign: "middle" }}
+                    >
                       {user.status === "Approved" ? (
                         <Box
                           sx={{
                             color: "green",
                             display: "flex",
                             alignItems: "center",
+                            textAlign: "center",
+                            verticalAlign: "middle",
                           }}
                         >
                           <CheckCircleIcon sx={{ marginRight: "5px" }} />
@@ -655,6 +711,8 @@ const UserPage = () => {
                             color: "red",
                             display: "flex",
                             alignItems: "center",
+                            textAlign: "center",
+                            verticalAlign: "middle",
                           }}
                         >
                           <CancelIcon sx={{ marginRight: "5px" }} />
@@ -666,6 +724,8 @@ const UserPage = () => {
                             color: "Blue",
                             display: "flex",
                             alignItems: "center",
+                            textAlign: "center",
+                            verticalAlign: "middle",
                           }}
                         >
                           <AccessTimeIcon sx={{ marginRight: "5px" }} />
@@ -673,7 +733,9 @@ const UserPage = () => {
                         </Box>
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell
+                      sx={{ textAlign: "center", verticalAlign: "middle" }}
+                    >
                       <IconButton
                         color="primary"
                         onClick={() => handleViewOpen(user)}

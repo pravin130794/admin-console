@@ -350,22 +350,70 @@ const GroupsPage = () => {
           <Table>
             <TableHead sx={{ backgroundColor: "#001a99" }}>
               <TableRow>
-                <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                <TableCell
+                  sx={{
+                    color: "white",
+                    fontWeight: "bold",
+                    borderRight: "2px solid white",
+                    textAlign: "center",
+                    verticalAlign: "middle",
+                  }}
+                >
                   SN. No
                 </TableCell>
-                <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                <TableCell
+                  sx={{
+                    color: "white",
+                    fontWeight: "bold",
+                    borderRight: "2px solid white",
+                    textAlign: "center",
+                    verticalAlign: "middle",
+                  }}
+                >
                   Name
                 </TableCell>
-                <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                <TableCell
+                  sx={{
+                    color: "white",
+                    fontWeight: "bold",
+                    borderRight: "2px solid white",
+                    textAlign: "center",
+                    verticalAlign: "middle",
+                  }}
+                >
                   Description
                 </TableCell>
-                <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                <TableCell
+                  sx={{
+                    color: "white",
+                    fontWeight: "bold",
+                    borderRight: "2px solid white",
+                    textAlign: "center",
+                    verticalAlign: "middle",
+                  }}
+                >
                   Assigned Users
                 </TableCell>
-                <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                <TableCell
+                  sx={{
+                    color: "white",
+                    fontWeight: "bold",
+                    borderRight: "2px solid white",
+                    textAlign: "center",
+                    verticalAlign: "middle",
+                  }}
+                >
                   Assigned Projects
                 </TableCell>
-                <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                <TableCell
+                  sx={{
+                    color: "white",
+                    fontWeight: "bold",
+                    borderRight: "2px solid white",
+                    textAlign: "center",
+                    verticalAlign: "middle",
+                  }}
+                >
                   Actions
                 </TableCell>
               </TableRow>
@@ -374,10 +422,24 @@ const GroupsPage = () => {
               {groups.length > 0 ? (
                 groups.map((group, index) => (
                   <TableRow key={group.id || `group-${index}`}>
-                    <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                    <TableCell>{group.name}</TableCell>
-                    <TableCell>{group.description}</TableCell>
-                    <TableCell>
+                    <TableCell
+                      sx={{ textAlign: "center", verticalAlign: "middle" }}
+                    >
+                      {page * rowsPerPage + index + 1}
+                    </TableCell>
+                    <TableCell
+                      sx={{ textAlign: "center", verticalAlign: "middle" }}
+                    >
+                      {group.name}
+                    </TableCell>
+                    <TableCell
+                      sx={{ textAlign: "center", verticalAlign: "middle" }}
+                    >
+                      {group.description}
+                    </TableCell>
+                    <TableCell
+                      sx={{ textAlign: "center", verticalAlign: "middle" }}
+                    >
                       {group.members.length > 0 ? (
                         <Typography>
                           {group.members
@@ -388,7 +450,9 @@ const GroupsPage = () => {
                         "-"
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell
+                      sx={{ textAlign: "center", verticalAlign: "middle" }}
+                    >
                       {group.projects.length > 0 ? (
                         <Typography>
                           {group.projects
@@ -399,7 +463,9 @@ const GroupsPage = () => {
                         "-"
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell
+                      sx={{ textAlign: "center", verticalAlign: "middle" }}
+                    >
                       <IconButton
                         color="primary"
                         onClick={() => handleViewOpen(group)}

@@ -408,25 +408,81 @@ const ProjectsPage = () => {
           <Table>
             <TableHead sx={{ backgroundColor: "#001a99" }}>
               <TableRow>
-                <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                <TableCell
+                  sx={{
+                    color: "white",
+                    fontWeight: "bold",
+                    borderRight: "2px solid white",
+                    textAlign: "center",
+                    verticalAlign: "middle",
+                  }}
+                >
                   SN. No
                 </TableCell>
-                <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                <TableCell
+                  sx={{
+                    color: "white",
+                    fontWeight: "bold",
+                    borderRight: "2px solid white",
+                    textAlign: "center",
+                    verticalAlign: "middle",
+                  }}
+                >
                   Name
                 </TableCell>
-                <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                <TableCell
+                  sx={{
+                    color: "white",
+                    fontWeight: "bold",
+                    borderRight: "2px solid white",
+                    textAlign: "center",
+                    verticalAlign: "middle",
+                  }}
+                >
                   Description
                 </TableCell>
-                <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                <TableCell
+                  sx={{
+                    color: "white",
+                    fontWeight: "bold",
+                    borderRight: "2px solid white",
+                    textAlign: "center",
+                    verticalAlign: "middle",
+                  }}
+                >
                   Assign Groups
                 </TableCell>
-                <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                <TableCell
+                  sx={{
+                    color: "white",
+                    fontWeight: "bold",
+                    borderRight: "2px solid white",
+                    textAlign: "center",
+                    verticalAlign: "middle",
+                  }}
+                >
                   Assign Users
                 </TableCell>
-                <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                <TableCell
+                  sx={{
+                    color: "white",
+                    fontWeight: "bold",
+                    borderRight: "2px solid white",
+                    textAlign: "center",
+                    verticalAlign: "middle",
+                  }}
+                >
                   Status
                 </TableCell>
-                <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                <TableCell
+                  sx={{
+                    color: "white",
+                    fontWeight: "bold",
+                    borderRight: "2px solid white",
+                    textAlign: "center",
+                    verticalAlign: "middle",
+                  }}
+                >
                   Actions
                 </TableCell>
               </TableRow>
@@ -435,11 +491,29 @@ const ProjectsPage = () => {
               {projects.length > 0 ? (
                 projects.map((project, index) => (
                   <TableRow key={project.id || `project-${index}`}>
-                    <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                    <TableCell>{project.name}</TableCell>
-                    <TableCell>{project.description}</TableCell>
-                    <TableCell>{project.groupName}</TableCell>
-                    <TableCell>
+                    <TableCell
+                      sx={{ textAlign: "center", verticalAlign: "middle" }}
+                    >
+                      {page * rowsPerPage + index + 1}
+                    </TableCell>
+                    <TableCell
+                      sx={{ textAlign: "center", verticalAlign: "middle" }}
+                    >
+                      {project.name}
+                    </TableCell>
+                    <TableCell
+                      sx={{ textAlign: "center", verticalAlign: "middle" }}
+                    >
+                      {project.description}
+                    </TableCell>
+                    <TableCell
+                      sx={{ textAlign: "center", verticalAlign: "middle" }}
+                    >
+                      {project.groupName}
+                    </TableCell>
+                    <TableCell
+                      sx={{ textAlign: "center", verticalAlign: "middle" }}
+                    >
                       {project.assignedUsers.length > 0 ? (
                         <Typography>
                           {project.assignedUsers
@@ -450,8 +524,14 @@ const ProjectsPage = () => {
                         "-"
                       )}
                     </TableCell>
-                    <TableCell>{project.status}</TableCell>
-                    <TableCell>
+                    <TableCell
+                      sx={{ textAlign: "center", verticalAlign: "middle" }}
+                    >
+                      {project.status}
+                    </TableCell>
+                    <TableCell
+                      sx={{ textAlign: "center", verticalAlign: "middle" }}
+                    >
                       <IconButton
                         color="primary"
                         onClick={() => handleViewOpen(project)}

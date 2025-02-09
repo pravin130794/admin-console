@@ -24,8 +24,8 @@ async def create_host(host: CreateHostRequest):
         new_host = Host(
             name=host.name,
             member=host.member,
-            project=host.projectId,
-            group=host.groupId,
+            project=host.project,
+            group=host.group,
             devices=host.devices,
             os=host.os,
             ipAddress=host.ipAddress,
@@ -89,12 +89,12 @@ async def list_user_hosts(
 
         for host in hosts:
             # Fetch group details using the groupId from the host document
-            group = await Group.find_one(Group.id == host.group)
-            group_data = {"id": str(group.id), "name": group.name} if group else {}
+            groups = await Group.find({"_id": {"$in": host.group}}).to_list()
+            group_data = [{"id": str(group.id), "name": group.name} for group in groups] if groups else []
 
             # Fetch project details using the projectId from the host document
-            project = await Project.find_one(Project.id == host.project)
-            project_data = {"id": str(project.id), "name": project.name} if project else {}
+            projects = await Project.find({"_id": {"$in": host.project}}).to_list()
+            project_data = [{"id": str(project.id), "name": project.name} for project in projects] if projects else []
 
             # Fetch device details using the devices field in the host document
             devices = await Devices.find({"_id": {"$in": host.devices}}).to_list()
@@ -154,10 +154,10 @@ async def partial_update_host(host: HostUpdateRequest):
         # Update fields provided in the request
         if host.name is not None:
             existing_host.name = host.name
-        if host.groupId is not None:
-            existing_host.groupId = host.groupId
-        if host.projectId is not None:
-            existing_host.projectId = host.projectId
+        if host.group is not None:
+            existing_host.group = host.group
+        if host.project is not None:
+            existing_host.project = host.project
         if host.os is not None:
             existing_host.os = host.os
         if host.ipAddress is not None:
