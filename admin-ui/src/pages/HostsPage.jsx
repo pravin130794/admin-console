@@ -44,7 +44,7 @@ const HostsPage = () => {
   const [totalHosts, setTotalHosts] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [loadingProjects, setLoadingProjects] = useState(false);
-  const [loadingGrous, setLoadingGroups] = useState(false);
+  const [loadingGroups, setLoadingGroups] = useState(false);
   const [projects, setProjects] = useState([]);
   const [openDeviceModel, setOpenDeviceModel] = useState(false);
   const [selectedDevices, setSelectedDevices] = useState([]);
@@ -56,13 +56,15 @@ const HostsPage = () => {
   const [visibleProjectItems, setProjectVisibleItems] = useState([]);
   const [visibleGroupItems, setGroupVisibleItems] = useState([]);
   const [openRegister, setOpenRegister] = useState(false);
+  const [openEdit, setOpenEdit] = useState(false);
+  const [editHostData, setEditHostData] = useState({});
   const [registerData, setRegisterData] = useState({
     name: "",
     location: "",
     os: "",
     ipAddress: "",
-    projectId: "",
-    groupId: "",
+    project: [],
+    group: [],
     member: localStorage.getItem("user_id"),
   });
   const [apiLoading, setApiLoading] = useState(false);
@@ -76,17 +78,20 @@ const HostsPage = () => {
   const [deviceList, setDeviceList] = useState([]);
   const [editData, setEditData] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedHost, setSelectedHost] = useState(null);
+  const [reason, setReason] = useState("");
+  const [openDelete, setOpenDelete] = useState(false);
 
   const toggleRow = (index) => {
     setcollapsibleOpen((prev) => ({ ...prev, [index]: !prev[index] }));
   };
 
   useEffect(() => {
-    if (openRegister) {
+    if (openRegister || openEdit) {
       fetchProjects();
       fetchGroups();
     }
-  }, [openRegister]);
+  }, [openRegister, openEdit]);
 
   const handleOpen = (host) => {
     setOpen(true);
@@ -163,10 +168,6 @@ const HostsPage = () => {
     });
   };
 
-  useEffect(() => {
-    fetchDevices();
-  }, []);
-
   const fetchDevices = async (devices = []) => {
     setLoadingDevices(true);
     try {
@@ -238,6 +239,7 @@ const HostsPage = () => {
 
   useEffect(() => {
     fetchHosts();
+    fetchDevices();
   }, []);
 
   const fetchHosts = async () => {
@@ -264,14 +266,28 @@ const HostsPage = () => {
     }
   };
 
-  const handleScroll = (event) => {
+  const handleGroupScroll = (event) => {
     const bottom =
       event.target.scrollHeight - event.target.scrollTop <=
       event.target.clientHeight + 10; // Adjust tolerance
-    if (bottom && visibleItems.length < groups.length) {
-      setVisibleItems((prevVisibleItems) => [
+    if (bottom && visibleGroupItems.length < groups.length) {
+      setGroupVisibleItems((prevVisibleItems) => [
         ...prevVisibleItems,
         ...groups.slice(prevVisibleItems.length, prevVisibleItems.length + 10),
+      ]);
+    }
+  };
+  const handlePorjectScroll = (event) => {
+    const bottom =
+      event.target.scrollHeight - event.target.scrollTop <=
+      event.target.clientHeight + 10; // Adjust tolerance
+    if (bottom && visibleProjectItems.length < projects.length) {
+      setProjectVisibleItems((prevVisibleItems) => [
+        ...prevVisibleItems,
+        ...projects.slice(
+          prevVisibleItems.length,
+          prevVisibleItems.length + 10
+        ),
       ]);
     }
   };
@@ -290,7 +306,7 @@ const HostsPage = () => {
   };
 
   const validateRegisterForm = () => {
-    const { name, location, os, ipAddress, projectId, groupId } = registerData;
+    const { name, location, os, ipAddress, project, group } = registerData;
 
     // Helper function to show error in Snackbar
     const showError = (message) => {
@@ -308,8 +324,8 @@ const HostsPage = () => {
       { value: location, label: "Location" },
       { value: os, label: "OS" },
       { value: ipAddress, label: "IP Address" },
-      { value: projectId, label: "Project" },
-      { value: groupId, label: "Group" },
+      { value: project, label: "Project" },
+      { value: group, label: "Group" },
     ];
 
     for (const field of requiredFields) {
@@ -330,8 +346,8 @@ const HostsPage = () => {
   const handleRegisterOpen = () => {
     setRegisterData({
       name: "",
-      projectId: "",
-      groupId: "",
+      project: [],
+      group: [],
       os: "",
       ipAddress: "",
       location: "",
@@ -388,6 +404,125 @@ const HostsPage = () => {
     setRegisterData({ ...registerData, [field]: value });
   };
 
+  const handleEditOpen = (host) => {
+    setEditHostData({
+      ...host,
+      group: host.group.map((group) => group.id),
+      project: host.project.map((project) => project.id),
+    });
+    setOpenEdit(true);
+  };
+
+  const handleEditClose = () => {
+    setOpenEdit(false);
+  };
+
+  const handleEditSave = async () => {
+    setApiLoading(true);
+    try {
+      const token = localStorage.getItem("authToken");
+      const baseUrl = ApiBaseUrl.getBaseUrl();
+      const response = await fetch(`http://${baseUrl}/api/v1/hosts`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(editHostData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Failed to add host.");
+      }
+
+      setSnackbar({
+        open: true,
+        message: "Host updated successfully!",
+        severity: "success",
+      });
+
+      handleEditClose();
+      fetchHosts();
+    } catch (error) {
+      console.error("Error update host:", error);
+      setSnackbar({
+        open: true,
+        message: error.message || "An error occurred.",
+        severity: "error",
+      });
+    } finally {
+      setApiLoading(false);
+    }
+  };
+
+  const handleEditInputChange = (field, value) => {
+    setEditHostData({ ...editHostData, [field]: value });
+  };
+
+  const handleDeleteOpen = (host) => {
+    setSelectedHost(host);
+    setOpenDelete(true);
+  };
+
+  const handleDeleteClose = async () => {
+    setOpenDelete(false);
+    setReason("");
+  };
+
+  const handleDelete = async () => {
+    if (!reason) {
+      setSnackbar({
+        open: true,
+        message: "Please provide a reason for deletion.",
+        severity: "warning",
+      });
+      return;
+    }
+    setApiLoading(true);
+    try {
+      const host_id = selectedHost.id;
+      const token = localStorage.getItem("authToken");
+      const baseUrl = ApiBaseUrl.getBaseUrl();
+      const response = await fetch(
+        `http://${baseUrl}/api/v1/host/${host_id}/inactivate`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            reason: reason,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Failed to delete host.");
+      }
+
+      setSnackbar({
+        open: true,
+        message: "Host deleted successfully!",
+        severity: "success",
+      });
+      fetchHosts();
+    } catch (error) {
+      console.error("Error rejecting host:", error);
+      setSnackbar({
+        open: true,
+        message: error.message || "An error occurred.",
+        severity: "error",
+      });
+    } finally {
+      setApiLoading(false);
+      setOpenDelete(false);
+      setReason("");
+    }
+  };
+
   const filteredDevices = deviceList.filter((device) =>
     device.model.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -397,7 +532,7 @@ const HostsPage = () => {
       <>
         {/* Main Row */}
         <TableRow>
-          <TableCell>
+          <TableCell sx={{ textAlign: "center", verticalAlign: "middle" }}>
             <IconButton
               aria-label="expand row"
               size="small"
@@ -406,21 +541,37 @@ const HostsPage = () => {
               {isOpen ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
             </IconButton>
           </TableCell>
-          <TableCell>{index + 1}</TableCell>
-          <TableCell>{host.name}</TableCell>
-          <TableCell>{host.ipAddress}</TableCell>
-          <TableCell>{host.location}</TableCell>
-          <TableCell>{host.project.name}</TableCell>
-          <TableCell>{host.group.name}</TableCell>
-          <TableCell>{host.os}</TableCell>
-          <TableCell>{host.devices.length}</TableCell>
-          <TableCell>
+          <TableCell sx={{ textAlign: "center", verticalAlign: "middle" }}>
+            {index + 1}
+          </TableCell>
+          <TableCell sx={{ textAlign: "center", verticalAlign: "middle" }}>
+            {host.name}
+          </TableCell>
+          <TableCell sx={{ textAlign: "center", verticalAlign: "middle" }}>
+            {host.ipAddress}
+          </TableCell>
+          <TableCell sx={{ textAlign: "center", verticalAlign: "middle" }}>
+            {host.location}
+          </TableCell>
+          <TableCell sx={{ textAlign: "center", verticalAlign: "middle" }}>
+            {host.project.map((project) => project.name).join(", ")}
+          </TableCell>
+          <TableCell sx={{ textAlign: "center", verticalAlign: "middle" }}>
+            {host.group.map((group) => group.name).join(", ")}
+          </TableCell>
+          <TableCell sx={{ textAlign: "center", verticalAlign: "middle" }}>
+            {host.os}
+          </TableCell>
+          <TableCell sx={{ textAlign: "center", verticalAlign: "middle" }}>
+            {host.devices.length}
+          </TableCell>
+          <TableCell sx={{ textAlign: "center", verticalAlign: "middle" }}>
             <IconButton color="error">
-              <DeleteIcon />
+              <DeleteIcon onClick={() => handleDeleteOpen(host)} />
             </IconButton>
 
             <IconButton color="secondary">
-              <EditIcon />
+              <EditIcon onClick={() => handleEditOpen(host)} />
             </IconButton>
           </TableCell>
         </TableRow>
@@ -435,26 +586,94 @@ const HostsPage = () => {
                   <Table size="small">
                     <TableHead>
                       <TableRow>
-                        <TableCell sx={{ fontWeight: "bold" }}>Model</TableCell>
-                        <TableCell sx={{ fontWeight: "bold" }}>UDID</TableCell>
-                        <TableCell sx={{ fontWeight: "bold" }}>State</TableCell>
-                        <TableCell sx={{ fontWeight: "bold" }}>CPU</TableCell>
-                        <TableCell sx={{ fontWeight: "bold" }}>
+                        <TableCell
+                          sx={{
+                            borderRight: "1px solid black",
+                            textAlign: "center",
+                            verticalAlign: "middle",
+                          }}
+                        >
+                          Model
+                        </TableCell>
+                        <TableCell
+                          sx={{
+                            borderRight: "1px solid black",
+                            textAlign: "center",
+                            verticalAlign: "middle",
+                          }}
+                        >
+                          UDID
+                        </TableCell>
+                        <TableCell
+                          sx={{
+                            borderRight: "1px solid black",
+                            textAlign: "center",
+                            verticalAlign: "middle",
+                          }}
+                        >
+                          State
+                        </TableCell>
+                        <TableCell
+                          sx={{
+                            borderRight: "1px solid black",
+                            textAlign: "center",
+                            verticalAlign: "middle",
+                          }}
+                        >
+                          CPU
+                        </TableCell>
+                        <TableCell
+                          sx={{
+                            borderRight: "1px solid black",
+                            textAlign: "center",
+                            verticalAlign: "middle",
+                          }}
+                        >
                           Manufacturer
                         </TableCell>
-                        <TableCell sx={{ fontWeight: "bold" }}>
+                        <TableCell
+                          sx={{
+                            borderRight: "1px solid black",
+                            textAlign: "center",
+                            verticalAlign: "middle",
+                          }}
+                        >
                           OS Version
                         </TableCell>
-                        <TableCell sx={{ fontWeight: "bold" }}>
+                        <TableCell
+                          sx={{
+                            borderRight: "1px solid black",
+                            textAlign: "center",
+                            verticalAlign: "middle",
+                          }}
+                        >
                           SDK Version
                         </TableCell>
-                        <TableCell sx={{ fontWeight: "bold" }}>
+                        <TableCell
+                          sx={{
+                            borderRight: "1px solid black",
+                            textAlign: "center",
+                            verticalAlign: "middle",
+                          }}
+                        >
                           Security ID
                         </TableCell>
-                        <TableCell sx={{ fontWeight: "bold" }}>
+                        <TableCell
+                          sx={{
+                            borderRight: "1px solid black",
+                            textAlign: "center",
+                            verticalAlign: "middle",
+                          }}
+                        >
                           Registered To
                         </TableCell>
-                        <TableCell sx={{ fontWeight: "bold" }}>
+                        <TableCell
+                          sx={{
+                            borderRight: "1px solid black",
+                            textAlign: "center",
+                            verticalAlign: "middle",
+                          }}
+                        >
                           Action
                         </TableCell>
                       </TableRow>
@@ -462,16 +681,84 @@ const HostsPage = () => {
                     <TableBody>
                       {host.devices.map((detail, idx) => (
                         <TableRow key={idx}>
-                          <TableCell>{detail.model}</TableCell>
-                          <TableCell>{detail.udid}</TableCell>
-                          <TableCell>{detail.state}</TableCell>
-                          <TableCell>{detail.cpu}</TableCell>
-                          <TableCell>{detail.manufacturer}</TableCell>
-                          <TableCell>{detail.os_version}</TableCell>
-                          <TableCell>{detail.sdk_version}</TableCell>
-                          <TableCell>{detail.security_id}</TableCell>
-                          <TableCell>{detail.registered_to}</TableCell>
-                          <TableCell>
+                          <TableCell
+                            sx={{
+                              textAlign: "center",
+                              verticalAlign: "middle",
+                            }}
+                          >
+                            {detail.model}
+                          </TableCell>
+                          <TableCell
+                            sx={{
+                              textAlign: "center",
+                              verticalAlign: "middle",
+                            }}
+                          >
+                            {detail.udid}
+                          </TableCell>
+                          <TableCell
+                            sx={{
+                              textAlign: "center",
+                              verticalAlign: "middle",
+                            }}
+                          >
+                            {detail.state}
+                          </TableCell>
+                          <TableCell
+                            sx={{
+                              textAlign: "center",
+                              verticalAlign: "middle",
+                            }}
+                          >
+                            {detail.cpu}
+                          </TableCell>
+                          <TableCell
+                            sx={{
+                              textAlign: "center",
+                              verticalAlign: "middle",
+                            }}
+                          >
+                            {detail.manufacturer}
+                          </TableCell>
+                          <TableCell
+                            sx={{
+                              textAlign: "center",
+                              verticalAlign: "middle",
+                            }}
+                          >
+                            {detail.os_version}
+                          </TableCell>
+                          <TableCell
+                            sx={{
+                              textAlign: "center",
+                              verticalAlign: "middle",
+                            }}
+                          >
+                            {detail.sdk_version}
+                          </TableCell>
+                          <TableCell
+                            sx={{
+                              textAlign: "center",
+                              verticalAlign: "middle",
+                            }}
+                          >
+                            {detail.security_id}
+                          </TableCell>
+                          <TableCell
+                            sx={{
+                              textAlign: "center",
+                              verticalAlign: "middle",
+                            }}
+                          >
+                            {detail.registered_to}
+                          </TableCell>
+                          <TableCell
+                            sx={{
+                              textAlign: "center",
+                              verticalAlign: "middle",
+                            }}
+                          >
                             <AddCircleOutlineIcon />
                           </TableCell>
                         </TableRow>
@@ -517,29 +804,101 @@ const HostsPage = () => {
               }}
             >
               <TableRow>
-                <TableCell />
-                <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                <TableCell
+                  sx={{
+                    color: "white",
+
+                    borderRight: "2px solid white",
+                    textAlign: "center",
+                    verticalAlign: "middle",
+                  }}
+                />
+                <TableCell
+                  sx={{
+                    color: "white",
+
+                    borderRight: "2px solid white",
+                    textAlign: "center",
+                    verticalAlign: "middle",
+                  }}
+                >
                   SN. No
                 </TableCell>
-                <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                <TableCell
+                  sx={{
+                    color: "white",
+
+                    borderRight: "2px solid white",
+                    textAlign: "center",
+                    verticalAlign: "middle",
+                  }}
+                >
                   Host Name
                 </TableCell>
-                <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                <TableCell
+                  sx={{
+                    color: "white",
+
+                    borderRight: "2px solid white",
+                    textAlign: "center",
+                    verticalAlign: "middle",
+                  }}
+                >
                   IP Address
                 </TableCell>
-                <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                <TableCell
+                  sx={{
+                    color: "white",
+
+                    borderRight: "2px solid white",
+                    textAlign: "center",
+                    verticalAlign: "middle",
+                  }}
+                >
                   Location
                 </TableCell>
-                <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                <TableCell
+                  sx={{
+                    color: "white",
+
+                    borderRight: "2px solid white",
+                    textAlign: "center",
+                    verticalAlign: "middle",
+                  }}
+                >
                   Assigned Projects
                 </TableCell>
-                <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                <TableCell
+                  sx={{
+                    color: "white",
+
+                    borderRight: "2px solid white",
+                    textAlign: "center",
+                    verticalAlign: "middle",
+                  }}
+                >
                   Assigned Groups
                 </TableCell>
-                <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                <TableCell
+                  sx={{
+                    color: "white",
+
+                    borderRight: "2px solid white",
+                    textAlign: "center",
+                    verticalAlign: "middle",
+                  }}
+                >
                   OS
                 </TableCell>
-                <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                <TableCell
+                  sx={{
+                    color: "white",
+
+                    borderRight: "2px solid white",
+                    textAlign: "center",
+                    verticalAlign: "middle",
+                  }}
+                >
                   No. of Devices
                 </TableCell>
                 <TableCell sx={{ color: "white", fontWeight: "bold" }}>
@@ -547,6 +906,7 @@ const HostsPage = () => {
                 </TableCell>
               </TableRow>
             </TableHead>
+
             <TableBody>
               {hosts.length > 0 ? (
                 hosts.map((host, index) => (
@@ -610,7 +970,7 @@ const HostsPage = () => {
           <Box
             sx={{
               backgroundImage:
-                "linear-gradient(to left, #5A8DFF, #001a99, #000080)",
+                "linear-gradient(to left, rgb(1,223,170), rgb(3,201,114), rgb(2,176,54))",
               color: "white",
               padding: "10px",
               display: "flex",
@@ -658,16 +1018,47 @@ const HostsPage = () => {
                 }
               />
               <FormControl fullWidth>
-                <InputLabel>Project *</InputLabel>
+                <InputLabel>Projects *</InputLabel>
                 <Select
-                  value={registerData.projectId || ""} // Bind single project ID
-                  onChange={(e) =>
-                    handleRegisterInputChange("projectId", e.target.value)
-                  } // Update single project
-                  input={<OutlinedInput id="select-single" label="Project *" />}
+                  multiple
+                  value={registerData.project || []} // Bind multiple prject IDs
+                  onChange={
+                    (e) => handleRegisterInputChange("project", e.target.value) // Update multiple project
+                  }
+                  input={
+                    <OutlinedInput
+                      id="select-multiple-chip"
+                      label="Projects *"
+                    />
+                  }
+                  renderValue={(selected) =>
+                    selected.map((id) => {
+                      const project = projects.find(
+                        (project) => project.id === id
+                      );
+                      return project ? (
+                        <Box
+                          key={project.id}
+                          sx={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            padding: "2px 8px",
+                            margin: "2px",
+                            backgroundColor: "#e0e0e0",
+                            borderRadius: "16px",
+                            fontSize: "14px",
+                          }}
+                        >
+                          {project.name}
+                        </Box>
+                      ) : (
+                        "Select Projects"
+                      );
+                    })
+                  }
                   MenuProps={{
                     PaperProps: {
-                      onScroll: handleScroll,
+                      onScroll: handlePorjectScroll,
                       style: { maxHeight: 150, overflowY: "auto" },
                     },
                   }}
@@ -690,22 +1081,48 @@ const HostsPage = () => {
               </FormControl>
 
               <FormControl fullWidth>
-                <InputLabel>Group *</InputLabel>
+                <InputLabel>Groups *</InputLabel>
                 <Select
-                  value={registerData.groupId || ""} // Bind single group ID
-                  onChange={(e) =>
-                    handleRegisterInputChange("groupId", e.target.value)
-                  } // Update single group
-                  input={<OutlinedInput id="select-single" label="Group *" />}
+                  multiple
+                  value={registerData.group || []} // Bind multiple group IDs
+                  onChange={
+                    (e) => handleRegisterInputChange("group", e.target.value) // Update multiple groups
+                  }
+                  input={
+                    <OutlinedInput id="select-multiple-chip" label="Groups *" />
+                  }
+                  renderValue={(selected) =>
+                    selected.map((id) => {
+                      const group = groups.find((group) => group.id === id);
+                      return group ? (
+                        <Box
+                          key={group.id}
+                          sx={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            padding: "2px 8px",
+                            margin: "2px",
+                            backgroundColor: "#e0e0e0",
+                            borderRadius: "16px",
+                            fontSize: "14px",
+                          }}
+                        >
+                          {group.name}
+                        </Box>
+                      ) : (
+                        "Select Groups"
+                      );
+                    })
+                  }
                   MenuProps={{
                     PaperProps: {
-                      onScroll: handleScroll,
+                      onScroll: handleGroupScroll,
                       style: { maxHeight: 150, overflowY: "auto" },
                     },
                   }}
-                  disabled={loadingGrous} // Disable dropdown while loading
+                  disabled={loadingGroups} // Disable dropdown while loading
                 >
-                  {loadingGrous ? (
+                  {loadingGroups ? (
                     <MenuItem disabled>
                       <CircularProgress size={20} /> Loading...
                     </MenuItem>
@@ -731,6 +1148,264 @@ const HostsPage = () => {
                 onClick={handleRegisterSave}
               >
                 Save
+              </Button>
+            </Box>
+          </Box>
+        </Box>
+      </Modal>
+
+      {/* Edit Host Modal */}
+      <Modal open={openEdit} onClose={handleEditClose}>
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: 500,
+            backgroundColor: "white",
+            boxShadow: 24,
+            borderRadius: "10px",
+            overflow: "hidden",
+          }}
+        >
+          {/* Header */}
+          <Box
+            sx={{
+              backgroundImage:
+                "linear-gradient(to left, rgb(1,223,170), rgb(3,201,114), rgb(2,176,54))",
+              color: "white",
+              padding: "10px",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <Typography fontWeight="bold" variant="h6">
+              👤 Edit Host
+            </Typography>
+            <IconButton onClick={handleEditClose} sx={{ color: "white" }}>
+              <CloseIcon />
+            </IconButton>
+          </Box>
+
+          {/* Form */}
+          <Box sx={{ p: 3 }}>
+            <Box display="grid" gridTemplateColumns="1fr 1fr" gap={2}>
+              <TextField
+                label="Name *"
+                value={editHostData.name}
+                onChange={(e) => handleEditInputChange("name", e.target.value)}
+              />
+              <TextField
+                label="IP Address *"
+                value={editHostData.ipAddress}
+                onChange={(e) =>
+                  handleEditInputChange("ipAddress", e.target.value)
+                }
+              />
+              <TextField
+                label="Location *"
+                value={editHostData.location}
+                onChange={(e) =>
+                  handleEditInputChange("location", e.target.value)
+                }
+              />
+              <TextField
+                label="OS *"
+                value={editHostData.os}
+                onChange={(e) => handleEditInputChange("os", e.target.value)}
+              />
+              <FormControl fullWidth>
+                <InputLabel>Groups *</InputLabel>
+                <Select
+                  multiple
+                  value={editHostData.group || []} // Bind multiple group IDs
+                  onChange={
+                    (e) => handleEditInputChange("group", e.target.value) // Update multiple groups
+                  }
+                  input={
+                    <OutlinedInput id="select-multiple-chip" label="Groups *" />
+                  }
+                  renderValue={(selected) =>
+                    selected.map((id) => {
+                      const group = groups.find((group) => group.id === id);
+
+                      return group ? (
+                        <Box
+                          key={group.id}
+                          sx={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            padding: "2px 8px",
+                            margin: "2px",
+                            backgroundColor: "#e0e0e0",
+                            borderRadius: "16px",
+                            fontSize: "14px",
+                          }}
+                        >
+                          {group.name}
+                        </Box>
+                      ) : (
+                        "Select Groups"
+                      );
+                    })
+                  }
+                  MenuProps={{
+                    PaperProps: {
+                      onScroll: handleGroupScroll,
+                      style: { maxHeight: 150, overflowY: "auto" },
+                    },
+                  }}
+                  disabled={loadingGroups} // Disable dropdown while loading
+                >
+                  {loadingGroups ? (
+                    <MenuItem disabled>
+                      <CircularProgress size={20} /> Loading...
+                    </MenuItem>
+                  ) : visibleGroupItems.length > 0 ? (
+                    visibleGroupItems.map((group) => (
+                      <MenuItem key={group.id} value={group.id}>
+                        {group.name}
+                      </MenuItem>
+                    ))
+                  ) : (
+                    <MenuItem>No groups found</MenuItem>
+                  )}
+                </Select>
+              </FormControl>
+
+              <FormControl fullWidth>
+                <InputLabel>Projects *</InputLabel>
+                <Select
+                  multiple
+                  value={editHostData.project || []} // Bind multiple project IDs
+                  onChange={
+                    (e) => handleEditInputChange("project", e.target.value) // Update multiple project
+                  }
+                  input={
+                    <OutlinedInput
+                      id="select-multiple-chip"
+                      label="Projects *"
+                    />
+                  }
+                  renderValue={(selected) =>
+                    selected.map((id) => {
+                      const project = projects.find(
+                        (project) => project.id === id
+                      );
+
+                      return project ? (
+                        <Box
+                          key={project.id}
+                          sx={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            padding: "2px 8px",
+                            margin: "2px",
+                            backgroundColor: "#e0e0e0",
+                            borderRadius: "16px",
+                            fontSize: "14px",
+                          }}
+                        >
+                          {project.name}
+                        </Box>
+                      ) : (
+                        "Select Projects"
+                      );
+                    })
+                  }
+                  MenuProps={{
+                    PaperProps: {
+                      onScroll: handlePorjectScroll,
+                      style: { maxHeight: 150, overflowY: "auto" },
+                    },
+                  }}
+                  disabled={loadingProjects} // Disable dropdown while loading
+                >
+                  {loadingProjects ? (
+                    <MenuItem disabled>
+                      <CircularProgress size={20} /> Loading...
+                    </MenuItem>
+                  ) : visibleProjectItems.length > 0 ? (
+                    visibleProjectItems.map((project) => (
+                      <MenuItem key={project.id} value={project.id}>
+                        {project.name}
+                      </MenuItem>
+                    ))
+                  ) : (
+                    <MenuItem>No projects found</MenuItem>
+                  )}
+                </Select>
+              </FormControl>
+            </Box>
+            <Box textAlign="right" mt={2}>
+              <Button
+                variant="contained"
+                sx={{
+                  background: "linear-gradient(to right, #f12711, #f5af19)",
+                  color: "white",
+                }}
+                onClick={handleEditSave}
+              >
+                Save
+              </Button>
+            </Box>
+          </Box>
+        </Box>
+      </Modal>
+
+      {/* Delete Host Modal */}
+      <Modal open={openDelete} onClose={handleDeleteClose}>
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: 500,
+            backgroundColor: "white",
+            boxShadow: 24,
+            borderRadius: "10px",
+            overflow: "hidden",
+          }}
+        >
+          <Box
+            sx={{
+              backgroundImage:
+                "linear-gradient(to left, rgb(1,223,170), rgb(3,201,114), rgb(2,176,54))",
+              color: "white",
+              padding: "10px",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <Typography fontWeight="bold" variant="h6">
+              👤 Delete Host
+            </Typography>
+            <IconButton onClick={handleDeleteClose} sx={{ color: "white" }}>
+              <CloseIcon />
+            </IconButton>
+          </Box>
+          <Box p={3}>
+            <TextField
+              fullWidth
+              label="Reason *"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Enter reason"
+            />
+            <Box textAlign="right" mt={2}>
+              <Button
+                variant="contained"
+                sx={{
+                  background: "linear-gradient(to right, #f12711, #f5af19)",
+                  color: "white",
+                }}
+                onClick={handleDelete}
+              >
+                Delete
               </Button>
             </Box>
           </Box>
