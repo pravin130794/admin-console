@@ -238,6 +238,7 @@ class Devices(Document):
     sdk_version: str
     security_id: Optional[int] = None
     registered_to: Optional[str] = None
+    host_ip: Optional[str] = None
 
     class Settings:
         name = "device"

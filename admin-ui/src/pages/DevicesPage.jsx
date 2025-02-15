@@ -47,6 +47,7 @@ import MemoryIcon from "@mui/icons-material/Memory";
 import BatteryCharging90Icon from "@mui/icons-material/BatteryCharging90";
 import SignalCellularAltIcon from "@mui/icons-material/SignalCellularAlt";
 import SdCardIcon from "@mui/icons-material/SdCard";
+import constant from "../constants/constant";
 
 const DevicesPage = () => {
   const [deviceList, setDeviceList] = useState([]);
@@ -160,18 +161,24 @@ const DevicesPage = () => {
     setApiLoading(true);
     try {
       const baseUrl = ApiBaseUrl.getBaseUrl();
+      const user_id = localStorage.getItem("user_id");
       const token = localStorage.getItem("authToken");
-      const response = await fetch(`http://${baseUrl}/api/v1/devices`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await fetch(
+        `http://${baseUrl}/api/v1/devices?user_id=${user_id}&skip=0&limit=100`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       const data = await response.json();
-      const respData = data.map((device) => {
-        return { fullDocument: device };
-      });
+      if (data.devices.length > 0) {
+        const respData = data.devices.map((device) => {
+          return { fullDocument: device };
+        });
 
-      setDeviceList(respData);
+        setDeviceList(respData);
+      }
     } catch (error) {
       console.error("Error fetching devices:", error);
       setSnackbar({
@@ -256,13 +263,13 @@ const DevicesPage = () => {
           >
             <MenuIcon />
           </IconButton>
-          {/* <Typography
+          <Typography
             variant="h6"
             component="div"
             sx={{ flexGrow: 1, textAlign: "center" }}
           >
-            {selectedDeviceName ?? ""}
-          </Typography> */}
+            {constant.globalMapModel[selectedDeviceName] ?? ""}
+          </Typography>
         </Toolbar>
       </AppBar>
 

@@ -382,6 +382,7 @@ const UserPage = () => {
     setEditedData({
       ...user,
       groups: user.groups.map((group) => group._id), // Map existing groups to their IDs
+      projects: user.projects.map((project) => project._id), // Map existing projects to their ID
     });
     setOpenEdit(true);
   };

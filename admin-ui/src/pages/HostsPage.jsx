@@ -578,7 +578,7 @@ const HostsPage = () => {
 
         {/* Collapsible Details Row */}
         <TableRow>
-          <TableCell colSpan={9} sx={{ paddingBottom: 0, paddingTop: 0 }}>
+          <TableCell colSpan={12} sx={{ paddingBottom: 0, paddingTop: 0 }}>
             <Collapse in={isOpen} timeout="auto" unmountOnExit>
               <Box sx={{ margin: 2 }}>
                 <Typography variant="h6">Devices Details</Typography>
@@ -751,7 +751,7 @@ const HostsPage = () => {
                               verticalAlign: "middle",
                             }}
                           >
-                            {detail.registered_to}
+                            {detail.registered_to.user_name}
                           </TableCell>
                           <TableCell
                             sx={{
