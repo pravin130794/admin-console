@@ -67,15 +67,18 @@ async def list_user_projects(
     limit: int = Query(10, ge=1)  # Number of items to fetch
 ):
     """
-    Get a paginated list of projects created by the user or where the user is a member.
-    SuperAdmin can see all active projects with their assigned groups and users.
+    Get a paginated list of active projects based on the user's role.
+    
+    - SuperAdmin: Sees all active projects.
+    - GroupAdmin: Sees active projects in groups they manage.
+    - Regular User: Sees active projects in the same groups.
     """
     try:
         # Convert user_id to PydanticObjectId
-        user_id = PydanticObjectId(user_id)
+        user_id_obj = PydanticObjectId(user_id)
 
         # Fetch the user from the database
-        user = await User.find_one(User.id == user_id)
+        user = await User.find_one(User.id == user_id_obj)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 
@@ -84,11 +87,12 @@ async def list_user_projects(
             # SuperAdmin fetches all active projects
             projects_query = Project.find({"isActive": True})
         else:
-            # Fetch projects where the user is assigned
+            # For GroupAdmin and Regular User, fetch projects that belong to groups they manage or are a member of.
+            # We assume `user.groups` contains the group IDs relevant to the user.
             projects_query = Project.find({
                 "$and": [
                     {"isActive": True},
-                    {"assignedUsers": {"$in": [user_id]}}
+                    {"groupId": {"$in": user.groupIds}}
                 ]
             })
 
@@ -110,7 +114,10 @@ async def list_user_projects(
 
             # Prepare the group name and assigned user names
             group_name = group.name if group else "Unknown"
-            assigned_user_names = [{"username": user.username, "id": str(user.id)} for user in assigned_users]
+            assigned_user_names = [
+                {"username": assigned_user.username, "id": str(assigned_user.id)}
+                for assigned_user in assigned_users
+            ]
 
             project_data = {
                 "id": str(project.id),
@@ -134,8 +141,6 @@ async def list_user_projects(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
-
-
 
 # Get a specific project by ID
 @router.get("/projects/{project_id}", dependencies=[Depends(JWTBearer())])
@@ -181,7 +186,6 @@ async def partial_update_project(project: ProjectUpdateRequest):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
-
 
 # Delete a project by ID
 @router.patch("/project/{project_id}/inactivate",dependencies=[Depends(JWTBearer())])

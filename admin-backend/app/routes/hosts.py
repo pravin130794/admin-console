@@ -46,7 +46,6 @@ async def create_host(host: CreateHostRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
-# Get a list of all hosts with details about groups, projects, and devices
 @router.get("/hosts", dependencies=[Depends(JWTBearer())])
 async def list_user_hosts(
     user_id: str,  # User ID passed as a query parameter
@@ -54,8 +53,11 @@ async def list_user_hosts(
     limit: int = Query(10, ge=1)  # Number of items to fetch
 ):
     """
-    Get a paginated list of hosts created by the user or where the user is a member.
-    SuperAdmin can see all active hosts, along with their groups, projects, and devices.
+    Get a paginated list of active hosts based on the user's role.
+    
+    - SuperAdmin: Sees all active hosts.
+    - GroupAdmin: Sees active hosts in the groups they manage.
+    - Regular User: (Assumed) Sees active hosts in the groups they belong to.
     """
     try:
         # Convert user_id to PydanticObjectId
@@ -66,15 +68,26 @@ async def list_user_hosts(
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 
-        # Initialize query based on user role
+        # Initialize the query based on user role
         if user.role == "SuperAdmin":
             # SuperAdmin fetches all active hosts
             hosts_query = Host.find({"isActive": True})
-        else:
-            # Fetch hosts based on user membership
+        elif user.role == "GroupAdmin":
+            # GroupAdmin sees hosts in groups they manage.
+            # In your relation, GroupAdmin U1 manages groups ['G1', 'G2']
             hosts_query = Host.find({
                 "$and": [
                     {"isActive": True},
+                    {"group": {"$in": user.groupIds}}
+                ]
+            })
+        else:
+            # Regular user: See hosts in groups they belong to.
+            # This assumes that regular users have a field like `groups` as well.
+            hosts_query = Host.find({
+                "$and": [
+                    {"isActive": True},
+                    {"group": {"$in": user.groupIds}}
                 ]
             })
 
@@ -88,17 +101,41 @@ async def list_user_hosts(
         host_list = []
 
         for host in hosts:
-            # Fetch group details using the groupId from the host document
-            groups = await Group.find({"_id": {"$in": host.group}}).to_list()
+            # Fetch group details using the group IDs from the host document
+            groups = await Group.find({"_id": {"$in": user.groupIds}}).to_list()
             group_data = [{"id": str(group.id), "name": group.name} for group in groups] if groups else []
 
-            # Fetch project details using the projectId from the host document
-            projects = await Project.find({"_id": {"$in": host.project}}).to_list()
+            # Fetch project details using the project IDs from the host document
+            projects = await Project.find({"_id": {"$in": user.projectIds}}).to_list()
             project_data = [{"id": str(project.id), "name": project.name} for project in projects] if projects else []
 
-            # Fetch device details using the devices field in the host document
-            devices = await Devices.find({"_id": {"$in": host.devices}}).to_list()
-            device_data = [{"id": str(device.id), "model": device.model, "udid": device.udid, "state": device.state, "cpu": device.cpu, "manufacturer": device.manufacturer, "os_version": device.os_version, "sdk_version": device.sdk_version, "security_id": device.security_id, "registered_to": device.registered_to} for device in devices] if devices else []
+            # Fetch device details using the host_ip from the host document
+            devices = await Devices.find({"host_ip": host.ipAddress}).to_list()
+            device_data = []
+            if devices:
+                for device in devices:
+                    # Convert the device.registered_to to PydanticObjectId before querying.
+                    device_registered_to = PydanticObjectId(device.registered_to)
+                    # Fetch the user corresponding to the registered_to field
+                    device_user = await User.find_one(User.id == device_registered_to)
+                    # Prepare the registered_to information with user_id and user_name
+                    registered_to_info = {
+                        "user_id": str(device.registered_to),
+                        "user_name": device_user.username if device_user else None
+                    }
+                    device_data.append({
+                        "id": str(device.id),
+                        "model": device.model,
+                        "udid": device.udid,
+                        "state": device.state,
+                        "cpu": device.cpu,
+                        "manufacturer": device.manufacturer,
+                        "os_version": device.os_version,
+                        "sdk_version": device.sdk_version,
+                        "security_id": device.security_id,
+                        "registered_to": registered_to_info,
+                        "host_ip": device.host_ip
+                    })
 
             # Prepare host data
             host_data = {
@@ -110,7 +147,7 @@ async def list_user_hosts(
                 "isActive": host.isActive,
                 "group": group_data,
                 "project": project_data,
-                "devices": device_data
+                "devices": device_data,
             }
 
             host_list.append(host_data)

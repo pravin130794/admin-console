@@ -64,15 +64,18 @@ async def list_user_groups(
     limit: int = Query(10, ge=1)  # Number of items to fetch
 ):
     """
-    Get a paginated list of groups created by the user or where the user is a member.
-    SuperAdmin can see all active groups, and groups will have associated project details.
+    Get a paginated list of active groups based on the user's role.
+    
+    - SuperAdmin: Sees all active groups.
+    - GroupAdmin: Sees active groups they manage.
+    - Regular User: Sees active groups where they are a member or the creator.
     """
     try:
         # Convert user_id to PydanticObjectId
-        user_id = PydanticObjectId(user_id)
+        user_id_obj = PydanticObjectId(user_id)
 
         # Fetch the user from the database
-        user = await User.find_one(User.id == user_id)
+        user = await User.find_one(User.id == user_id_obj)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 
@@ -80,14 +83,23 @@ async def list_user_groups(
         if user.role == "SuperAdmin":
             # SuperAdmin fetches all active groups
             groups_query = Group.find({"isActive": True})
+        elif user.role == "GroupAdmin":
+            # GroupAdmin sees active groups they manage.
+            # We assume the GroupAdmin document has a field 'groups' with group IDs they manage.
+            groups_query = Group.find({
+                "$and": [
+                    {"isActive": True},
+                    {"_id": {"$in": user.groupIds}}
+                ]
+            })
         else:
-            # Fetch groups created by the user or where the user is a member
+            # Regular user: See active groups where the user is a member or the creator.
             groups_query = Group.find({
                 "$and": [
                     {"isActive": True},
                     {"$or": [
-                        {"members": {"$in": [user_id]}},
-                        {"createdBy": user_id}
+                        {"members": {"$in": [user_id_obj]}},
+                        {"createdBy": user_id_obj}
                     ]}
                 ]
             })
@@ -107,7 +119,7 @@ async def list_user_groups(
             member_data = [
                 {
                     "id": str(member.id),
-                    "name": f"{member.username}"  # Combining first and last name
+                    "name": f"{member.username}"  # Adjust if needed to include full name
                 }
                 for member in members
             ]
@@ -130,8 +142,8 @@ async def list_user_groups(
                 "name": group.name,
                 "description": group.description,
                 "createdBy": str(group.createdBy),
-                "members": member_data,  # Now members contain name and id
-                "projects": project_data,  # Added project details
+                "members": member_data,
+                "projects": project_data,
                 "isActive": group.isActive
             }
             group_list.append(group_data)
@@ -145,6 +157,7 @@ async def list_user_groups(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+
 
 # Get a specific group by ID
 @router.get("/groups/{group_id}",dependencies=[Depends(JWTBearer())])
