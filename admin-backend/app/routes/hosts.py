@@ -102,11 +102,11 @@ async def list_user_hosts(
 
         for host in hosts:
             # Fetch group details using the group IDs from the host document
-            groups = await Group.find({"_id": {"$in": user.groupIds}}).to_list()
+            groups = await Group.find({"_id": {"$in": host.group}}).to_list()
             group_data = [{"id": str(group.id), "name": group.name} for group in groups] if groups else []
 
             # Fetch project details using the project IDs from the host document
-            projects = await Project.find({"_id": {"$in": user.projectIds}}).to_list()
+            projects = await Project.find({"_id": {"$in": host.project}}).to_list()
             project_data = [{"id": str(project.id), "name": project.name} for project in projects] if projects else []
 
             # Fetch device details using the host_ip from the host document
@@ -115,27 +115,28 @@ async def list_user_hosts(
             if devices:
                 for device in devices:
                     # Convert the device.registered_to to PydanticObjectId before querying.
-                    device_registered_to = PydanticObjectId(device.registered_to)
-                    # Fetch the user corresponding to the registered_to field
-                    device_user = await User.find_one(User.id == device_registered_to)
-                    # Prepare the registered_to information with user_id and user_name
-                    registered_to_info = {
-                        "user_id": str(device.registered_to),
-                        "user_name": device_user.username if device_user else None
-                    }
-                    device_data.append({
-                        "id": str(device.id),
-                        "model": device.model,
-                        "udid": device.udid,
-                        "state": device.state,
-                        "cpu": device.cpu,
-                        "manufacturer": device.manufacturer,
-                        "os_version": device.os_version,
-                        "sdk_version": device.sdk_version,
-                        "security_id": device.security_id,
-                        "registered_to": registered_to_info,
-                        "host_ip": device.host_ip
-                    })
+                    if device.registered_to:
+                        device_registered_to = PydanticObjectId(device.registered_to)
+                        # Fetch the user corresponding to the registered_to field
+                        device_user = await User.find_one(User.id == device_registered_to)
+                        # Prepare the registered_to information with user_id and user_name
+                        registered_to_info = {
+                            "user_id": str(device.registered_to),
+                            "user_name": device_user.username if device_user else None
+                        }
+                        device_data.append({
+                            "id": str(device.id),
+                            "model": device.model,
+                            "udid": device.udid,
+                            "state": device.state,
+                            "cpu": device.cpu,
+                            "manufacturer": device.manufacturer,
+                            "os_version": device.os_version,
+                            "sdk_version": device.sdk_version,
+                            "security_id": device.security_id,
+                            "registered_to": registered_to_info,
+                            "host_ip": device.host_ip
+                        })
 
             # Prepare host data
             host_data = {
