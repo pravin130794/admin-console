@@ -82,6 +82,8 @@ const HostsPage = () => {
   const [selectedHost, setSelectedHost] = useState(null);
   const [reason, setReason] = useState("");
   const [openDelete, setOpenDelete] = useState(false);
+  const [openActionView, setOpenActionView] = useState(false);
+  const [selectedAction, setSelectedAction] = useState(null);
   const userRole = localStorage.getItem("role");
   const [openView, setOpenView] = useState(false);
 
@@ -482,6 +484,59 @@ const HostsPage = () => {
     setReason("");
   };
 
+  const handleActionOpen = (device) => {
+    setOpenActionView(true);
+    setSelectedAction(device);
+  };
+  const handleActionClose = () => {
+    setOpenActionView(false);
+    setSelectedAction(null);
+  };
+
+  const handleActionForRequest = async () => {
+    setApiLoading(true);
+    try {
+      const device_id = selectedAction?.id;
+      const token = localStorage.getItem("authToken");
+      const user_id = localStorage.getItem("user_id");
+      const baseUrl = ApiBaseUrl.getBaseUrl();
+      const response = await fetch(
+        `http://${baseUrl}/api/v1/request-device/${device_id}?user_id=${user_id}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.detail || "Failed to submit request for device."
+        );
+      }
+
+      setSnackbar({
+        open: true,
+        message: "Request for device submitted successfully!",
+        severity: "success",
+      });
+      fetchHosts();
+    } catch (error) {
+      console.error("Error rejecting request for device:", error);
+      setSnackbar({
+        open: true,
+        message: error.message || "An error occurred.",
+        severity: "error",
+      });
+    } finally {
+      setApiLoading(false);
+      setOpenActionView(false);
+    }
+  };
+
   const handleDelete = async () => {
     if (!reason) {
       setSnackbar({
@@ -693,6 +748,15 @@ const HostsPage = () => {
                             verticalAlign: "middle",
                           }}
                         >
+                          Status
+                        </TableCell>
+                        <TableCell
+                          sx={{
+                            borderRight: "1px solid black",
+                            textAlign: "center",
+                            verticalAlign: "middle",
+                          }}
+                        >
                           Action
                         </TableCell>
                       </TableRow>
@@ -776,9 +840,39 @@ const HostsPage = () => {
                             sx={{
                               textAlign: "center",
                               verticalAlign: "middle",
+                              color:
+                                detail.status === "Approved" ? "green" : "red",
                             }}
                           >
-                            <AddCircleOutlineIcon />
+                            {detail.status}
+                          </TableCell>
+                          <TableCell
+                            sx={{
+                              textAlign: "center",
+                              verticalAlign: "middle",
+                            }}
+                          >
+                            <IconButton
+                              onClick={() => handleActionOpen(detail)}
+                              disabled={
+                                detail.status === "Approved" ||
+                                detail.status != ""
+                              }
+                              sx={{
+                                cursor:
+                                  detail.status === "Approved"
+                                    ? "not-allowed"
+                                    : "pointer",
+                              }}
+                            >
+                              <AddCircleOutlineIcon
+                                cursor={
+                                  detail.status === "Approved"
+                                    ? "not-allowed"
+                                    : "pointer"
+                                }
+                              />
+                            </IconButton>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -1583,6 +1677,33 @@ const HostsPage = () => {
         </DialogActions>
       </Dialog>
 
+      {/* Device Request Model */}
+      <Dialog
+        open={openActionView}
+        onClose={handleActionClose}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Action Creation</DialogTitle>
+        <DialogContent>
+          <Typography variant="subtitle1" gutterBottom>
+            Device ID: {selectedAction?.model ? selectedAction.model : "N/A"}
+          </Typography>
+          <Typography>Are you sure want to access to device ?</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleActionClose} color="secondary">
+            Cancel
+          </Button>
+          <Button
+            onClick={handleActionForRequest}
+            variant="contained"
+            color="primary"
+          >
+            Submit
+          </Button>
+        </DialogActions>
+      </Dialog>
       {/* Snackbar for alerts */}
       <SnackbarComponent
         open={snackbar.open}

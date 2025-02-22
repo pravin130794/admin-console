@@ -240,11 +240,15 @@ class Devices(Document):
     security_id: Optional[int] = None
     registered_to: Optional[str] = None
     host_ip: Optional[str] = None
+    requested_by: Optional[PydanticObjectId] = None  # ID of user who requested the device
+    status: str = Field(enum=["Pending", "Approved", "Rejected"])
+    requested_at: Optional[datetime] = None
+    approved_or_rejected_at: Optional[datetime] = None
 
     class Settings:
         name = "device"
 
-# Project Model
+# Host Model
 class Host(Document):
     name: str
     ipAddress: str
@@ -255,7 +259,6 @@ class Host(Document):
     member: PydanticObjectId
     project: List[PydanticObjectId]  = []
     group: List[PydanticObjectId]  = []
-    devices: List[PydanticObjectId] = []
     createdAt: datetime = Field(default_factory=datetime.now)
     updatedAt: datetime = Field(default_factory=datetime.now)
 
