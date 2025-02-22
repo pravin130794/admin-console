@@ -442,6 +442,7 @@ async def sign_up(user: UserSignUpRequest):
         username=user.username,
         email=user.email,
         password=encpt_password,
+        phone=user.phone,
         groupIds=[],  # Initialize with no groups
         projectIds=[]  # Initialize with no projects
     )

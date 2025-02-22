@@ -74,7 +74,7 @@ const UserPage = () => {
     businessPurpose: "",
     groups: [],
   });
-
+  const userRole = localStorage.getItem("role");
   useEffect(() => {
     if (openRegister || openApprove || openEdit) {
       fetchGroups();
@@ -595,17 +595,22 @@ const UserPage = () => {
             User Management
           </Typography>
         </Box>
-        <Box>
-          <Button
-            variant="contained"
-            sx={{ backgroundColor: "#ffffff", marginRight: "10px" }}
-            onClick={handleRegisterOpen}
-          >
-            <Typography variant="h8" fontWeight="bold" color="#001a99">
-              + Add User
-            </Typography>
-          </Button>
-        </Box>
+
+        {userRole != "User" ? (
+          <Box>
+            <Button
+              variant="contained"
+              sx={{ backgroundColor: "#ffffff", marginRight: "10px" }}
+              onClick={handleRegisterOpen}
+            >
+              <Typography variant="h8" fontWeight="bold" color="#001a99">
+                + Add User
+              </Typography>
+            </Button>
+          </Box>
+        ) : (
+          ""
+        )}
       </Box>
 
       {/* Table */}
@@ -743,31 +748,42 @@ const UserPage = () => {
                       >
                         <VisibilityIcon />
                       </IconButton>
-                      <IconButton
-                        color="error"
-                        onClick={() => handleDeleteOpen(user)}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                      <IconButton
-                        color="warning"
-                        onClick={() => handleRejectOpen(user)}
-                      >
-                        <CancelIcon />
-                      </IconButton>
-                      <IconButton
-                        color="success"
-                        onClick={() => handleApproveOpen(user)}
-                        disabled={user.status === "Approved"}
-                      >
-                        <CheckCircleIcon />
-                      </IconButton>
-                      <IconButton
-                        color="secondary"
-                        onClick={() => handleEditOpen(user)}
-                      >
-                        <EditIcon />
-                      </IconButton>
+                      {userRole != "User" ? (
+                        <IconButton
+                          color="error"
+                          onClick={() => handleDeleteOpen(user)}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      ) : null}
+
+                      {userRole != "User" ? (
+                        <IconButton
+                          color="warning"
+                          onClick={() => handleRejectOpen(user)}
+                        >
+                          <CancelIcon />
+                        </IconButton>
+                      ) : null}
+
+                      {userRole != "User" ? (
+                        <IconButton
+                          color="success"
+                          onClick={() => handleApproveOpen(user)}
+                          disabled={user.status === "Approved"}
+                        >
+                          <CheckCircleIcon />
+                        </IconButton>
+                      ) : null}
+
+                      {userRole != "User" ? (
+                        <IconButton
+                          color="secondary"
+                          onClick={() => handleEditOpen(user)}
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      ) : null}
                     </TableCell>
                   </TableRow>
                 ))

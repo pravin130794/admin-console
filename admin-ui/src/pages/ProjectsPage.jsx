@@ -62,7 +62,7 @@ const ProjectsPage = () => {
     page * rowsPerPage,
     page * rowsPerPage + rowsPerPage
   );
-
+  const userRole = localStorage.getItem("role");
   useEffect(() => {
     if (openRegister || openEdit) {
       fetchGroups();
@@ -389,17 +389,21 @@ const ProjectsPage = () => {
             Project Management
           </Typography>
         </Box>
-        <Box>
-          <Button
-            variant="contained"
-            onClick={handleRegisterOpen}
-            sx={{ backgroundColor: "#ffffff", marginRight: "10px" }}
-          >
-            <Typography variant="h8" fontWeight="bold" color="#001a99">
-              + Add Project
-            </Typography>
-          </Button>
-        </Box>
+        {userRole != "User" ? (
+          <Box>
+            <Button
+              variant="contained"
+              onClick={handleRegisterOpen}
+              sx={{ backgroundColor: "#ffffff", marginRight: "10px" }}
+            >
+              <Typography variant="h8" fontWeight="bold" color="#001a99">
+                + Add Project
+              </Typography>
+            </Button>
+          </Box>
+        ) : (
+          ""
+        )}
       </Box>
 
       {/* Table */}
@@ -538,18 +542,23 @@ const ProjectsPage = () => {
                       >
                         <VisibilityIcon />
                       </IconButton>
-                      <IconButton
-                        color="error"
-                        onClick={() => handleDeleteOpen(project)}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                      <IconButton
-                        color="secondary"
-                        onClick={() => handleEditOpen(project)}
-                      >
-                        <EditIcon />
-                      </IconButton>
+                      {userRole != "User" ? (
+                        <IconButton
+                          color="error"
+                          onClick={() => handleDeleteOpen(project)}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      ) : null}
+
+                      {userRole != "User" ? (
+                        <IconButton
+                          color="secondary"
+                          onClick={() => handleEditOpen(project)}
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      ) : null}
                     </TableCell>
                   </TableRow>
                 ))

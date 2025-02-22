@@ -110,6 +110,7 @@ class UserSignUpRequest(BaseModel):
     lastname: str
     username: str
     email: EmailStr
+    phone: str
     password: Optional[str] = None
 
 class UserToken(Document):
