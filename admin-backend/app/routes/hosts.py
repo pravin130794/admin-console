@@ -135,7 +135,8 @@ async def list_user_hosts(
                             "sdk_version": device.sdk_version,
                             "security_id": device.security_id,
                             "registered_to": registered_to_info,
-                            "host_ip": device.host_ip
+                            "host_ip": device.host_ip,
+                            "status": device.status,
                         })
 
             # Prepare host data

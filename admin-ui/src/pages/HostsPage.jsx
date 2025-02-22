@@ -37,6 +37,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import ApiBaseUrl from "../ApiBaseUrl";
 import { KeyboardArrowUp, KeyboardArrowDown } from "@mui/icons-material";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 
 const HostsPage = () => {
   const [hosts, setHosts] = useState([]);
@@ -81,6 +82,10 @@ const HostsPage = () => {
   const [selectedHost, setSelectedHost] = useState(null);
   const [reason, setReason] = useState("");
   const [openDelete, setOpenDelete] = useState(false);
+  const [openActionView, setOpenActionView] = useState(false);
+  const [selectedAction, setSelectedAction] = useState(null);
+  const userRole = localStorage.getItem("role");
+  const [openView, setOpenView] = useState(false);
 
   const toggleRow = (index) => {
     setcollapsibleOpen((prev) => ({ ...prev, [index]: !prev[index] }));
@@ -98,6 +103,15 @@ const HostsPage = () => {
     setScroll("paper");
     fetchDevices(host.devices);
     setEditData(host);
+  };
+  const handleViewOpen = (host) => {
+    setSelectedHost(host);
+    setOpenView(true);
+  };
+
+  const handleViewClose = () => {
+    setOpenView(false);
+    setSelectedHost(null);
   };
 
   const handleClose = () => {
@@ -470,6 +484,59 @@ const HostsPage = () => {
     setReason("");
   };
 
+  const handleActionOpen = (device) => {
+    setOpenActionView(true);
+    setSelectedAction(device);
+  };
+  const handleActionClose = () => {
+    setOpenActionView(false);
+    setSelectedAction(null);
+  };
+
+  const handleActionForRequest = async () => {
+    setApiLoading(true);
+    try {
+      const device_id = selectedAction?.id;
+      const token = localStorage.getItem("authToken");
+      const user_id = localStorage.getItem("user_id");
+      const baseUrl = ApiBaseUrl.getBaseUrl();
+      const response = await fetch(
+        `http://${baseUrl}/api/v1/request-device/${device_id}?user_id=${user_id}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.detail || "Failed to submit request for device."
+        );
+      }
+
+      setSnackbar({
+        open: true,
+        message: "Request for device submitted successfully!",
+        severity: "success",
+      });
+      fetchHosts();
+    } catch (error) {
+      console.error("Error rejecting request for device:", error);
+      setSnackbar({
+        open: true,
+        message: error.message || "An error occurred.",
+        severity: "error",
+      });
+    } finally {
+      setApiLoading(false);
+      setOpenActionView(false);
+    }
+  };
+
   const handleDelete = async () => {
     if (!reason) {
       setSnackbar({
@@ -566,13 +633,20 @@ const HostsPage = () => {
             {host.devices.length}
           </TableCell>
           <TableCell sx={{ textAlign: "center", verticalAlign: "middle" }}>
-            <IconButton color="error">
-              <DeleteIcon onClick={() => handleDeleteOpen(host)} />
+            <IconButton color="primary" onClick={() => handleViewOpen(host)}>
+              <VisibilityIcon />
             </IconButton>
 
-            <IconButton color="secondary">
-              <EditIcon onClick={() => handleEditOpen(host)} />
-            </IconButton>
+            {userRole != "User" ? (
+              <IconButton color="error">
+                <DeleteIcon onClick={() => handleDeleteOpen(host)} />
+              </IconButton>
+            ) : null}
+            {userRole != "User" ? (
+              <IconButton color="secondary">
+                <EditIcon onClick={() => handleEditOpen(host)} />
+              </IconButton>
+            ) : null}
           </TableCell>
         </TableRow>
 
@@ -674,6 +748,15 @@ const HostsPage = () => {
                             verticalAlign: "middle",
                           }}
                         >
+                          Status
+                        </TableCell>
+                        <TableCell
+                          sx={{
+                            borderRight: "1px solid black",
+                            textAlign: "center",
+                            verticalAlign: "middle",
+                          }}
+                        >
                           Action
                         </TableCell>
                       </TableRow>
@@ -757,9 +840,39 @@ const HostsPage = () => {
                             sx={{
                               textAlign: "center",
                               verticalAlign: "middle",
+                              color:
+                                detail.status === "Approved" ? "green" : "red",
                             }}
                           >
-                            <AddCircleOutlineIcon />
+                            {detail.status}
+                          </TableCell>
+                          <TableCell
+                            sx={{
+                              textAlign: "center",
+                              verticalAlign: "middle",
+                            }}
+                          >
+                            <IconButton
+                              onClick={() => handleActionOpen(detail)}
+                              disabled={
+                                detail.status === "Approved" ||
+                                detail.status != ""
+                              }
+                              sx={{
+                                cursor:
+                                  detail.status === "Approved"
+                                    ? "not-allowed"
+                                    : "pointer",
+                              }}
+                            >
+                              <AddCircleOutlineIcon
+                                cursor={
+                                  detail.status === "Approved"
+                                    ? "not-allowed"
+                                    : "pointer"
+                                }
+                              />
+                            </IconButton>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -782,16 +895,20 @@ const HostsPage = () => {
     <Box>
       {/* Header */}
 
-      <Typography
-        variant="h8"
-        fontWeight="bold"
-        onClick={handleRegisterOpen}
-        display="flex"
-        justifyContent="end"
-      >
-        <AddCircleOutlineIcon />
-        Add Host
-      </Typography>
+      {userRole != "User" ? (
+        <Typography
+          variant="h8"
+          fontWeight="bold"
+          onClick={handleRegisterOpen}
+          display="flex"
+          justifyContent="end"
+        >
+          <AddCircleOutlineIcon />
+          Add Host
+        </Typography>
+      ) : (
+        ""
+      )}
 
       {/* Table */}
       <Box mt={3}>
@@ -1154,6 +1271,90 @@ const HostsPage = () => {
         </Box>
       </Modal>
 
+      {/* View Host Details Modal */}
+      <Modal open={openView} onClose={handleViewClose}>
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: 500,
+            backgroundColor: "white",
+            boxShadow: 24,
+            borderRadius: "10px",
+            overflow: "hidden",
+          }}
+        >
+          {/* Header */}
+          <Box
+            sx={{
+              backgroundImage:
+                "linear-gradient(to left, #5A8DFF, #001a99, #000080)",
+              color: "white",
+              padding: "10px",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <Typography fontWeight="bold" variant="h6">
+              👤 Host Details
+            </Typography>
+            <IconButton onClick={handleViewClose} sx={{ color: "white" }}>
+              <CloseIcon />
+            </IconButton>
+          </Box>
+
+          {/* Host Details Content */}
+          {selectedHost && (
+            <Box sx={{ padding: "20px" }}>
+              {/* First Row */}
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: "10px 20px",
+                  marginBottom: "10px",
+                }}
+              >
+                <Typography fontWeight="bold">
+                  Name:{" "}
+                  <span style={{ color: "orange" }}>{selectedHost.name}</span>
+                </Typography>
+                <Typography fontWeight="bold">
+                  IP Address:{" "}
+                  <span style={{ color: "orange" }}>
+                    {selectedHost.ipAddress}
+                  </span>
+                </Typography>
+                <Typography fontWeight="bold">
+                  Location:{" "}
+                  <span style={{ color: "orange" }}>
+                    {selectedHost.location}
+                  </span>
+                </Typography>
+                <Typography fontWeight="bold">
+                  OS: <span style={{ color: "orange" }}>{selectedHost.os}</span>
+                </Typography>
+                <Typography fontWeight="bold">
+                  Projects:{" "}
+                  <span style={{ color: "orange" }}>
+                    {selectedHost.project.map((pro) => pro.name).join(", ")}
+                  </span>
+                </Typography>
+                <Typography fontWeight="bold">
+                  Groups:{" "}
+                  <span style={{ color: "orange" }}>
+                    {selectedHost.group.map((grp) => grp.name).join(", ")}
+                  </span>
+                </Typography>
+              </Box>
+            </Box>
+          )}
+        </Box>
+      </Modal>
+
       {/* Edit Host Modal */}
       <Modal open={openEdit} onClose={handleEditClose}>
         <Box
@@ -1476,6 +1677,33 @@ const HostsPage = () => {
         </DialogActions>
       </Dialog>
 
+      {/* Device Request Model */}
+      <Dialog
+        open={openActionView}
+        onClose={handleActionClose}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Action Creation</DialogTitle>
+        <DialogContent>
+          <Typography variant="subtitle1" gutterBottom>
+            Device ID: {selectedAction?.model ? selectedAction.model : "N/A"}
+          </Typography>
+          <Typography>Are you sure want to access to device ?</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleActionClose} color="secondary">
+            Cancel
+          </Button>
+          <Button
+            onClick={handleActionForRequest}
+            variant="contained"
+            color="primary"
+          >
+            Submit
+          </Button>
+        </DialogActions>
+      </Dialog>
       {/* Snackbar for alerts */}
       <SnackbarComponent
         open={snackbar.open}

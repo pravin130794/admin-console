@@ -49,7 +49,7 @@ const GroupsPage = () => {
     message: "",
     severity: "info",
   });
-
+  const userRole = localStorage.getItem("role");
   useEffect(() => {
     fetchGroups();
   }, [page, rowsPerPage]);
@@ -331,17 +331,22 @@ const GroupsPage = () => {
             Group Management
           </Typography>
         </Box>
-        <Box>
-          <Button
-            variant="contained"
-            onClick={handleRegisterOpen}
-            sx={{ backgroundColor: "#ffffff", marginRight: "10px" }}
-          >
-            <Typography variant="h8" fontWeight="bold" color="#001a99">
-              + Add Group
-            </Typography>
-          </Button>
-        </Box>
+
+        {userRole != "User" ? (
+          <Box>
+            <Button
+              variant="contained"
+              onClick={handleRegisterOpen}
+              sx={{ backgroundColor: "#ffffff", marginRight: "10px" }}
+            >
+              <Typography variant="h8" fontWeight="bold" color="#001a99">
+                + Add Group
+              </Typography>
+            </Button>
+          </Box>
+        ) : (
+          ""
+        )}
       </Box>
 
       {/* Table */}
@@ -472,18 +477,24 @@ const GroupsPage = () => {
                       >
                         <VisibilityIcon />
                       </IconButton>
-                      <IconButton
-                        color="error"
-                        onClick={() => handleDeleteOpen(group)}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                      <IconButton
-                        color="secondary"
-                        onClick={() => handleEditOpen(group)}
-                      >
-                        <EditIcon />
-                      </IconButton>
+
+                      {userRole != "User" ? (
+                        <IconButton
+                          color="error"
+                          onClick={() => handleDeleteOpen(group)}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      ) : null}
+
+                      {userRole != "User" ? (
+                        <IconButton
+                          color="secondary"
+                          onClick={() => handleEditOpen(group)}
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      ) : null}
                     </TableCell>
                   </TableRow>
                 ))

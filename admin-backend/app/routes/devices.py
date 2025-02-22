@@ -1,3 +1,4 @@
+from datetime import datetime
 import random
 from fastapi import APIRouter, Depends, HTTPException, Query
 from app.middleware.auth import JWTBearer
@@ -57,7 +58,7 @@ async def list_devices(
 
         # Apply pagination
         devices = await devices_query.skip(skip).limit(limit).to_list()
-        print(devices)
+
         total_count = await devices_query.count()
 
         # Return the paginated list of devices
@@ -139,3 +140,67 @@ async def registed_device(device_id: str,current_token: str = Depends(JWTBearer(
         await device.save()
         return random_number
     return device.security_id
+
+# Request a device
+@router.post("/request-device/{device_id}")
+async def request_device(device_id: str, user_id: str):
+    device = await Devices.get(device_id)
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found")
+
+    if device.status == "Pending":
+        raise HTTPException(status_code=400, detail="Device already has a pending request")
+
+    # Update device with request details
+    device.requested_by = user_id
+    device.status = "Pending"
+    device.requested_at = datetime.now()
+    await device.save()
+
+    return {"message": "Device request submitted successfully"}
+
+# Admin - Get all pending device requests
+@router.get("/admin/requests")
+async def get_pending_requests():
+    # Find all pending devices
+    pending_devices = await Devices.find(Devices.status == "Pending").to_list()
+
+    requests = []
+    for device in pending_devices:
+        # Fetch the user based on ObjectId
+        user = await User.get(device.requested_by)
+        if not user:
+            user_name = "Unknown User"
+        else:
+            user_name = user.username  # Get user name from user collection
+        
+        requests.append({
+            "device_id": str(device.id),
+            "device_name": device.model,
+            "requested_by": user_name,  # Return user name instead of ObjectId
+            "status": device.status,
+            "requested_at": device.requested_at
+        })
+
+    return requests
+
+# Admin - Approve or Reject a device request
+@router.put("/admin/request/{device_id}/{action}")
+async def approve_or_reject_request(device_id: str, action: str):
+    device = await Devices.get(device_id)
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found")
+
+    if device.status != "Pending":
+        raise HTTPException(status_code=400, detail="No pending request for this device")
+
+    if action.lower() not in ["approve", "reject"]:
+        raise HTTPException(status_code=400, detail="Invalid action")
+
+    # Update request status
+    device.status = "Approved" if action.lower() == "approve" else "Rejected"
+    device.approved_or_rejected_at = datetime.now()
+    
+    await device.save()
+
+    return {"message": f"Request {action.capitalize()} successfully"}
