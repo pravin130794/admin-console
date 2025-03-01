@@ -1,4 +1,4 @@
-import { React, useState } from "react";
+import { React, useState, useEffect } from "react";
 import {
   AppBar,
   Toolbar,
@@ -7,14 +7,22 @@ import {
   Box,
   Button,
   IconButton,
+  Badge,
+  Modal,
+  List,
+  ListItem,
+  ListItemText,
+  Divider,
 } from "@mui/material";
 import LogoutIcon from "@mui/icons-material/Logout";
 import SapphireLogo from "../assets/SapphireLogo.png";
+import NotificationsIcon from "@mui/icons-material/Notifications";
 import { Link, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/Auth";
 import { useRecoilCallback } from "recoil";
 import SnackbarComponent from "../components/Snackbar";
 import ApiBaseUrl from "../ApiBaseUrl";
+import CloseIcon from "@mui/icons-material/Close";
 import {
   selectedDeviceAccordion,
   selectedDeviceModelBody,
@@ -25,6 +33,7 @@ import {
 const AppBarLayout = () => {
   const navigate = useNavigate();
   const { logout } = useAuth();
+  const userRole = localStorage.getItem("role");
   const username = localStorage.getItem("username");
   const location = useLocation(); // Get the current location
   const [snackbar, setSnackbar] = useState({
@@ -32,7 +41,9 @@ const AppBarLayout = () => {
     message: "",
     severity: "info",
   });
-
+  const [loadingPendingRequest, setLoadingPendingRequest] = useState(false);
+  const [pendingRequests, setPendingRequests] = useState([]);
+  const [openReqModel, setOpenReqModel] = useState(false);
   const resetAllAtoms = useRecoilCallback(
     ({ reset }) =>
       () => {
@@ -43,6 +54,71 @@ const AppBarLayout = () => {
       },
     []
   );
+
+  const handleRequestModelOpen = () => {
+    setOpenReqModel(true);
+  };
+
+  const handleRequestModelClose = () => {
+    setOpenReqModel(false);
+  };
+
+  const fetchPendingRequest = async () => {
+    setLoadingPendingRequest(true);
+    try {
+      const token = localStorage.getItem("authToken");
+      const baseUrl = ApiBaseUrl.getBaseUrl();
+      const response = await fetch(`http://${baseUrl}/api/v1/admin/requests`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      setPendingRequests(data);
+    } catch (error) {
+      console.error("Error fetching pending request:", error);
+    } finally {
+      setLoadingPendingRequest(false);
+    }
+  };
+
+  const handleAction = async (deviceId, action) => {
+    try {
+      const token = localStorage.getItem("authToken");
+      const baseUrl = ApiBaseUrl.getBaseUrl();
+      const response = await fetch(
+        `http://${baseUrl}/api/v1/admin/request/${deviceId}/${action}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Failed to delete user.");
+      }
+
+      setSnackbar({
+        open: true,
+        message: "Request updated successfully!",
+        severity: "success",
+      });
+      fetchPendingRequest();
+    } catch (error) {
+      console.error("Error fetching pending request:", error);
+      setSnackbar({
+        open: true,
+        message: error.message || "An error occurred.",
+        severity: "error",
+      });
+    }
+  };
+
+  useEffect(() => {
+    fetchPendingRequest();
+  }, []);
   const handleLogout = async () => {
     try {
       // Call the logout API
@@ -232,7 +308,29 @@ const AppBarLayout = () => {
           </Box>
 
           {/* User Logout */}
-          <Box>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "space-between",
+              gap: "16px", //
+            }}
+          >
+            {userRole != "User" ? (
+              <Badge
+                badgeContent={
+                  pendingRequests.length > 0 ? pendingRequests.length : "0"
+                }
+                color="error"
+                sx={{ marginRight: "10px", marginTop: "10px" }}
+              >
+                <NotificationsIcon
+                  color="primary"
+                  onClick={handleRequestModelOpen}
+                />
+              </Badge>
+            ) : (
+              ""
+            )}
             <IconButton
               onClick={handleLogout}
               sx={{
@@ -242,6 +340,7 @@ const AppBarLayout = () => {
                   color: "white",
                 },
                 borderRadius: "5px",
+                gap: "5px",
               }}
             >
               <Typography sx={{ marginRight: "8px", fontWeight: "bold" }}>
@@ -257,6 +356,94 @@ const AppBarLayout = () => {
       <Box component="main" sx={{ p: 3 }}>
         <Outlet />
       </Box>
+
+      {/* View Request  Modal */}
+      <Modal open={openReqModel} onClose={handleRequestModelClose}>
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: 500,
+            backgroundColor: "white",
+            boxShadow: 24,
+            borderRadius: "10px",
+            overflow: "hidden",
+          }}
+        >
+          {/* Header */}
+          <Box
+            sx={{
+              backgroundImage:
+                "linear-gradient(to left, #5A8DFF, #001a99, #000080)",
+              color: "white",
+              padding: "10px",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <Typography fontWeight="bold" variant="h6">
+              👤 Pending Requests
+            </Typography>
+            <IconButton
+              onClick={handleRequestModelClose}
+              sx={{ color: "white" }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </Box>
+
+          {/* Request List */}
+          <Box sx={{ padding: "20px" }}>
+            {pendingRequests.length > 0 ? (
+              <List>
+                {pendingRequests.map((req) => (
+                  <div key={req.device_id}>
+                    <ListItem
+                      sx={{
+                        paddingLeft: "5px", // Add left padding
+                        paddingRight: "5px", // Add right padding
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "10px", //
+                      }}
+                    >
+                      <ListItemText
+                        primary={`Device: ${req.device_name}`}
+                        secondary={`Requested By: ${req.requested_by}`}
+                      />
+                      <Button
+                        variant="contained"
+                        color="success"
+                        sx={{ mr: 1 }}
+                        onClick={() =>
+                          handleAction(req.device_id, "registered")
+                        }
+                      >
+                        Approve
+                      </Button>
+                      <Button
+                        variant="contained"
+                        color="error"
+                        onClick={() => handleAction(req.device_id, "reject")}
+                      >
+                        Reject
+                      </Button>
+                    </ListItem>
+                    <Divider />
+                  </div>
+                ))}
+              </List>
+            ) : (
+              <Typography variant="body1" align="center">
+                No pending requests found.
+              </Typography>
+            )}
+          </Box>
+        </Box>
+      </Modal>
       <SnackbarComponent
         open={snackbar.open}
         message={snackbar.message}
