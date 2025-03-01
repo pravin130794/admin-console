@@ -18,10 +18,6 @@ import {
   Backdrop,
   TablePagination,
   OutlinedInput,
-  List,
-  ListItem,
-  ListItemText,
-  Divider,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import InputLabel from "@mui/material/InputLabel";
@@ -34,8 +30,6 @@ import CancelIcon from "@mui/icons-material/Cancel";
 import FormControl from "@mui/material/FormControl";
 import CircularProgress from "@mui/material/CircularProgress";
 import SnackbarComponent from "../components/Snackbar";
-import NotificationsIcon from "@mui/icons-material/Notifications";
-import Badge from "@mui/material/Badge";
 import ApiBaseUrl from "../ApiBaseUrl";
 
 const UserPage = () => {
@@ -50,7 +44,6 @@ const UserPage = () => {
     reason: "",
   });
   const [openApprove, setOpenApprove] = useState(false);
-  const [openReqModel, setOpenReqModel] = useState(false);
   const [reason, setReason] = useState("");
   const [role, setRole] = useState("");
   const [page, setPage] = useState(0); // Current page
@@ -61,8 +54,6 @@ const UserPage = () => {
   const [groups, setGroups] = useState([]);
   const [visibleItems, setVisibleItems] = useState([]);
   const [loadingGroups, setLoadingGroups] = useState(false);
-  const [loadingPendingRequest, setLoadingPendingRequest] = useState(false);
-  const [pendingRequests, setPendingRequests] = useState([]);
   const [users, setUsers] = useState([]);
   const [totalUsers, setTotalUsers] = useState(0); // Total count of users
   const [loadingUsers, setLoadingUsers] = useState(false);
@@ -92,7 +83,6 @@ const UserPage = () => {
 
   useEffect(() => {
     fetchUsers();
-    fetchPendingRequest();
   }, [page, rowsPerPage]);
 
   const handleCloseSnackbar = () => {
@@ -134,59 +124,6 @@ const UserPage = () => {
       console.error("Error fetching groups:", error);
     } finally {
       setLoadingGroups(false);
-    }
-  };
-
-  const fetchPendingRequest = async () => {
-    setLoadingPendingRequest(true);
-    try {
-      const token = localStorage.getItem("authToken");
-      const baseUrl = ApiBaseUrl.getBaseUrl();
-      const response = await fetch(`http://${baseUrl}/api/v1/admin/requests`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const data = await response.json();
-      setPendingRequests(data);
-    } catch (error) {
-      console.error("Error fetching pending request:", error);
-    } finally {
-      setLoadingPendingRequest(false);
-    }
-  };
-
-  const handleAction = async (deviceId, action) => {
-    try {
-      const token = localStorage.getItem("authToken");
-      const baseUrl = ApiBaseUrl.getBaseUrl();
-      const response = await fetch(
-        `http://${baseUrl}/api/v1/admin/request/${deviceId}/${action}`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || "Failed to delete user.");
-      }
-
-      setSnackbar({
-        open: true,
-        message: "Request updated successfully!",
-        severity: "success",
-      });
-      fetchPendingRequest();
-    } catch (error) {
-      console.error("Error fetching pending request:", error);
-      setSnackbar({
-        open: true,
-        message: error.message || "An error occurred.",
-        severity: "error",
-      });
     }
   };
 
@@ -677,19 +614,6 @@ const UserPage = () => {
               gap: "16px", //
             }}
           >
-            <Badge
-              badgeContent={
-                pendingRequests.length > 0 ? pendingRequests.length : "0"
-              }
-              color="error"
-              sx={{ marginRight: "10px" }}
-            >
-              <NotificationsIcon
-                color="inherit"
-                onClick={handleRequestModelOpen}
-              />
-            </Badge>
-
             <Button
               variant="contained"
               sx={{ backgroundColor: "#ffffff", marginRight: "10px" }}
@@ -1636,92 +1560,6 @@ const UserPage = () => {
                 Save
               </Button>
             </Box>
-          </Box>
-        </Box>
-      </Modal>
-
-      {/* View Request  Modal */}
-      <Modal open={openReqModel} onClose={handleRequestModelClose}>
-        <Box
-          sx={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            width: 500,
-            backgroundColor: "white",
-            boxShadow: 24,
-            borderRadius: "10px",
-            overflow: "hidden",
-          }}
-        >
-          {/* Header */}
-          <Box
-            sx={{
-              backgroundImage:
-                "linear-gradient(to left, #5A8DFF, #001a99, #000080)",
-              color: "white",
-              padding: "10px",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <Typography fontWeight="bold" variant="h6">
-              👤 Pending Requests
-            </Typography>
-            <IconButton
-              onClick={handleRequestModelClose}
-              sx={{ color: "white" }}
-            >
-              <CloseIcon />
-            </IconButton>
-          </Box>
-
-          {/* Request List */}
-          <Box sx={{ padding: "20px" }}>
-            {pendingRequests.length > 0 ? (
-              <List>
-                {pendingRequests.map((req) => (
-                  <div key={req.device_id}>
-                    <ListItem
-                      sx={{
-                        paddingLeft: "5px", // Add left padding
-                        paddingRight: "5px", // Add right padding
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "10px", //
-                      }}
-                    >
-                      <ListItemText
-                        primary={`Device: ${req.device_name}`}
-                        secondary={`Requested By: ${req.requested_by}`}
-                      />
-                      <Button
-                        variant="contained"
-                        color="success"
-                        sx={{ mr: 1 }}
-                        onClick={() => handleAction(req.device_id, "approve")}
-                      >
-                        Approve
-                      </Button>
-                      <Button
-                        variant="contained"
-                        color="error"
-                        onClick={() => handleAction(req.device_id, "reject")}
-                      >
-                        Reject
-                      </Button>
-                    </ListItem>
-                    <Divider />
-                  </div>
-                ))}
-              </List>
-            ) : (
-              <Typography variant="body1" align="center">
-                No pending requests found.
-              </Typography>
-            )}
           </Box>
         </Box>
       </Modal>

@@ -841,7 +841,7 @@ const HostsPage = () => {
                               textAlign: "center",
                               verticalAlign: "middle",
                               color:
-                                detail.status === "Approved" ? "green" : "red",
+                                detail.status === "Registered" ? "green" : "red",
                             }}
                           >
                             {detail.status}
@@ -855,19 +855,19 @@ const HostsPage = () => {
                             <IconButton
                               onClick={() => handleActionOpen(detail)}
                               disabled={
-                                detail.status === "Approved" ||
+                                detail.status === "Registered" ||
                                 detail.status != ""
                               }
                               sx={{
                                 cursor:
-                                  detail.status === "Approved"
+                                  detail.status === "Registered"
                                     ? "not-allowed"
                                     : "pointer",
                               }}
                             >
                               <AddCircleOutlineIcon
                                 cursor={
-                                  detail.status === "Approved"
+                                  detail.status === "Registered"
                                     ? "not-allowed"
                                     : "pointer"
                                 }

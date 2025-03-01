@@ -241,7 +241,7 @@ class Devices(Document):
     registered_to: Optional[str] = None
     host_ip: Optional[str] = None
     requested_by: Optional[PydanticObjectId] = None  # ID of user who requested the device
-    status: str = Field(enum=["Pending", "Approved", "Rejected"])
+    status: str = Field(enum=["Pending", "Registered", "Rejected"])
     requested_at: Optional[datetime] = None
     approved_or_rejected_at: Optional[datetime] = None
 
@@ -287,3 +287,21 @@ class HostUpdateRequest(BaseModel):
     ipAddress: Optional[str] = None
     location: Optional[str] = None
     devices: Optional[List[PydanticObjectId]] = []
+
+# Notification Model
+class Notification(Document):
+    user_id: PydanticObjectId
+    message: Optional[str] = None
+    is_read: bool = False
+    createdAt: datetime = Field(default_factory=datetime.now)
+    updatedAt: datetime = Field(default_factory=datetime.now)
+
+    class Settings:
+        name = "notifications"
+
+class NotificationResponse(BaseModel):
+    id: str
+    message: str
+    is_read: bool
+    user_id: str
+    createdAt: datetime
