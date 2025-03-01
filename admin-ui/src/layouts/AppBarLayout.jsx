@@ -12,8 +12,15 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import SapphireLogo from "../assets/SapphireLogo.png";
 import { Link, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/Auth";
+import { useRecoilCallback } from "recoil";
 import SnackbarComponent from "../components/Snackbar";
 import ApiBaseUrl from "../ApiBaseUrl";
+import {
+  selectedDeviceAccordion,
+  selectedDeviceModelBody,
+  selectedDeviceModelName,
+  selectedDeviceUrl,
+} from "../services/recoilState";
 
 const AppBarLayout = () => {
   const navigate = useNavigate();
@@ -25,6 +32,17 @@ const AppBarLayout = () => {
     message: "",
     severity: "info",
   });
+
+  const resetAllAtoms = useRecoilCallback(
+    ({ reset }) =>
+      () => {
+        reset(selectedDeviceAccordion);
+        reset(selectedDeviceModelBody);
+        reset(selectedDeviceUrl);
+        reset(selectedDeviceModelName);
+      },
+    []
+  );
   const handleLogout = async () => {
     try {
       // Call the logout API
@@ -51,6 +69,8 @@ const AppBarLayout = () => {
       }
       // Clear authentication tokens
       localStorage.removeItem("authToken");
+      // Reset all recoil states
+      resetAllAtoms();
       setSnackbar({
         open: true,
         message: "Logout successful!",
