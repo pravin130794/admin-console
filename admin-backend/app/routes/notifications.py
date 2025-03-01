@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends, Query
 from app.middleware.auth import JWTBearer
 from app.models import Notification
+from beanie import PydanticObjectId
 
 router = APIRouter()
 
@@ -15,17 +16,31 @@ async def get_notifications(
     Get a paginated list of notifications for a user.
     """
     try:
+        user_id = PydanticObjectId(user_id)
         # Get total count of user notifications
         total_count = await Notification.find(Notification.user_id == user_id).count()
 
         # Get paginated notifications
-        notifications = await Notification.find(Notification.user_id == user_id).skip(skip).limit(limit).to_list()
+        notifications = await Notification.find({
+            "$and": [
+                    {"is_read": False},
+                    {"user_id": user_id}
+                ]
+        }).skip(skip).limit(limit).to_list()
+
+        notifications_list = []
+
+        for notification in notifications:
+            notification_dict = notification.dict()
+            notification_dict["id"] = str(notification_dict["id"])
+            notification_dict["user_id"] = str(notification_dict["user_id"])
+            notifications_list.append(notification_dict)
 
         return {
             "total": total_count,
             "skip": skip,
             "limit": limit,
-            "notifications": [notification.dict() for notification in notifications]
+            "notifications": notifications_list
         }
 
     except Exception as e:

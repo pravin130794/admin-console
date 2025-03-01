@@ -55,6 +55,18 @@ const AppBarLayout = () => {
     []
   );
 
+  const [notificationLists, setNotificationLists] = useState([]);
+  const [loadingNotification, setLoadingNotification] = useState(false);
+  const [openNotificationModel, setOpenNotificationModel] = useState(false);
+
+  const handleNotificationModelOpen = () => {
+    setOpenNotificationModel(true);
+  };
+
+  const handleNotificationModelClose = () => {
+    setOpenNotificationModel(false);
+  };
+
   const handleRequestModelOpen = () => {
     setOpenReqModel(true);
   };
@@ -80,6 +92,53 @@ const AppBarLayout = () => {
     } finally {
       setLoadingPendingRequest(false);
     }
+  };
+
+  const fetchNotificationRequest = async () => {
+    setLoadingNotification(true);
+    try {
+      const token = localStorage.getItem("authToken");
+      const user_id = localStorage.getItem("user_id");
+      const baseUrl = ApiBaseUrl.getBaseUrl();
+      const response = await fetch(
+        `http://${baseUrl}/api/v1/notifications/${user_id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const data = await response.json();
+      setNotificationLists(data.notifications);
+    } catch (error) {
+      console.error("Error fetching pending request:", error);
+    } finally {
+      setLoadingNotification(false);
+    }
+  };
+
+  const markAsRead = async (notificationId) => {
+    const baseUrl = ApiBaseUrl.getBaseUrl();
+    const token = localStorage.getItem("authToken");
+    await fetch(
+      `http://${baseUrl}/api/v1/notifications/${notificationId}/read`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    // Update state to reflect read status
+    setNotificationLists(
+      notificationLists.map((notif) => {
+        return notif.id === notificationId
+          ? { ...notif, is_read: true }
+          : notif;
+      })
+    );
+    fetchNotificationRequest();
   };
 
   const handleAction = async (deviceId, action) => {
@@ -118,6 +177,9 @@ const AppBarLayout = () => {
 
   useEffect(() => {
     fetchPendingRequest();
+    if (userRole == "User") {
+      fetchNotificationRequest();
+    }
   }, []);
   const handleLogout = async () => {
     try {
@@ -331,6 +393,23 @@ const AppBarLayout = () => {
             ) : (
               ""
             )}
+
+            {userRole == "User" ? (
+              <Badge
+                badgeContent={
+                  notificationLists.length > 0 ? notificationLists.length : "0"
+                }
+                color="error"
+                sx={{ marginRight: "10px", marginTop: "10px" }}
+              >
+                <NotificationsIcon
+                  color="primary"
+                  onClick={handleNotificationModelOpen}
+                />
+              </Badge>
+            ) : (
+              ""
+            )}
             <IconButton
               onClick={handleLogout}
               sx={{
@@ -439,6 +518,88 @@ const AppBarLayout = () => {
             ) : (
               <Typography variant="body1" align="center">
                 No pending requests found.
+              </Typography>
+            )}
+          </Box>
+        </Box>
+      </Modal>
+
+      {/* View Notification  Modal */}
+      <Modal
+        open={openNotificationModel}
+        onClose={handleNotificationModelClose}
+      >
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: 500,
+            backgroundColor: "white",
+            boxShadow: 24,
+            borderRadius: "10px",
+            overflow: "hidden",
+          }}
+        >
+          {/* Header */}
+          <Box
+            sx={{
+              backgroundImage:
+                "linear-gradient(to left, #5A8DFF, #001a99, #000080)",
+              color: "white",
+              padding: "10px",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <Typography fontWeight="bold" variant="h6">
+              👤 Notification
+            </Typography>
+            <IconButton
+              onClick={handleNotificationModelClose}
+              sx={{ color: "white" }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </Box>
+
+          {/* Request List */}
+          <Box sx={{ padding: "20px" }}>
+            {loadingNotification ? (
+              <Typography variant="body1" align="center">
+                Loading...
+              </Typography>
+            ) : notificationLists.length > 0 ? (
+              <List>
+                {notificationLists.map((nReq) => (
+                  <div key={nReq.id}>
+                    <ListItem
+                      sx={{
+                        paddingLeft: "5px",
+                        paddingRight: "5px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "10px",
+                        backgroundColor: nReq.is_read ? "#f1f1f1" : "white", // Change color if read
+                        color: nReq.is_read ? "gray" : "black",
+                        cursor: nReq.is_read ? "not-allowed" : "pointer",
+                      }}
+                      onClick={() => markAsRead(nReq.id)}
+                    >
+                      <ListItemText
+                        primary={nReq.message}
+                        secondary={nReq.createdAt}
+                      />
+                    </ListItem>
+                    <Divider />
+                  </div>
+                ))}
+              </List>
+            ) : (
+              <Typography variant="body1" align="center">
+                No Notifications found.
               </Typography>
             )}
           </Box>

@@ -213,7 +213,7 @@ async def approve_or_reject_request(device_id: str, action: str):
         user_id=device.requested_by,
         message=f"Your device request has been {action.capitalize()}",
         is_read=False,
-        created_at=datetime.now()
+        createdAt=datetime.now()
     )
     await new_notification.insert()
 
