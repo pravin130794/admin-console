@@ -1701,7 +1701,9 @@ const UserPage = () => {
                         variant="contained"
                         color="success"
                         sx={{ mr: 1 }}
-                        onClick={() => handleAction(req.device_id, "approve")}
+                        onClick={() =>
+                          handleAction(req.device_id, "registered")
+                        }
                       >
                         Approve
                       </Button>

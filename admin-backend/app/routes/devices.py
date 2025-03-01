@@ -194,11 +194,11 @@ async def approve_or_reject_request(device_id: str, action: str):
     if device.status != "Pending":
         raise HTTPException(status_code=400, detail="No pending request for this device")
 
-    if action.lower() not in ["approve", "reject"]:
+    if action.lower() not in ["registered", "reject"]:
         raise HTTPException(status_code=400, detail="Invalid action")
 
     # Update request status
-    device.status = "Approved" if action.lower() == "approve" else "Rejected"
+    device.status = "Registered" if action.lower() == "registered" else "Rejected"
     device.approved_or_rejected_at = datetime.now()
     
     await device.save()

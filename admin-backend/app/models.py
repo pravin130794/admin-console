@@ -241,7 +241,7 @@ class Devices(Document):
     registered_to: Optional[str] = None
     host_ip: Optional[str] = None
     requested_by: Optional[PydanticObjectId] = None  # ID of user who requested the device
-    status: str = Field(enum=["Pending", "Approved", "Rejected"])
+    status: str = Field(enum=["Pending", "Registered", "Rejected"])
     requested_at: Optional[datetime] = None
     approved_or_rejected_at: Optional[datetime] = None
 
