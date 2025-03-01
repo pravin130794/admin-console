@@ -637,14 +637,17 @@ const HostsPage = () => {
               <VisibilityIcon />
             </IconButton>
 
-            {userRole != "User" ? (
-              <IconButton color="error">
-                <DeleteIcon onClick={() => handleDeleteOpen(host)} />
+            {userRole !== "User" ? (
+              <IconButton color="error" onClick={() => handleDeleteOpen(host)}>
+                <DeleteIcon />
               </IconButton>
             ) : null}
-            {userRole != "User" ? (
-              <IconButton color="secondary">
-                <EditIcon onClick={() => handleEditOpen(host)} />
+            {userRole !== "User" ? (
+              <IconButton
+                color="secondary"
+                onClick={() => handleEditOpen(host)}
+              >
+                <EditIcon />
               </IconButton>
             ) : null}
           </TableCell>
@@ -841,7 +844,9 @@ const HostsPage = () => {
                               textAlign: "center",
                               verticalAlign: "middle",
                               color:
-                                detail.status === "Registered" ? "green" : "red",
+                                detail.status === "Registered"
+                                  ? "green"
+                                  : "red",
                             }}
                           >
                             {detail.status}
