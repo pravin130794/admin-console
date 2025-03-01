@@ -52,7 +52,8 @@ async def list_devices(
             # Now, query active devices with host_ip in the collected host IPs
             devices_query = Devices.find({
                 "$and": [
-                    {"host_ip": {"$in": host_ips}}
+                    {"host_ip": {"$in": host_ips}},
+                    {"registered_to": user_id}
                 ]
             })
 
