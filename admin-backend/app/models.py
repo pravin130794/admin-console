@@ -287,3 +287,21 @@ class HostUpdateRequest(BaseModel):
     ipAddress: Optional[str] = None
     location: Optional[str] = None
     devices: Optional[List[PydanticObjectId]] = []
+
+# Notification Model
+class Notification(Document):
+    user_id: PydanticObjectId
+    message: Optional[str] = None
+    is_read: bool = False
+    createdAt: datetime = Field(default_factory=datetime.now)
+    updatedAt: datetime = Field(default_factory=datetime.now)
+
+    class Settings:
+        name = "notifications"
+
+class NotificationResponse(BaseModel):
+    id: str
+    message: str
+    is_read: bool
+    user_id: str
+    createdAt: datetime

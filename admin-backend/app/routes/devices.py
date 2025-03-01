@@ -2,7 +2,7 @@ from datetime import datetime
 import random
 from fastapi import APIRouter, Depends, HTTPException, Query
 from app.middleware.auth import JWTBearer
-from app.models import Devices, User, Host
+from app.models import Devices, Notification, User, Host
 from beanie import PydanticObjectId
 from bson import ObjectId
 from typing import List
@@ -169,7 +169,7 @@ async def get_pending_requests():
     requests = []
     for device in pending_devices:
         # Fetch the user based on ObjectId
-        user = await User.get(device.requested_by)
+        user = await User.get(str(device.requested_by))
         if not user:
             user_name = "Unknown User"
         else:
@@ -201,7 +201,20 @@ async def approve_or_reject_request(device_id: str, action: str):
     # Update request status
     device.status = "Registered" if action.lower() == "registered" else "Rejected"
     device.approved_or_rejected_at = datetime.now()
+
+    if device.security_id is None:
+        random_number = random.randint(10000, 99999)
+        device.security_id = random_number
+        device.registered_to = str(device.requested_by)
     
     await device.save()
+    # Create a notification for the user
+    new_notification = Notification(
+        user_id=device.requested_by,
+        message=f"Your device request has been {action.capitalize()}",
+        is_read=False,
+        created_at=datetime.now()
+    )
+    await new_notification.insert()
 
     return {"message": f"Request {action.capitalize()} successfully"}

@@ -138,6 +138,25 @@ async def list_user_hosts(
                             "host_ip": device.host_ip,
                             "status": device.status,
                         })
+                    else:
+                        registered_to_info = {
+                            "user_id": None,
+                            "user_name":  None
+                        }
+                        device_data.append({
+                            "id": str(device.id),
+                            "model": device.model,
+                            "udid": device.udid,
+                            "state": device.state,
+                            "cpu": device.cpu,
+                            "manufacturer": device.manufacturer,
+                            "os_version": device.os_version,
+                            "sdk_version": device.sdk_version,
+                            "security_id": device.security_id,
+                            "registered_to": registered_to_info,
+                            "host_ip": device.host_ip,
+                            "status": device.status,
+                        })
 
             # Prepare host data
             host_data = {
