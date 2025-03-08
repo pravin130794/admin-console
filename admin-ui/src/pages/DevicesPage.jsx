@@ -240,6 +240,39 @@ const DevicesPage = () => {
     // Perform specific logic based on the label or icon
   };
 
+  const handleSessionClose = async (selectedData) => {
+    console.log("🚀 ~ handleSessionClose ~ selectedData:", selectedData);
+    setApiLoading(true);
+    try {
+      const baseUrl = ApiBaseUrl.getBaseUrl();
+      const token = localStorage.getItem("authToken");
+      const response = await fetch(
+        `http://${baseUrl}/api/v1/deregisterdevice/${selectedData.udid}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({}),
+        }
+      );
+      const data = await response.json();
+      setSelectedDevice(null);
+      setSelectedDeviceBody(null);
+      setExpandedDevice(null);
+    } catch (error) {
+      console.error("Error deregistering device:", error);
+      setSnackbar({
+        open: true,
+        message: error.message || "An error occurred.",
+        severity: "error",
+      });
+    } finally {
+      setApiLoading(false);
+    }
+  };
+
   return (
     <Box display="flex" flexDirection="column" height="100vh">
       {/* AppBar */}
@@ -632,6 +665,24 @@ const DevicesPage = () => {
                     </Button>
                   ))}
                 </Box>
+                <Typography
+                  variant="h6"
+                  mb={1}
+                  p={1}
+                  sx={{
+                    backgroundColor:
+                      selectedDeviceBody?.manufacturer === "samsung"
+                        ? "Black"
+                        : "#0052cc",
+                    color: "white",
+                    borderRadius: "5px",
+                    alignContent: "center",
+                    textAlign: "center",
+                  }}
+                  onClick={() => handleSessionClose(selectedDeviceBody)}
+                >
+                  Logut
+                </Typography>
               </Box>
             </Box>
           ) : (

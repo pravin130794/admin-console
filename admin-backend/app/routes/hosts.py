@@ -222,8 +222,8 @@ async def partial_update_host(host: HostUpdateRequest):
             existing_host.ipAddress = host.ipAddress
         if host.location is not None:
             existing_host.location = host.location
-        if host.devices is not None:
-            existing_host.devices = host.devices
+        # if host.devices is not None:
+        #     existing_host.devices = host.devices
         if host.member is not None:
             existing_host.member = host.member
 
