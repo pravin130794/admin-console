@@ -37,6 +37,7 @@ const HomePage = () => {
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState("Home");
   const [showScroll, setShowScroll] = useState(false);
+  const [isSticky, setIsSticky] = useState(false);
 
   const devices = [
     { name: "Mobile", image: "./src/assets/mobile.png" },
@@ -78,17 +79,90 @@ const HomePage = () => {
     return () => window.removeEventListener("scroll", checkScrollTop);
   }, [showScroll]);
 
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 50) {
+        setIsSticky(true);
+      } else {
+        setIsSticky(false);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
   return (
     <Box>
       {/* Top Navbar */}
-      <AppBar position="static" sx={{ backgroundColor: "black" }}>
-        <Toolbar sx={{ justifyContent: "flex-end", gap: 2 }}>
-          <div className="box a" onClick={() => navigate("/login")}>
-            Login
-          </div>
-          <div className="box a" onClick={() => navigate("/signup")}>
-            Sign up
-          </div>
+      <AppBar
+        position={isSticky ? "fixed" : "static"}
+        sx={{ backgroundColor: "black" }}
+      >
+        <Toolbar
+          sx={{
+            display: "flex",
+            justifyContent: !isSticky ? "flex-end" : "space-between",
+            alignItems: "center",
+            paddingX: 2,
+          }}
+        >
+          {isSticky ? (
+            <Box
+              sx={{
+                display: "flex",
+                gap: 4,
+                flexGrow: 1, // Pushes content to center
+                justifyContent: "center",
+              }}
+            >
+              {[
+                { label: "Home", ref: null },
+                { label: "Remote Devices", ref: remoteAccessRef },
+                { label: "Test Automation", ref: testAutomationRef },
+                { label: "Multiple devices", ref: multipleDevicesRef },
+                { label: "Features", ref: featuresRef },
+              ].map((menu) => (
+                <Typography
+                  key={menu.label}
+                  variant="h6"
+                  sx={{
+                    cursor: "pointer",
+                    position: "relative",
+                    "&::after": {
+                      content: '""',
+                      position: "absolute",
+                      bottom: -5, // Position the underline
+                      left: 0,
+                      right: 0,
+                      height: "3px", // Height of the underline
+                      background:
+                        activeSection === menu.label
+                          ? "linear-gradient(to right, #1e3a8a, #3b82f6, #06b6d4)"
+                          : "transparent", // Show underline only for active item
+                      borderRadius: "2px",
+                      transition: "all 0.3s ease", // Smooth transition for underline
+                    },
+                  }}
+                  onClick={() => {
+                    setActiveSection(menu.label);
+                    handleScroll(menu.ref);
+                  }}
+                >
+                  {menu.label}
+                </Typography>
+              ))}
+            </Box>
+          ) : (
+            ""
+          )}
+          <Box sx={{ display: "flex", gap: 4 }}>
+            <div className="box a" onClick={() => navigate("/login")}>
+              Login
+            </div>
+            <div className="box a" onClick={() => navigate("/signup")}>
+              Sign up
+            </div>
+          </Box>
         </Toolbar>
       </AppBar>
 

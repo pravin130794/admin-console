@@ -138,6 +138,7 @@ async def registed_device(device_id: str,current_token: str = Depends(JWTBearer(
         random_number = random.randint(10000, 99999)
         device.security_id = random_number
         device.registered_to = user_id
+        device.status = "Registered"
         await device.save()
         return random_number
     return device.security_id

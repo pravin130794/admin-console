@@ -286,7 +286,6 @@ class HostUpdateRequest(BaseModel):
     os: Optional[str] = None
     ipAddress: Optional[str] = None
     location: Optional[str] = None
-    devices: Optional[List[PydanticObjectId]] = []
 
 # Notification Model
 class Notification(Document):

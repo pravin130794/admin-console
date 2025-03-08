@@ -434,6 +434,7 @@ const HostsPage = () => {
   const handleEditSave = async () => {
     setApiLoading(true);
     try {
+      delete editHostData.devices;
       const token = localStorage.getItem("authToken");
       const baseUrl = ApiBaseUrl.getBaseUrl();
       const response = await fetch(`http://${baseUrl}/api/v1/hosts`, {
