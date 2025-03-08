@@ -126,7 +126,7 @@ async def list_devices(skip: int = Query(0, ge=0), limit: int = Query(10, ge=1))
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
 
-@router.post("/registerdevice/{device_id}", summary="Register a device to a user")
+@router.post("/registerdevice/{device_id}",dependencies=[Depends(JWTBearer())], summary="Register a device to a user")
 async def registed_device(device_id: str,current_token: str = Depends(JWTBearer())):
     user_id = current_token.get("sub")
     if not user_id:
@@ -144,7 +144,7 @@ async def registed_device(device_id: str,current_token: str = Depends(JWTBearer(
     return device.security_id
 
 # Request a device
-@router.post("/request-device/{device_id}")
+@router.post("/request-device/{device_id}",dependencies=[Depends(JWTBearer())])
 async def request_device(device_id: str, user_id: str):
     device = await Devices.get(device_id)
     if not device:
@@ -162,7 +162,7 @@ async def request_device(device_id: str, user_id: str):
     return {"message": "Device request submitted successfully"}
 
 # Admin - Get all pending device requests
-@router.get("/admin/requests")
+@router.get("/admin/requests",dependencies=[Depends(JWTBearer())])
 async def get_pending_requests():
     # Find all pending devices
     pending_devices = await Devices.find(Devices.status == "Pending").to_list()
@@ -187,7 +187,7 @@ async def get_pending_requests():
     return requests
 
 # Admin - Approve or Reject a device request
-@router.put("/admin/request/{device_id}/{action}")
+@router.put("/admin/request/{device_id}/{action}", dependencies=[Depends(JWTBearer())])
 async def approve_or_reject_request(device_id: str, action: str):
     device = await Devices.get(device_id)
     if not device:
@@ -221,7 +221,7 @@ async def approve_or_reject_request(device_id: str, action: str):
     return {"message": f"Request {action.capitalize()} successfully"}
 
 
-@router.put("/deregisterdevice/{device_id}", summary="Deregister a device")
+@router.put("/deregisterdevice/{device_id}",dependencies=[Depends(JWTBearer())], summary="Deregister a device")
 async def deregister_device(
     device_id: str
 ):
