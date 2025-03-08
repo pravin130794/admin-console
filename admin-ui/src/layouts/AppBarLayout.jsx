@@ -29,6 +29,7 @@ import {
   selectedDeviceModelName,
   selectedDeviceUrl,
 } from "../services/recoilState";
+import { initializeWebSocket } from "../services/WebSocketService";
 
 const AppBarLayout = () => {
   const navigate = useNavigate();
@@ -54,10 +55,36 @@ const AppBarLayout = () => {
       },
     []
   );
-
   const [notificationLists, setNotificationLists] = useState([]);
   const [loadingNotification, setLoadingNotification] = useState(false);
   const [openNotificationModel, setOpenNotificationModel] = useState(false);
+
+  useEffect(() => {
+    const handleWebSocketMessage = (data) => {
+      console.log("Received WebSocket update in App Bar:", data);
+      if (data?.updateDescription?.updatedFields?.status) {
+        if (userRole == "User") {
+          fetchNotificationRequest();
+        } else {
+          fetchPendingRequest();
+        }
+      }
+    };
+    const baseUrl = ApiBaseUrl.getBaseUrl();
+    initializeWebSocket(
+      `ws://${baseUrl}/ws`,
+      handleWebSocketMessage,
+      (error) => {
+        console.error("WebSocket error:", error);
+      },
+      () => {
+        console.log("WebSocket connection closed");
+      }
+    );
+    return () => {
+      // ws.close();
+    };
+  }, []);
 
   const handleNotificationModelOpen = () => {
     setOpenNotificationModel(true);
@@ -181,6 +208,7 @@ const AppBarLayout = () => {
       fetchNotificationRequest();
     }
   }, []);
+
   const handleLogout = async () => {
     try {
       // Call the logout API
@@ -234,6 +262,7 @@ const AppBarLayout = () => {
   const handleCloseSnackbar = () => {
     setSnackbar((prev) => ({ ...prev, open: false }));
   };
+
   return (
     <Box sx={{ flexGrow: 1 }}>
       <AppBar position="static" sx={{ backgroundColor: "#fcfcfc" }}>
