@@ -219,3 +219,32 @@ async def approve_or_reject_request(device_id: str, action: str):
     await new_notification.insert()
 
     return {"message": f"Request {action.capitalize()} successfully"}
+
+
+@router.put("/deregisterdevice/{device_id}", summary="Deregister a device")
+async def deregister_device(
+    device_id: str
+):
+    # Find the device by `udid`
+    device: Devices = await Devices.find_one(Devices.udid == device_id)
+    
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found")
+
+    # Check if the device is already deregistered
+    if device.security_id is None and device.registered_to is None:
+        raise HTTPException(status_code=400, detail="Device is already deregistered")
+
+    # Reset fields to deregister the device
+    device.security_id = None
+    device.registered_to = None
+    device.status = ""  # Reset status
+    device.requested_by = None
+    device.requested_at = None
+    device.approved_or_rejected_at = None
+    device.last_update = datetime.utcnow()  # Update modification timestamp
+
+    # Save updated device
+    await device.save()
+
+    return {"message": "Device successfully deregistered", "device_id": device.udid}
