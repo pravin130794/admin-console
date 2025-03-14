@@ -438,41 +438,45 @@ const DevicesPage = () => {
                           borderRadius: "5px",
                         }}
                       >
-                        <ListItemText
-                          primary={
-                            <Typography variant="body1" sx={{ color: "Black" }}>
-                              Manufacturer: {device.fullDocument.manufacturer}
+                        <Box sx={{ width: "100%", p: 1 }}>
+                          <Typography
+                            variant="body1"
+                            component="div"
+                            sx={{ color: "Black", fontWeight: "medium", mb: 1 }}
+                          >
+                            Manufacturer: {device.fullDocument.manufacturer}
+                          </Typography>
+                          <Box sx={{ color: "text.secondary" }}>
+                            <Typography
+                              variant="body2"
+                              component="div"
+                              sx={{ color: "Black", mt: 0.5 }}
+                            >
+                              State: {device.fullDocument.state}
                             </Typography>
-                          }
-                          secondary={
-                            <>
-                              <Typography
-                                variant="body2"
-                                sx={{ color: "Black" }}
-                              >
-                                State: {device.fullDocument.state}
-                              </Typography>
-                              <Typography
-                                variant="body2"
-                                sx={{ color: "Black" }}
-                              >
-                                OS Version: {device.fullDocument.os_version}
-                              </Typography>
-                              <Typography
-                                variant="body2"
-                                sx={{ color: "Black" }}
-                              >
-                                CPU: {device.fullDocument.cpu}
-                              </Typography>
-                              <Typography
-                                variant="body2"
-                                sx={{ color: "Black" }}
-                              >
-                                SDK Version: {device.fullDocument.sdk_version}
-                              </Typography>
-                            </>
-                          }
-                        />
+                            <Typography
+                              variant="body2"
+                              component="div"
+                              sx={{ color: "Black", mt: 0.5 }}
+                            >
+                              OS Version: {device.fullDocument.os_version}
+                            </Typography>
+                            <Typography
+                              variant="body2"
+                              component="div"
+                              sx={{ color: "Black", mt: 0.5 }}
+                            >
+                              CPU: {device.fullDocument.cpu}
+                            </Typography>
+                            <Typography
+                              variant="body2"
+                              component="div"
+                              sx={{ color: "Black", mt: 0.5 }}
+                            >
+                              SDK Version: {device.fullDocument.sdk_version}
+                            </Typography>
+                          </Box>
+                        </Box>
                       </ListItemButton>
                     </ListItem>
                   </List>
