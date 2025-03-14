@@ -16,13 +16,10 @@ import {
   Collapse,
   Backdrop,
   CircularProgress,
-  Grid,
+  ListItemButton,
   Button,
 } from "@mui/material";
-import {
-  initializeWebSocket,
-  closeWebSocket,
-} from "../services/WebSocketService";
+import { initializeWebSocket } from "../services/WebSocketService";
 import ApiBaseUrl from "../ApiBaseUrl";
 import {
   selectedDeviceAccordion,
@@ -418,56 +415,65 @@ const DevicesPage = () => {
                 </AccordionSummary>
                 <AccordionDetails>
                   <List>
-                    <ListItem
-                      button
-                      onClick={async () => {
-                        setSelectedDeviceName(device.fullDocument.model);
-                        await registerDevice(device.fullDocument);
-                      }}
-                      sx={{
-                        backgroundColor:
-                          selectedDeviceBody?.udid === device.fullDocument.udid
-                            ? "#5a8dff"
-                            : "transparent",
-                        color:
-                          selectedDeviceBody?.udid === device.fullDocument.udid
-                            ? "white"
-                            : "inherit",
-                        "&:hover": {
-                          backgroundColor: "#5a8dff",
-                        },
-                        borderRadius: "5px",
-                      }}
-                    >
-                      <ListItemText
-                        primary={
-                          <>
-                            <Typography
-                              variant="body1"
-                              // fontWeight="bold"
-                              sx={{ color: "Black" }}
-                            >
+                    <ListItem disablePadding>
+                      <ListItemButton
+                        onClick={async () => {
+                          setSelectedDeviceName(device.fullDocument.model);
+                          await registerDevice(device.fullDocument);
+                        }}
+                        sx={{
+                          backgroundColor:
+                            selectedDeviceBody?.udid ===
+                            device.fullDocument.udid
+                              ? "#5a8dff"
+                              : "transparent",
+                          color:
+                            selectedDeviceBody?.udid ===
+                            device.fullDocument.udid
+                              ? "white"
+                              : "inherit",
+                          "&:hover": {
+                            backgroundColor: "#5a8dff",
+                          },
+                          borderRadius: "5px",
+                        }}
+                      >
+                        <ListItemText
+                          primary={
+                            <Typography variant="body1" sx={{ color: "Black" }}>
                               Manufacturer: {device.fullDocument.manufacturer}
                             </Typography>
-                          </>
-                        }
-                        secondary={
-                          <>
-                            <Typography variant="body2" sx={{ color: "Black" }}>
-                              State: {device.fullDocument.state}
-                            </Typography>
-                            <Typography variant="body2" sx={{ color: "Black" }}>
-                              OS Version: {device.fullDocument.os_version}
-                            </Typography>
-                            <Typography variant="body2" sx={{ color: "Black" }}>
-                              CPU: {device.fullDocument.cpu}
-                            </Typography>
-                            <Typography variant="body2" sx={{ color: "Black" }}>
-                              SDK Version: {device.fullDocument.sdk_version}
-                            </Typography>
-                          </>
-                        }
-                      />
+                          }
+                          secondary={
+                            <>
+                              <Typography
+                                variant="body2"
+                                sx={{ color: "Black" }}
+                              >
+                                State: {device.fullDocument.state}
+                              </Typography>
+                              <Typography
+                                variant="body2"
+                                sx={{ color: "Black" }}
+                              >
+                                OS Version: {device.fullDocument.os_version}
+                              </Typography>
+                              <Typography
+                                variant="body2"
+                                sx={{ color: "Black" }}
+                              >
+                                CPU: {device.fullDocument.cpu}
+                              </Typography>
+                              <Typography
+                                variant="body2"
+                                sx={{ color: "Black" }}
+                              >
+                                SDK Version: {device.fullDocument.sdk_version}
+                              </Typography>
+                            </>
+                          }
+                        />
+                      </ListItemButton>
                     </ListItem>
                   </List>
                 </AccordionDetails>
