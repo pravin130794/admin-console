@@ -207,7 +207,12 @@ async def approve_or_reject_request(device_id: str, action: str):
         random_number = random.randint(10000, 99999)
         device.security_id = random_number
         device.registered_to = str(device.requested_by)
-    
+
+    if device.status == "Rejected":
+        device.security_id = None
+        device.registered_to = ""
+        device.status = ""
+
     await device.save()
     # Create a notification for the user
     new_notification = Notification(

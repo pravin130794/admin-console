@@ -62,12 +62,10 @@ const AppBarLayout = () => {
   useEffect(() => {
     const handleWebSocketMessage = (data) => {
       console.log("Received WebSocket update in App Bar:", data);
-      if (data?.updateDescription?.updatedFields?.status) {
-        if (userRole == "User") {
-          fetchNotificationRequest();
-        } else {
-          fetchPendingRequest();
-        }
+      if (data?.updateDescription?.updatedFields?.status !== undefined) {
+        (userRole === "User"
+          ? fetchNotificationRequest
+          : fetchPendingRequest)();
       }
     };
     const baseUrl = ApiBaseUrl.getBaseUrl();
@@ -84,7 +82,7 @@ const AppBarLayout = () => {
     return () => {
       // ws.close();
     };
-  }, []);
+  }, [notificationLists, pendingRequests]);
 
   const handleNotificationModelOpen = () => {
     setOpenNotificationModel(true);

@@ -261,6 +261,7 @@ const DevicesPage = () => {
       setSelectedDevice(null);
       setSelectedDeviceBody(null);
       setExpandedDevice(null);
+      constant.globalMapModel[selectedDeviceName] = "";
     } catch (error) {
       console.error("Error deregistering device:", error);
       setSnackbar({
@@ -681,7 +682,7 @@ const DevicesPage = () => {
                   }}
                   onClick={() => handleSessionClose(selectedDeviceBody)}
                 >
-                  Logut
+                  Logout
                 </Typography>
               </Box>
             </Box>
