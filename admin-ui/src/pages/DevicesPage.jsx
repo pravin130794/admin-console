@@ -16,13 +16,10 @@ import {
   Collapse,
   Backdrop,
   CircularProgress,
-  Grid,
+  ListItemButton,
   Button,
 } from "@mui/material";
-import {
-  initializeWebSocket,
-  closeWebSocket,
-} from "../services/WebSocketService";
+import { initializeWebSocket } from "../services/WebSocketService";
 import ApiBaseUrl from "../ApiBaseUrl";
 import {
   selectedDeviceAccordion,
@@ -261,6 +258,7 @@ const DevicesPage = () => {
       setSelectedDevice(null);
       setSelectedDeviceBody(null);
       setExpandedDevice(null);
+      constant.globalMapModel[selectedDeviceName] = "";
     } catch (error) {
       console.error("Error deregistering device:", error);
       setSnackbar({
@@ -417,56 +415,69 @@ const DevicesPage = () => {
                 </AccordionSummary>
                 <AccordionDetails>
                   <List>
-                    <ListItem
-                      button
-                      onClick={async () => {
-                        setSelectedDeviceName(device.fullDocument.model);
-                        await registerDevice(device.fullDocument);
-                      }}
-                      sx={{
-                        backgroundColor:
-                          selectedDeviceBody?.udid === device.fullDocument.udid
-                            ? "#5a8dff"
-                            : "transparent",
-                        color:
-                          selectedDeviceBody?.udid === device.fullDocument.udid
-                            ? "white"
-                            : "inherit",
-                        "&:hover": {
-                          backgroundColor: "#5a8dff",
-                        },
-                        borderRadius: "5px",
-                      }}
-                    >
-                      <ListItemText
-                        primary={
-                          <>
+                    <ListItem disablePadding>
+                      <ListItemButton
+                        onClick={async () => {
+                          setSelectedDeviceName(device.fullDocument.model);
+                          await registerDevice(device.fullDocument);
+                        }}
+                        sx={{
+                          backgroundColor:
+                            selectedDeviceBody?.udid ===
+                            device.fullDocument.udid
+                              ? "#5a8dff"
+                              : "transparent",
+                          color:
+                            selectedDeviceBody?.udid ===
+                            device.fullDocument.udid
+                              ? "white"
+                              : "inherit",
+                          "&:hover": {
+                            backgroundColor: "#5a8dff",
+                          },
+                          borderRadius: "5px",
+                        }}
+                      >
+                        <Box sx={{ width: "100%", p: 1 }}>
+                          <Typography
+                            variant="body1"
+                            component="div"
+                            sx={{ color: "Black", fontWeight: "medium", mb: 1 }}
+                          >
+                            Manufacturer: {device.fullDocument.manufacturer}
+                          </Typography>
+                          <Box sx={{ color: "text.secondary" }}>
                             <Typography
-                              variant="body1"
-                              // fontWeight="bold"
-                              sx={{ color: "Black" }}
+                              variant="body2"
+                              component="div"
+                              sx={{ color: "Black", mt: 0.5 }}
                             >
-                              Manufacturer: {device.fullDocument.manufacturer}
-                            </Typography>
-                          </>
-                        }
-                        secondary={
-                          <>
-                            <Typography variant="body2" sx={{ color: "Black" }}>
                               State: {device.fullDocument.state}
                             </Typography>
-                            <Typography variant="body2" sx={{ color: "Black" }}>
+                            <Typography
+                              variant="body2"
+                              component="div"
+                              sx={{ color: "Black", mt: 0.5 }}
+                            >
                               OS Version: {device.fullDocument.os_version}
                             </Typography>
-                            <Typography variant="body2" sx={{ color: "Black" }}>
+                            <Typography
+                              variant="body2"
+                              component="div"
+                              sx={{ color: "Black", mt: 0.5 }}
+                            >
                               CPU: {device.fullDocument.cpu}
                             </Typography>
-                            <Typography variant="body2" sx={{ color: "Black" }}>
+                            <Typography
+                              variant="body2"
+                              component="div"
+                              sx={{ color: "Black", mt: 0.5 }}
+                            >
                               SDK Version: {device.fullDocument.sdk_version}
                             </Typography>
-                          </>
-                        }
-                      />
+                          </Box>
+                        </Box>
+                      </ListItemButton>
                     </ListItem>
                   </List>
                 </AccordionDetails>
@@ -681,7 +692,7 @@ const DevicesPage = () => {
                   }}
                   onClick={() => handleSessionClose(selectedDeviceBody)}
                 >
-                  Logut
+                  Logout
                 </Typography>
               </Box>
             </Box>
