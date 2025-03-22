@@ -47,6 +47,7 @@ const HomePage = () => {
   ];
 
   // References for each section
+  const homeRef = useRef(null);
   const remoteAccessRef = useRef(null);
   const testAutomationRef = useRef(null);
   const multipleDevicesRef = useRef(null);
@@ -116,7 +117,7 @@ const HomePage = () => {
               }}
             >
               {[
-                { label: "Home", ref: null },
+                { label: "Home", ref: homeRef },
                 { label: "Remote Devices", ref: remoteAccessRef },
                 { label: "Test Automation", ref: testAutomationRef },
                 { label: "Multiple devices", ref: multipleDevicesRef },
@@ -167,7 +168,7 @@ const HomePage = () => {
       </AppBar>
 
       {/* Header Section */}
-      <Box sx={{ borderBottom: "1px solid #ccc" }}>
+      <Box ref={homeRef} sx={{ borderBottom: "1px solid #ccc" }}>
         <Container maxWidth="xl">
           <Toolbar
             sx={{
@@ -179,7 +180,7 @@ const HomePage = () => {
             <img src={logo} alt="Verizon Logo" height="80" />
             <Box sx={{ display: "flex", gap: 4 }}>
               {[
-                { label: "Home", ref: null },
+                { label: "Home", ref: homeRef },
                 { label: "Remote Devices", ref: remoteAccessRef },
                 { label: "Test Automation", ref: testAutomationRef },
                 { label: "Multiple devices", ref: multipleDevicesRef },
