@@ -66,5 +66,42 @@ shadcn UI admin
 https://github.com/satnaing/shadcn-admin
 
 
+<----------------------------------------------------------------------------------->
+
+setup application 
+
+// mongodb 
+
+run docker compose command
+
+docker compose -f mongodb.yml up -d
+
+
+if mongo not able to connect then check /etc/hosts
+
+
+sudo vi /etc/hosts
+
+add IP address
+
+
+// backend 
+
+set venv -> python3 -m venv venv 
+
+activate the source -> source venv/bin/activate 
+
+install all packages -> pip install -r requirements.txt 
+
+run the application -> python3 -m uvicorn app.main:app --reload --port 8001   
+
+
+// UI
+
+install packages if not installed -> pnpm install 
+
+run the application -> pnpm run dev 
+
+
 
 
